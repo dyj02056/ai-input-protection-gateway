@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // 텍스트 입력 요소의 이벤트만 감지합니다. 입력값(value/textContent)은 읽지 않습니다.
+  // 텍스트 입력 요소만 대상으로 합니다. 검사 결과에 원문이나 일치한 문자열은 넣지 않습니다.
   const EDITABLE_SELECTOR = [
     "textarea",
     "input:not([type])",
@@ -14,13 +14,24 @@
   ].join(", ");
 
   let noticeHost = null;
+  let noticeTitle = null;
+  let noticeDescription = null;
   let hideTimer = 0;
 
-  function isEditableTarget(target) {
-    return (
-      target instanceof Element &&
-      target.closest(EDITABLE_SELECTOR) !== null
-    );
+  function findEditableTarget(target) {
+    if (!(target instanceof Element)) {
+      return null;
+    }
+
+    return target.closest(EDITABLE_SELECTOR);
+  }
+
+  function readEditorText(editor) {
+    if (editor instanceof HTMLInputElement || editor instanceof HTMLTextAreaElement) {
+      return editor.value;
+    }
+
+    return editor.innerText || editor.textContent || "";
   }
 
   function createNotice() {
@@ -68,23 +79,33 @@
     notice.setAttribute("role", "status");
     notice.setAttribute("aria-live", "polite");
 
-    const title = document.createElement("strong");
-    title.textContent = "입력/붙여넣기 이벤트 감지";
-
-    const description = document.createElement("span");
-    description.textContent =
-      "확장 프로그램은 입력 내용을 검사·저장·전송하지 않습니다. 아직 차단·마스킹하지 않아 입력이 AI 서비스로 전송될 수 있습니다.";
-
-    notice.append(title, description);
+    noticeTitle = document.createElement("strong");
+    noticeDescription = document.createElement("span");
+    notice.append(noticeTitle, noticeDescription);
     shadow.append(style, notice);
     document.documentElement.append(host);
+    noticeHost = host;
 
     return host;
   }
 
-  function showNotice() {
+  function showNotice(categories, detectorAvailable = true) {
     if (!noticeHost || !noticeHost.isConnected) {
-      noticeHost = createNotice();
+      createNotice();
+    }
+
+    if (!detectorAvailable) {
+      noticeTitle.textContent = "로컬 검사기를 사용할 수 없습니다";
+      noticeDescription.textContent =
+        "확장 프로그램을 새로고침해 주세요. 입력 내용은 검사되거나 차단되지 않았습니다.";
+    } else if (categories.length > 0) {
+      noticeTitle.textContent = "형식 패턴 감지 — 전송 전 확인";
+      noticeDescription.textContent =
+        `${categories.join(" · ")} 형식과 일치했습니다. 실제 정보인지 검증하지 않았으며, 입력을 마스킹하거나 차단하지 않습니다.`;
+    } else {
+      noticeTitle.textContent = "간단한 형식 검사 완료";
+      noticeDescription.textContent =
+        "설정된 일부 정규식과 일치하는 항목을 찾지 못했습니다. 탐지 누락이 있을 수 있고, 입력은 차단되지 않습니다.";
     }
 
     window.clearTimeout(hideTimer);
@@ -92,19 +113,53 @@
       if (noticeHost) {
         noticeHost.remove();
         noticeHost = null;
+        noticeTitle = null;
+        noticeDescription = null;
       }
-    }, 4000);
+      hideTimer = 0;
+    }, 5000);
   }
 
-  function handleEditorEvent(event) {
-    if (!isEditableTarget(event.target)) {
+  function inspectEditor(editor) {
+    const detector = globalThis.AIInputGatewayDetector;
+    if (!detector || typeof detector.inspect !== "function") {
+      showNotice([], false);
       return;
     }
 
-    // 페이지의 입력을 막거나 수정하지 않습니다.
-    showNotice();
+    try {
+      const categories = detector.inspect(readEditorText(editor));
+      if (!Array.isArray(categories)) {
+        showNotice([], false);
+        return;
+      }
+      showNotice(categories);
+    } catch {
+      // 오류 메시지나 입력값을 기록하지 않습니다.
+      showNotice([], false);
+    }
   }
 
+  function handleEditorEvent(event) {
+    const editor = findEditableTarget(event.target);
+    if (!editor) {
+      return;
+    }
+
+    if (event.type === "paste") {
+      // 붙여넣기 기본 동작이 끝난 뒤 입력창의 현재 내용을 검사합니다.
+      window.setTimeout(() => {
+        if (editor.isConnected) {
+          inspectEditor(editor);
+        }
+      }, 0);
+      return;
+    }
+
+    inspectEditor(editor);
+  }
+
+  // 관찰만 합니다. 입력 이벤트를 취소하거나 입력을 수정하지 않습니다.
   document.addEventListener("input", handleEditorEvent, true);
   document.addEventListener("paste", handleEditorEvent, true);
 })();
