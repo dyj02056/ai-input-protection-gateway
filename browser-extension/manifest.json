@@ -1,10 +1,26 @@
 {
   "manifest_version": 3,
   "name": "AI 입력정보 보호 게이트웨이",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "생성형 AI 입력 보호 기능을 단계별로 개발하기 위한 MVP 확장 프로그램입니다.",
   "action": {
     "default_title": "AI 입력정보 보호",
     "default_popup": "popup.html"
-  }
+  },
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }
