@@ -1,6 +1,13 @@
 (() => {
   "use strict";
 
+  // detector.js와 PDP가 공유하는 범주 ID를 사용자가 읽을 수 있는 이름으로 바꿉니다.
+  const CATEGORY_LABELS = Object.freeze({
+    government_id: "주민등록번호 형식",
+    phone_number: "전화번호 형식",
+    api_key: "API 키/토큰 형식",
+  });
+
   // 텍스트 입력 요소만 대상으로 합니다. 검사 결과에 원문이나 일치한 문자열은 넣지 않습니다.
   const EDITABLE_SELECTOR = [
     "textarea",
@@ -34,6 +41,16 @@
     }
 
     return editor.innerText || editor.textContent || "";
+  }
+
+  function formatCategoryLabels(categories) {
+    return categories
+      .map((category) => (
+        Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category)
+          ? CATEGORY_LABELS[category]
+          : "알 수 없는 탐지 범주"
+      ))
+      .join(" · ");
   }
 
   function createNotice() {
@@ -174,9 +191,10 @@
       const canMask = Boolean(
         editor && editor.isConnected && detector && typeof detector.mask === "function",
       );
+      const categoryLabels = formatCategoryLabels(categories);
       const description = canMask
-        ? `${categories.join(" · ")} 형식과 일치했습니다. 실제 정보인지 검증하지 않았습니다. 아래 버튼을 누르면 일치한 문자열만 자리표시자로 바꾸며, 입력을 자동 전송하거나 차단하지 않습니다.`
-        : `${categories.join(" · ")} 형식과 일치했습니다. 실제 정보인지 검증하지 않았으며, 입력을 마스킹하거나 차단하지 않습니다.`;
+        ? `${categoryLabels}과(와) 일치했습니다. 실제 정보인지 검증하지 않았습니다. 아래 버튼을 누르면 일치한 문자열만 자리표시자로 바꾸며, 입력을 자동 전송하거나 차단하지 않습니다.`
+        : `${categoryLabels}과(와) 일치했습니다. 실제 정보인지 검증하지 않았으며, 입력을 마스킹하거나 차단하지 않습니다.`;
 
       displayNotice(
         "형식 패턴 감지 — 전송 전 확인",
@@ -193,6 +211,25 @@
     );
   }
 
+  function writeContentEditableText(editor, text) {
+    // contenteditable 안의 일반 텍스트 노드에서는 '\n'이 화면상 공백처럼 접힐 수 있습니다.
+    // 줄마다 텍스트 노드를 만들고 줄 사이에 <br>을 넣어 줄바꿈을 표현합니다.
+    // 입력을 HTML로 해석하지 않도록 innerHTML 대신 텍스트 노드만 사용합니다.
+    const fragment = document.createDocumentFragment();
+    const lines = text.split(/\r\n|\r|\n/);
+
+    lines.forEach((line, index) => {
+      if (index > 0) {
+        fragment.append(document.createElement("br"));
+      }
+      if (line.length > 0) {
+        fragment.append(document.createTextNode(line));
+      }
+    });
+
+    editor.replaceChildren(fragment);
+  }
+
   function writeEditorText(editor, text) {
     if (editor instanceof HTMLInputElement) {
       const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
@@ -207,8 +244,7 @@
       }
       descriptor.set.call(editor, text);
     } else {
-      // HTML을 해석하지 않고 텍스트로만 대체합니다.
-      editor.textContent = text;
+      writeContentEditableText(editor, text);
     }
 
     const inputEvent = typeof InputEvent === "function"
@@ -266,7 +302,7 @@
 
     displayNotice(
       "마스킹본을 입력란에 적용했습니다",
-      "정규식과 일치한 부분만 유형별 자리표시자로 바꿨습니다. 화면의 변경 결과와 나머지 내용을 직접 확인하세요. 자동 전송·차단 기능은 없습니다.",
+      "일치한 부분만 유형별 자리표시자로 바꿨습니다. 줄바꿈은 유지하도록 처리했지만 편집기별 서식·상태가 달라질 수 있으니 결과를 확인하세요. 자동 전송·차단 기능은 없습니다.",
     );
   }
 
