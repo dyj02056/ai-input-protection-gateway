@@ -4,71 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 입력정보 보호 — 설정</title>
-<style>
-body{font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#16213a;background:#f4f7ff}
-.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:18px;margin-top:14px}
-label{display:flex;gap:10px;align-items:flex-start;margin:10px 0;line-height:1.5}
-fieldset.inline{border:1px solid #dbe4f3;border-radius:8px;padding:8px 12px;margin:12px 0}
-fieldset.inline label{display:inline-flex;margin:0 14px 0 0}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
-th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #e6ecf8;vertical-align:top;word-break:keep-all}
-th{color:#5a6b8c;font-weight:700}
-.empty{color:#5a6b8c;font-size:13px;margin:10px 0 0}
-.small{color:#5a6b8c;font-size:13px}
-button{background:#155eef;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:800;cursor:pointer}
-</style>
 </head>
 <body>
-<p><a href="popup.html">← 팝업으로</a></p>
-<h1>설정</h1>
-<p class="small">모든 설정은 브라우저 로컬에만 저장됩니다. 서버 전송·동기화 없음. 새로 설치한 확장은 감지 안내와 실행 취소만 켜져 있고, 전송 차단·승인 확인·정책 적용·감사 기록은 모두 꺼져 있습니다.</p>
-<div class="card">
-<h2>탐지 항목 (4종)</h2>
-<label><input type="checkbox" id="c-government_id" checked> 주민등록번호 형식 — MASK</label>
-<label><input type="checkbox" id="c-phone_number" checked> 전화번호 형식 — MASK</label>
-<label><input type="checkbox" id="c-email" checked> 이메일 형식 — MASK</label>
-<label><input type="checkbox" id="c-api_key" checked> API 키/토큰 형식 — BLOCK 안내 (기본값은 자동 차단 없음)</label>
-</div>
-<div class="card">
-<h2>마스킹 방식</h2>
-<label><input type="radio" name="mask" value="placeholder" checked> 자리표시자 ([전화번호] 등)</label>
-<label><input type="radio" name="mask" value="token" disabled> 세션 토큰 ([전화_1] + 응답 복원) — 다음 버전</label>
-</div>
-<div class="card">
-<h2>안내 표시와 실행 취소</h2>
-<label><input type="checkbox" id="f-persistentAlert" checked> 감지 안내 계속 표시 (8초 뒤 자동으로 사라지지 않음)</label>
-<label><input type="checkbox" id="f-autoCloseWhenClean" checked> 감지된 값이 모두 없어지면 감지 안내 자동 닫기</label>
-<label><input type="checkbox" id="f-undoButton" checked> 마스킹 결과에 "실행 취소" 버튼 표시</label>
-<fieldset class="inline">
-<legend>안내창 위치</legend>
-<label><input type="radio" name="noticePosition" value="top-right" checked> 오른쪽 위</label>
-<label><input type="radio" name="noticePosition" value="bottom-left"> 왼쪽 아래</label>
-</fieldset>
-<p class="small">알림 결과·완료 안내는 8초 뒤에 사라지고, 감지 안내는 위 설정을 따릅니다.</p>
-</div>
-<div class="card">
-<h2>감사 기록 (기본 꺼짐)</h2>
-<p class="small">원문과 일치한 문자열은 저장하지 않습니다. 판정 이름·범주 ID·시각만 최근 20건을 브라우저 로컬에 남깁니다.</p>
-<label><input type="checkbox" id="f-auditLog"> 감사 기록 남기기</label>
-<table id="audit" hidden>
-<thead><tr><th>시각</th><th>조치</th><th>범주</th></tr></thead>
-<tbody id="audit-body"></tbody>
-</table>
-<p class="empty" id="audit-empty">기록이 없습니다. 감사 기록을 켠 뒤 입력 검사를 실행하면 여기에 남습니다.</p>
-</div>
-<div class="card">
-<h2>전송 보호 (모두 기본 꺼짐)</h2>
-<p class="small">이 확장은 기본적으로 자동으로 막지 않습니다. 아래 항목은 켜야 동작하며, 끄면 즉시 원래대로 돌아갑니다.</p>
-<label><input type="checkbox" id="f-enforcePolicy"> 로컬 정책(정책 엔진) 적용 — 판정에 따라 안내 문구를 바꿉니다</label>
-<label><input type="checkbox" id="f-blockSend"> 전송 차단 — 로컬 정책이 BLOCK인 값이 실린 채 보내기를 누르면 중단합니다</label>
-<label><input type="checkbox" id="f-requireConfirm"> 승인 확인 단계 — 정책이 승인 검토 대상이면 보내기 전에 확인을 요구합니다</label>
-<p class="small">"전송 차단"과 "승인 확인 단계"는 위의 "로컬 정책 적용"을 함께 켜야 동작합니다.</p>
-</div>
-<div class="card">
-<h2>개인정보</h2>
-<p class="small">수집 항목 없음. 감사 기록은 원문 없이 범주·조치·시각만 최근 20건 로컬 표시. 아래 버튼으로 전체 삭제.</p>
-<button id="clear" type="button">로컬 기록 전체 삭제</button>
-</div>
-<script src="options.js"></script>
+<div id="root"></div>
+<script type="module" src="./src/options/main.tsx"></script>
 </body>
 </html>

@@ -4,3 +4,7 @@ dist/
 # Python 캐시
 __pycache__/
 *.pyc
+
+# Node / 확장 빌드 산출물
+node_modules/
+dist-ext/

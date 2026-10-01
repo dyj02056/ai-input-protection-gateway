@@ -4,6 +4,8 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 
 ## 파일 구성
 
+소스는 이 폴더(`browser-extension/`)에 있고, 제출·설치용 확장은 빌드 산출물 `dist-ext/`입니다. **스토어에는 `dist-ext/`만 올립니다.**
+
 | 파일 | 역할 |
 |---|---|
 | `manifest.json` | MV3 설정. 버전 1.1.0, 아이콘 4종, `options_page`, 백그라운드 서비스 워커, `storage` 권한, 대상 호스트 4개 |
@@ -11,11 +13,30 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 | `policy.js` | 브라우저 안에서 도는 로컬 정책 엔진. `policy.py`와 같은 우선순위(BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)와 같은 기본 매핑을 따릅니다 |
 | `content.js` | 입력·붙여넣기 감지 → 안내 창 → 수동 마스킹. 실행 취소, 감사 기록, 선택형 전송 차단 |
 | `background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지 |
-| `popup.html` / `popup.css` / `popup.js` | 도구 모음 팝업. 현재 탭의 지원 여부만 표시 |
-| `options.html` / `options.js` | 탐지 4종 on/off, 안내 표시·실행 취소, 감사 기록 보기/삭제, 전송 보호 스위치 |
-| `onboarding.html` | 설치 직후 열리는 60초 시작 가이드 |
+| `popup.html` · `options.html` · `onboarding.html` | 확장 페이지의 진입점. 비어 있는 `#root`에 `src/`의 React 화면을 붙입니다 |
+| `src/popup/` | 도구 모음 팝업(React). 현재 탭의 지원 여부와 버전만 표시 |
+| `src/options/` | 설정 화면(React). 탐지 4종 on/off, 안내 표시·실행 취소, 감사 기록 보기/삭제, 전송 보호 스위치 |
+| `src/onboarding/` | 설치 직후 열리는 60초 시작 가이드(React) |
+| `src/shared/` | 화면이 공유하는 상수·설정 읽기/쓰기·호스트 판별. `consistency.test.ts`가 `content.js`·`background.js`·`manifest.json`의 같은 값과 대조합니다 |
+| `src/test/` | 테스트용 `chrome.*` 스텁 |
 | `icons/logo.svg` · `icon16/32/48/128.png` | 최종 로고(A안). PNG는 `py tools/make_icons.py`로 생성 |
-| `detector.test.js` · `policy.test.js` | Node.js 내장 테스트 (개발용, 제출 ZIP에서 제외) |
+| `detector.test.js` · `policy.test.js` | Node.js 내장 테스트 (개발용, 제출 ZIP에 들어가지 않음) |
+
+`detector.js` · `policy.js` · `content.js` · `background.js`는 아직 번들하지 않고 **내용을 바꾸지 않은 채 그대로 `dist-ext/`에 복사**합니다(`vite.config.mts`의 `STATIC_FILES`). 따라서 `tools/dom_test.html`은 계속 이 폴더의 `content.js`를 직접 읽습니다.
+
+## 빌드·테스트
+
+Node.js 20.19 이상이 필요합니다. 저장소 루트에서 실행합니다.
+
+```bash
+npm install          # 처음 한 번
+npm run build        # 타입 검사 + dist-ext/ 생성
+npm run dev          # 변경 감시 빌드 (chrome://extensions → 압축해제된 확장 → dist-ext/ 로드)
+npm test             # detector·policy(node --test) + React 화면·공유 로직(vitest)
+py tools/package_store.py   # dist-ext/ → dist/ai-input-protection-gateway-<버전>.zip
+```
+
+`package_store.py`는 `dist-ext/`가 없으면 실패하고, 테스트·소스맵·TypeScript 소스가 섞여 있거나 HTML이 참조하는 파일이 없으면 ZIP을 만들지 않습니다.
 
 ## 탐지 결과 계약
 
@@ -82,7 +103,7 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 
 ## 설정 연동
 
-`options.js`가 `chrome.storage.local`에 `{ enabled: { government_id, phone_number, email, api_key } }`를 저장하고, `content.js`가 같은 키를 읽어 **끈 범주를 탐지와 마스킹에서 모두 제외**합니다.
+설정 화면(`src/options/`)이 `chrome.storage.local`에 `{ enabled: { government_id, phone_number, email, api_key } }`를 저장하고, `content.js`가 같은 키를 읽어 **끈 범주를 탐지와 마스킹에서 모두 제외**합니다.
 
 ```js
 // 옵션을 주지 않으면 기존과 동일하게 4종 전체를 사용합니다(하위 호환).
