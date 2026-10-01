@@ -1,6 +1,7 @@
 // 콘텐츠 스크립트 모듈 테스트용 환경: 엔진 전역 설치, 상태 초기화, 닫힌 shadow root 열기.
 import { detector } from "../engine/detector.ts";
 import { policy } from "../engine/policy.ts";
+import { resetApproval } from "../content/approval.ts";
 import { state } from "../content/state.ts";
 import { DEFAULT_FEATURES, type Features } from "../shared/settings.ts";
 
@@ -18,6 +19,7 @@ export function removeEngines(): void {
 }
 
 export function resetContentState(features: Partial<Features> = {}): void {
+  resetApproval();
   Object.assign(state, {
     features: { ...DEFAULT_FEATURES, ...features },
     disabledCategories: [],
@@ -35,6 +37,8 @@ export function resetContentState(features: Partial<Features> = {}): void {
     lastAuditKey: "",
     attachedFiles: [],
     serverPolicy: null,
+    serverEnabled: false,
+    approval: null,
   });
 }
 

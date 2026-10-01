@@ -40,9 +40,9 @@ class VerifyResult:
 
 
 class AuditLog:
-    def __init__(self, directory: Path, clock=time.time) -> None:
+    def __init__(self, directory: Path, clock=time.time, name: str = LOG_NAME) -> None:
         directory.mkdir(parents=True, exist_ok=True)
-        self._path = directory / LOG_NAME
+        self._path = directory / name
         self._clock = clock
         self._lock = threading.Lock()
         self._seq = 0

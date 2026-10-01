@@ -35,6 +35,7 @@ def make_settings(**overrides) -> Settings:
         api_key_digests={"acme": digest(KEY)},
         admin_key_digests={"boss": digest(ADMIN_KEY)},
         audit_dir=Path(tempfile.mkdtemp(dir=_AUDIT_TMP.name)),
+        data_dir=Path(tempfile.mkdtemp(dir=_AUDIT_TMP.name)),
     )
     values.update(overrides)
     return Settings(**values)

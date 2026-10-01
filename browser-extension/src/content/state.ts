@@ -9,7 +9,14 @@ import {
   type Features,
   type MaskStyle,
 } from "../shared/settings.ts";
-import { POLICY_SYNC_MESSAGE, readStoredPolicy, SERVER_KEYS, type ServerPolicy } from "../shared/serverPolicy.ts";
+import {
+  POLICY_SYNC_MESSAGE,
+  readServerConfig,
+  readStoredPolicy,
+  SERVER_KEYS,
+  type ServerPolicy,
+} from "../shared/serverPolicy.ts";
+import type { ApprovalEntry } from "./approval.ts";
 import type { AttachedFile } from "./files/types.ts";
 import type { Editor, UndoEntry } from "./types.ts";
 
@@ -51,6 +58,10 @@ export const state = {
   attachedFiles: [] as AttachedFile[],
   // 조직 PDP 서버에서 내려받아 적용 중인 정책. 없으면 내장 기본 정책으로 판정합니다.
   serverPolicy: null as ServerPolicy | null,
+  // 조직 서버가 연결돼 있는지(승인 요청을 보낼 수 있는지 판단하는 데 씁니다). API 키는 콘텐츠 스크립트가 읽지 않습니다.
+  serverEnabled: false,
+  // 이 탭에서 진행 중인 승인 요청. 탭 메모리에만 있고 저장하지 않으며, 새로고침하면 사라집니다.
+  approval: null as ApprovalEntry | null,
 };
 
 export function feature(name: BoolFeature): boolean {
@@ -103,6 +114,10 @@ export function applyServerPolicy(stored: unknown): void {
   state.serverPolicy = readStoredPolicy(stored);
 }
 
+export function applyServerConfig(stored: unknown): void {
+  state.serverEnabled = readServerConfig(stored).enabled;
+}
+
 // 서버 연동이 켜져 있으면 백그라운드가 정책을 확인하도록 요청합니다(너무 잦은 호출은 백그라운드가 막습니다).
 // 응답은 쓰지 않습니다. 새 정책은 저장소 변경으로 들어옵니다.
 function requestPolicySync(): void {
@@ -117,9 +132,10 @@ function requestPolicySync(): void {
 // chrome.storage를 쓸 수 없는 환경에서는 기본값으로만 동작합니다.
 export function watchSettings(onChanged: () => void): void {
   try {
-    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES, allowlist: [], maskStyle: "placeholder", [SERVER_KEYS.policy]: null }, (data) => {
+    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES, allowlist: [], maskStyle: "placeholder", [SERVER_KEYS.policy]: null, [SERVER_KEYS.config]: null }, (data) => {
       applySettings(data);
       applyServerPolicy(data[SERVER_KEYS.policy]);
+      applyServerConfig(data[SERVER_KEYS.config]);
       requestPolicySync();
     });
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -136,6 +152,9 @@ export function watchSettings(onChanged: () => void): void {
       applySettings(next);
       if (Object.prototype.hasOwnProperty.call(changes, SERVER_KEYS.policy)) {
         applyServerPolicy(changes[SERVER_KEYS.policy]?.newValue);
+      }
+      if (Object.prototype.hasOwnProperty.call(changes, SERVER_KEYS.config)) {
+        applyServerConfig(changes[SERVER_KEYS.config]?.newValue);
       }
       onChanged();
     });

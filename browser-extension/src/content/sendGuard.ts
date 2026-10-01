@@ -2,6 +2,7 @@
 // 승인 단계가 필요한 경우에만 동작하고, 5초 안에 다시 누르면 통과시킵니다.
 // "전송 차단"과 "승인 확인 단계"는 서로 독립된 스위치입니다. 둘 다 "로컬 정책 적용"이
 // 켜져 있어야 판정을 받습니다.
+import { approvalAvailable, approvalGrantsSend, approvalView } from "./approval.ts";
 import { recordAudit } from "./audit.ts";
 import { alertKey, decideLocalAction, formatCategoryLabels } from "./decision.ts";
 import { EDITABLE_SELECTOR, findEditableTarget } from "./editable.ts";
@@ -13,8 +14,9 @@ import { NOTICE_KIND, type Editor } from "./types.ts";
 const SEND_LABEL_HINTS = ["send", "submit", "보내기", "전송", "질문하기"];
 const BLOCK_CONFIRM_WINDOW_MS = 5000;
 
+// APPROVAL: 승인 검토 대상이고 조직 서버에 승인을 요청하는 설정이 켜진 경우(관리자 승인 없이는 통과시키지 않음)
 // FILE: 첨부파일 검사에서 문제가 있었고 "첨부파일 전송 차단"을 켠 경우
-type BlockReason = "" | "BLOCK" | "REQUIRE_APPROVAL" | "FILE";
+type BlockReason = "" | "BLOCK" | "REQUIRE_APPROVAL" | "APPROVAL" | "FILE";
 
 function sendBlockReason(editor: Editor | null): BlockReason {
   if (!feature("enforcePolicy")) {
@@ -34,7 +36,7 @@ function sendBlockReason(editor: Editor | null): BlockReason {
     return "BLOCK";
   }
   if (action === "REQUIRE_APPROVAL" && feature("requireConfirm")) {
-    return "REQUIRE_APPROVAL";
+    return approvalAvailable() ? "APPROVAL" : "REQUIRE_APPROVAL";
   }
   return "";
 }
@@ -85,6 +87,18 @@ function isSendControl(target: EventTarget | null): boolean {
 // 막으면 "한 번 더 누르면 전송됩니다"가 그대로 동작하지 않으므로, 같은 입력 묶음에
 // 속한 제출만 한 번 통과시킵니다. (플래그는 다음 작업 묶음에서 사라집니다.)
 function shouldBlockNow(editor: Editor | null, reason: string): boolean {
+  // 관리자 승인은 "한 번 더 누르면 통과"가 아닙니다. 수령한 승인이 있고 내용이 요청 때와 같을 때만 한 번 통과시킵니다.
+  if (reason === "APPROVAL") {
+    if (!approvalGrantsSend(editor, currentCategories(editor))) {
+      return true;
+    }
+    state.allowPendingSubmit = true;
+    window.setTimeout(() => {
+      state.allowPendingSubmit = false;
+    }, 0);
+    return false;
+  }
+
   const key = `${reason}|${editor === state.focusedEditor ? "focused" : "other"}`;
   const now = Date.now();
 
@@ -123,6 +137,20 @@ function announceBlock(editor: Editor | null, reason: BlockReason): void {
   const canMask = canMaskEditor(editor);
 
   recordAudit(decideLocalAction(categories), categories);
+
+  if (reason === "APPROVAL") {
+    displayNotice({
+      kind: NOTICE_KIND.ALERT,
+      title: "전송을 막았습니다 — 관리자 승인 필요",
+      description: `${label}과(와) 일치해 보내기를 중단했습니다. 승인을 받으면 내용을 바꾸지 말고 보내기를 다시 누르세요. 값을 지우거나 마스킹해서 보내도 됩니다.`,
+      editor: canMask ? editor : null,
+      showMask: canMask,
+      showUndo: hasUndoAvailable(),
+      alertId: alertKey(categories),
+      approval: approvalView(editor, categories),
+    });
+    return;
+  }
 
   displayNotice({
     kind: NOTICE_KIND.ALERT,

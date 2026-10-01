@@ -74,3 +74,50 @@ class AuditAck(BaseModel):
     accepted: int
     duplicates: int
     head_seq: int
+
+
+Action = Literal["ALLOW", "MASK", "REQUIRE_APPROVAL", "BLOCK"]
+Purpose = Literal["customer_response", "document_review", "code_work", "data_analysis", "other"]
+
+
+class ApprovalCreate(BaseModel):
+    """승인 요청. 입력 원문·파일 이름·내용 해시가 들어갈 자리가 없습니다. 메모는 짧은 사유만 받습니다."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    categories: list[CategoryId] = Field(min_length=1, max_length=32)
+    channel: Literal["prompt", "file"] = "prompt"
+    purpose: Purpose
+    note: str = Field(default="", max_length=100)
+
+
+class ApprovalCreated(BaseModel):
+    approval_id: str
+    status: str
+    expires_at: int
+
+
+class ApprovalState(BaseModel):
+    approval_id: str
+    status: str
+    expires_at: int
+    decision_note: str
+
+
+class ApprovalDecision(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal["approve", "reject"]
+    note: str = Field(default="", max_length=200)
+
+
+class PolicyDraft(BaseModel):
+    """콘솔에서 만드는 새 정책 버전. policy_id와 버전 번호는 서버가 정합니다."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    description: str = Field(default="", max_length=500)
+    category_actions: dict[CategoryId, Action] = Field(min_length=1, max_length=64)
+    unknown_category_action: Action
+    bulk_record_threshold: int = Field(ge=1, le=1_000_000)
+    activate: bool = False

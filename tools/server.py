@@ -5,7 +5,7 @@
   py tools/server.py test             서버 테스트 실행
   py tools/server.py newkey [--name]  새 API 키를 만들어 한 번만 보여주고, 환경 변수에 넣을 해시 줄도 출력
   py tools/server.py run              서버 실행 (기본 127.0.0.1:8787)
-  py tools/server.py e2e              서버를 임시로 띄워 확장 프로그램의 정책 동기화 코드를 실제로 연결해 시험
+  py tools/server.py e2e              서버를 임시로 띄워 확장 프로그램의 정책 동기화·감사 전송·승인 코드를 실제로 연결해 시험
 
 API 키는 코드·설정 파일에 두지 않습니다. `run`은 gateway-core/server/.env(커밋되지 않음)가 있으면 읽고,
 없으면 현재 환경 변수를 씁니다. 이 저장소는 공개입니다.
@@ -114,7 +114,14 @@ def cmd_e2e(_: argparse.Namespace) -> int:
     key = secrets.token_urlsafe(32)
     admin_key = secrets.token_urlsafe(32)
     audit_dir = tempfile.mkdtemp(prefix="pdp-e2e-audit-")
-    env = {**os.environ, "PDP_API_KEYS": f"e2e={key}", "PDP_ADMIN_KEYS": f"e2eadmin={admin_key}", "PDP_AUDIT_DIR": audit_dir}
+    data_dir = tempfile.mkdtemp(prefix="pdp-e2e-data-")
+    env = {
+        **os.environ,
+        "PDP_API_KEYS": f"e2e={key}",
+        "PDP_ADMIN_KEYS": f"e2eadmin={admin_key}",
+        "PDP_AUDIT_DIR": audit_dir,
+        "PDP_DATA_DIR": data_dir,
+    }
     server = subprocess.Popen(
         [str(python), "-m", "uvicorn", "server.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
         cwd=GATEWAY_CORE,
@@ -133,7 +140,14 @@ def cmd_e2e(_: argparse.Namespace) -> int:
         npx = "npx.cmd" if os.name == "nt" else "npx"
         test_env = {**os.environ, "PDP_E2E_URL": f"http://127.0.0.1:{port}", "PDP_E2E_KEY": key, "PDP_E2E_ADMIN_KEY": admin_key}
         return subprocess.run(
-            [npx, "vitest", "run", "browser-extension/src/background/policySync.e2e.test.ts", "browser-extension/src/background/auditUpload.e2e.test.ts"],
+            [
+                npx,
+                "vitest",
+                "run",
+                "browser-extension/src/background/policySync.e2e.test.ts",
+                "browser-extension/src/background/auditUpload.e2e.test.ts",
+                "browser-extension/src/background/approvals.e2e.test.ts",
+            ],
             cwd=REPO_ROOT,
             env=test_env,
             check=False,
@@ -145,6 +159,7 @@ def cmd_e2e(_: argparse.Namespace) -> int:
         except subprocess.TimeoutExpired:
             server.kill()
         shutil.rmtree(audit_dir, ignore_errors=True)
+        shutil.rmtree(data_dir, ignore_errors=True)
 
 
 def main() -> int:

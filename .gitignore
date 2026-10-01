@@ -69,3 +69,6 @@ local.settings.json
 
 # PDP 서버가 쌓는 감사 로그(운영 데이터)
 gateway-core/server/audit_data/
+
+# PDP 서버가 콘솔에서 만든 정책 버전·승인 요청·관리 기록(운영 데이터)
+gateway-core/server/data/

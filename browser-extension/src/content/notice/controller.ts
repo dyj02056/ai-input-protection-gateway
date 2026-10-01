@@ -2,7 +2,7 @@
 import { h, render } from "preact";
 import { state } from "../state.ts";
 import type { NoticeKind } from "../types.ts";
-import { Notice } from "./Notice.tsx";
+import { Notice, type NoticeApproval } from "./Notice.tsx";
 
 // 안내창을 둘 수 있는 위치입니다. 적용은 CSS의 data-position 규칙이 담당합니다.
 const NOTICE_POSITIONS = new Set(["top-right", "bottom-left"]);
@@ -13,12 +13,14 @@ export interface NoticeContent {
   description: string;
   showMask: boolean;
   showUndo: boolean;
+  approval?: NoticeApproval | null;
 }
 
 export interface NoticeHandlers {
   onClose: () => void;
   onMask: () => void;
   onUndo: () => void;
+  onApprovalRequest?: (purpose: string, note: string) => void;
   // 안내창이 사라질 때마다(닫기·시간 경과·직접 숨김) 불립니다.
   onHidden: () => void;
 }
@@ -84,9 +86,11 @@ export function createNoticeController(handlers: NoticeHandlers): NoticeControll
         description: content.description,
         showMask: content.showMask,
         showUndo: content.showUndo,
+        approval: content.approval ?? null,
         onClose: handlers.onClose,
         onMask: handlers.onMask,
         onUndo: handlers.onUndo,
+        onApprovalRequest: handlers.onApprovalRequest,
       }),
       shadow as unknown as Element,
     );

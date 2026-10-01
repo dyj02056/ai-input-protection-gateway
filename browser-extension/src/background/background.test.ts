@@ -172,5 +172,14 @@ describe.each(variants)("background (%s)", (_name, run) => {
       const response = (await ask({ type: "gateway:policy-probe", url: 3, key: null }, {})) as { state: string };
       expect(response.state).toBe("error");
     });
+
+    it("승인 요청은 탭(콘텐츠 스크립트)에서 온 것만 받고, 동의·연결이 없으면 실패로 답한다", async () => {
+      const message = { type: "gateway:approval", op: "create", categories: ["email"], purpose: "other", note: "" };
+      const fromPage = (await ask(message, fromTab(3))) as { ok: boolean };
+      expect(fromPage.ok).toBe(false);
+      // 확장 화면(탭이 아닌 곳)에서 온 승인 요청은 받지 않는다
+      expect(await ask(message, {})).toBe("no-response");
+      expect(await ask(message, undefined)).toBe("no-response");
+    });
   });
 });

@@ -1,6 +1,8 @@
 // 입력 검사 → 안내 → (사용자가 누르면) 마스킹·실행 취소로 이어지는 흐름입니다.
 // 입력은 관찰만 합니다. 사용자가 알림 버튼을 누르기 전에는 내용을 수정하지 않습니다.
+import { isApprovalPurpose } from "../shared/approval.ts";
 import { DEFAULT_FEATURES } from "../shared/settings.ts";
+import { approvalAvailable, approvalView, onApprovalChange, requestApproval, type ApprovalView } from "./approval.ts";
 import { recordAudit, reportAction } from "./audit.ts";
 import { alertKey, decideLocalAction, formatCategoryLabels, policyName } from "./decision.ts";
 import { findEditableTarget, isPlainEditor, readEditorText } from "./editable.ts";
@@ -24,6 +26,8 @@ interface DisplayOptions {
   showMask?: boolean;
   showUndo?: boolean;
   alertId?: string;
+  // 승인 요청 영역(상태 문구와 요청 양식). 있으면 안내창이 자동으로 사라지지 않습니다.
+  approval?: ApprovalView | null;
 }
 
 const notice = createNoticeController({
@@ -36,6 +40,7 @@ const notice = createNoticeController({
   },
   onMask: () => applyMaskToActiveEditor(),
   onUndo: () => applyUndo(),
+  onApprovalRequest: (purpose, note) => requestFromNotice(purpose, note),
   onHidden: () => {
     state.activeEditor = null;
   },
@@ -62,8 +67,9 @@ export function displayNotice({
   showMask = false,
   showUndo = false,
   alertId = "",
+  approval = null,
 }: DisplayOptions): void {
-  notice.show({ kind, title, description, showMask, showUndo }, noticeAutoHideMs(kind));
+  notice.show({ kind, title, description, showMask, showUndo, approval }, approval ? 0 : noticeAutoHideMs(kind));
 
   if (kind === NOTICE_KIND.ALERT) {
     state.activeAlertKey = alertId;
@@ -133,6 +139,9 @@ function actionTextFor(action: string, canMask: boolean): string {
       : `${policyName()} 판정이 BLOCK에 해당합니다. 이 확장은 전송을 막지 않으니 보내기 전에 직접 지우거나 마스킹하세요.`;
   }
   if (action === "REQUIRE_APPROVAL") {
+    if (approvalAvailable()) {
+      return `${policyName()} 판정이 승인 검토 대상입니다. 관리자의 승인을 받아야 전송되며, 아래에서 승인을 요청할 수 있습니다.`;
+    }
     return enforcing && feature("requireConfirm")
       ? `${policyName()} 판정이 승인 검토 대상이고 승인 단계가 켜져 있어, 확인을 거쳐야 전송됩니다.`
       : `${policyName()} 판정이 승인 검토 대상입니다. 이 확장은 승인 요청을 보내지 않으니 필요하면 별도 절차를 따르세요.`;
@@ -180,6 +189,7 @@ export function renderNotice(
       showMask: canMask,
       showUndo: hasUndoAvailable(),
       alertId: key,
+      approval: actionHint === "REQUIRE_APPROVAL" ? approvalView(editor ?? state.focusedEditor, categories) : null,
     });
     return;
   }
@@ -206,6 +216,25 @@ export function renderNotice(
     showUndo: hasUndoAvailable(),
   });
 }
+
+// 안내창의 "승인 요청 보내기" 버튼: 마지막으로 입력한 입력창의 감지 범주와 사용자가 고른 목적·사유로 요청합니다.
+function requestFromNotice(purpose: string, note: string): void {
+  if (!isApprovalPurpose(purpose)) return;
+  const editor = state.focusedEditor && state.focusedEditor.isConnected ? state.focusedEditor : state.activeEditor;
+  void requestApproval(editor, currentCategories(editor), purpose, note);
+}
+
+// 승인 상태가 바뀌면(승인·거절·만료·오류) 같은 감지 안내를 새 상태로 다시 그립니다. 사용자가 닫았더라도 결과는 알려 줍니다.
+function refreshApprovalNotice(): void {
+  const editor = state.focusedEditor;
+  if (!editor || !editor.isConnected) return;
+  const categories = currentCategories(editor);
+  if (categories.length === 0 || decideLocalAction(categories) !== "REQUIRE_APPROVAL") return;
+  state.dismissedAlertKey = "";
+  renderNotice(categories, true, editor);
+}
+
+onApprovalChange(refreshApprovalNotice);
 
 // 세션 토큰 마스킹일 때 복원이 어떻게 동작하는지 알려 줍니다. 전송되지 않고 이 탭에서만 보인다는 점을 분명히 합니다.
 function restoreSentence(): string {

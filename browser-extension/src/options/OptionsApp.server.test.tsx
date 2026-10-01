@@ -212,6 +212,37 @@ describe("연결된 상태", () => {
   });
 });
 
+describe("관리자 승인 요청 동의", () => {
+  const featuresOf = () => stub.store.features as Record<string, unknown>;
+
+  it("기본 꺼짐이고, 무엇을 보내고 무엇을 보내지 않는지 설명한다", async () => {
+    await renderOptions();
+    expect((document.getElementById("f-requestApproval") as HTMLInputElement).checked).toBe(false);
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("감지된 항목 종류(범주 ID)·업무 목적(선택지)·직접 쓴 사유(100자 이내)");
+    expect(body).toContain("입력한 글, 파일 이름·내용, 사이트 주소는 보내지 않습니다");
+  });
+
+  it("켜면 features에 저장되고, 감사 전송 동의와는 독립이다", async () => {
+    await renderOptions();
+    fireEvent.click(document.getElementById("f-requestApproval")!);
+    await waitFor(() => expect(featuresOf()?.requestApproval).toBe(true));
+    expect(featuresOf()?.uploadAudit).toBe(false);
+  });
+
+  it("서버 연결을 끊으면 승인 요청 동의도 꺼진다(다시 연결해도 저절로 켜지지 않는다)", async () => {
+    await renderOptions({
+      [SERVER_KEYS.config]: { enabled: true, url: ORIGIN },
+      [SERVER_KEYS.apiKey]: FAKE_KEY,
+      features: { requestApproval: true },
+    });
+    await waitFor(() => expect(button("server-disconnect")).not.toBeNull());
+    expect((document.getElementById("f-requestApproval") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(button("server-disconnect")!);
+    await waitFor(() => expect(featuresOf().requestApproval).toBe(false));
+  });
+});
+
 describe("감사 이벤트 전송 동의", () => {
   const featuresOf = () => stub.store.features as Record<string, unknown>;
 

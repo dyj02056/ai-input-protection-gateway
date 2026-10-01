@@ -112,8 +112,62 @@ export const NOTICE_CSS = `
         color: #22304a;
       }
 
+      .approval {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-self: stretch;
+        padding-top: 8px;
+        border-top: 1px solid #e2e9f5;
+      }
+
+      .approval-text {
+        font-weight: 700;
+      }
+
+      .approval-form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .approval-purpose,
+      .approval-note {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #c7d2e1;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font: inherit;
+        color: #172033;
+        background: #ffffff;
+      }
+
+      .approval-button {
+        border: 0;
+        border-radius: 6px;
+        padding: 7px 10px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        background: #b77900;
+        color: #ffffff;
+      }
+
+      .approval-button:hover {
+        background: #9a6600;
+      }
+
+      .approval-hint {
+        color: #5a6b8c;
+        font-size: 12px;
+      }
+
       .mask-button:focus-visible,
       .undo-button:focus-visible,
+      .approval-button:focus-visible,
+      .approval-purpose:focus-visible,
+      .approval-note:focus-visible,
       .close-button:focus-visible {
         outline: 3px solid #94b7ff;
         outline-offset: 2px;

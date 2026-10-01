@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>PDP 관리 콘솔</title>
+  <link rel="stylesheet" href="/console/console.css">
+</head>
+<body>
+  <header>
+    <h1>PDP 관리 콘솔</h1>
+    <button id="logout" type="button" hidden>로그아웃</button>
+  </header>
+
+  <main>
+    <!-- 로그인: 관리자 키는 이 화면의 메모리에만 있고 저장하지 않습니다. 새로고침하면 다시 입력합니다. -->
+    <section id="login" class="card">
+      <h2>관리자 키로 연결</h2>
+      <p class="small">
+        <code>py tools/server.py newkey --admin</code>으로 만든 관리자 키를 입력하세요. 키는 이 페이지를 연 서버로만 보내지며,
+        브라우저에 저장하지 않습니다(새로고침하면 다시 입력). 일반 API 키로는 들어올 수 없습니다.
+      </p>
+      <form id="login-form" autocomplete="off">
+        <label class="field">관리자 키
+          <input id="admin-key" type="password" autocomplete="off" spellcheck="false" required>
+        </label>
+        <button type="submit">연결</button>
+      </form>
+      <p id="login-message" class="small error" role="status"></p>
+    </section>
+
+    <div id="app" hidden>
+      <nav id="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="approvals">승인함 <span id="pending-count" class="badge" hidden></span></button>
+        <button type="button" role="tab" data-tab="policy">정책</button>
+        <button type="button" role="tab" data-tab="audit">감사 로그</button>
+        <button type="button" role="tab" data-tab="events">관리 기록</button>
+      </nav>
+      <p id="message" class="small" role="status"></p>
+      <section id="panel" class="card"></section>
+    </div>
+  </main>
+
+  <script src="/console/console.js"></script>
+</body>
+</html>

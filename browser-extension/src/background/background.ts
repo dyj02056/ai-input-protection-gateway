@@ -1,7 +1,10 @@
 // 스토어 등재용 백그라운드: 설치 시 시작 가이드 1회, 탭별 판정 배지.
-// 네트워크 요청 없음. 원문·범주 ID를 저장하지 않고 판정 이름만 배지 색으로 표시합니다.
+// 서버를 연결하지 않으면 네트워크 요청이 없습니다(연결한 경우의 요청은 policySync·auditUpload·approvals가 맡습니다).
+// 원문·범주 ID를 저장하지 않고 판정 이름만 배지 색으로 표시합니다.
+import { APPROVAL_MESSAGE } from "../shared/approval.ts";
 import { isSupportedUrl } from "../shared/hosts.ts";
 import { AUDIT_UPLOAD_MESSAGE, POLICY_PROBE_MESSAGE, POLICY_SYNC_MESSAGE } from "../shared/serverPolicy.ts";
+import { handleApproval } from "./approvals.ts";
 import { chromeAuditDeps, enqueueAudit, flushAudit } from "./auditUpload.ts";
 import { chromeDeps, probeServer, syncPolicy } from "./policySync.ts";
 
@@ -53,6 +56,15 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     if (!sender || !sender.tab) return;
     enqueueAudit(chromeAuditDeps(chromeDeps()), (message as { event?: unknown }).event).catch(() => undefined);
     return;
+  }
+  // 승인 요청: 탭(콘텐츠 스크립트)에서 온 것만 받습니다. 요청·상태 확인·승인 사용을 서버에 전달하고 결과만 돌려줍니다.
+  if (type === APPROVAL_MESSAGE) {
+    if (!sender || !sender.tab) return;
+    handleApproval(chromeDeps(), message).then(
+      (reply) => respond(reply),
+      () => respond({ ok: false, error: "승인 요청을 처리하지 못했습니다." }),
+    );
+    return true;
   }
   if (type === POLICY_PROBE_MESSAGE) {
     if (sender && sender.tab) return; // 탭(웹 페이지가 있는 곳)에서 온 요청은 받지 않습니다

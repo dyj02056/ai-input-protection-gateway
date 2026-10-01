@@ -11,6 +11,9 @@ API 키는 코드·설정 파일·저장소에 두지 않고 환경 변수로만
   PDP_ADMIN_KEYS_SHA256 / PDP_ADMIN_KEYS  감사 로그를 읽고 검증할 수 있는 관리자 키(위 API 키와 같은 형식).
                         일반 API 키는 로그를 쓰기만 하고 읽지 못합니다.
   PDP_AUDIT_DIR         감사 로그(audit.jsonl) 폴더. 기본: 이 폴더의 audit_data/ (커밋되지 않음)
+  PDP_DATA_DIR          콘솔이 만든 정책 버전, 승인 요청, 관리 기록을 두는 폴더. 기본: 이 폴더의 data/ (커밋되지 않음)
+  PDP_APPROVAL_TTL_MINUTES    승인 요청이 처리되지 않고 만료되기까지의 시간. 기본 240(4시간)
+  PDP_APPROVAL_VALID_MINUTES  승인된 뒤 한 번 쓸 수 있는 기간. 기본 30
 """
 
 from __future__ import annotations
@@ -29,6 +32,7 @@ _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 DEFAULT_POLICY_DIR = Path(__file__).resolve().parent / "policy_files"
 DEFAULT_AUDIT_DIR = Path(__file__).resolve().parent / "audit_data"
+DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
 class ConfigError(ValueError):
@@ -80,6 +84,10 @@ class Settings:
     # 감사 로그를 읽을 수 있는 관리자 키(이름 -> SHA-256). 일반 키와 별개입니다.
     admin_key_digests: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
     audit_dir: Path = DEFAULT_AUDIT_DIR
+    # 콘솔에서 바꾸는 상태(정책 버전·승인 요청·관리 기록)
+    data_dir: Path = DEFAULT_DATA_DIR
+    approval_pending_seconds: int = 240 * 60
+    approval_valid_seconds: int = 30 * 60
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
@@ -119,4 +127,7 @@ class Settings:
             max_body_bytes=integer("PDP_MAX_BODY_BYTES", 4096, 256, 65536) or 4096,
             admin_key_digests=MappingProxyType(admin_digests),
             audit_dir=Path(env["PDP_AUDIT_DIR"]) if env.get("PDP_AUDIT_DIR") else DEFAULT_AUDIT_DIR,
+            data_dir=Path(env["PDP_DATA_DIR"]) if env.get("PDP_DATA_DIR") else DEFAULT_DATA_DIR,
+            approval_pending_seconds=(integer("PDP_APPROVAL_TTL_MINUTES", 240, 1, 10_080) or 240) * 60,
+            approval_valid_seconds=(integer("PDP_APPROVAL_VALID_MINUTES", 30, 1, 1_440) or 30) * 60,
         )

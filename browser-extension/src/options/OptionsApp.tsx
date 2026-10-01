@@ -276,7 +276,7 @@ export function OptionsApp() {
         </p>
       </div>
 
-      <ServerCard onDisconnected={() => update({ ...settings, features: { ...settings.features, uploadAudit: false } })} />
+      <ServerCard onDisconnected={() => update({ ...settings, features: { ...settings.features, uploadAudit: false, requestApproval: false } })} />
 
       <div className="card">
         <h2>감사 이벤트를 조직 서버로 전송 (기본 꺼짐)</h2>
@@ -288,6 +288,21 @@ export function OptionsApp() {
         </p>
         <Toggle id="f-uploadAudit" checked={feature("uploadAudit")} onChange={setFeature("uploadAudit")}>
           감지 이벤트(범주 ID·조치·시각)를 조직 서버로 전송
+        </Toggle>
+      </div>
+
+      <div className="card">
+        <h2>관리자 승인 요청 (기본 꺼짐)</h2>
+        <p className="small">
+          위 &quot;조직 정책 서버&quot;를 연결하고, 위쪽의 <b>로컬 정책 적용</b>과 <b>승인 확인 단계</b>를 켰을 때만 동작하는 <b>별도 동의
+          스위치</b>입니다. 켜면 승인 검토 판정일 때 전송을 멈추고, 안내창에서 업무 목적을 골라 <b>관리자 승인을 요청</b>할 수 있습니다.
+          서버로 가는 것은 <b>감지된 항목 종류(범주 ID)·업무 목적(선택지)·직접 쓴 사유(100자 이내)</b>뿐이며, 사유에는 이름·전화번호 같은
+          개인정보를 쓰지 마세요. <b>입력한 글, 파일 이름·내용, 사이트 주소는 보내지 않습니다.</b> 승인은 한 번만 쓸 수 있고, 요청한 뒤 입력
+          내용이 바뀌면 이 브라우저가 스스로 무효로 봅니다(내용 비교는 이 탭 안에서만 하며 서버로 보내지 않습니다). 서버에 연결하지 못하면
+          승인 검토 판정의 전송은 계속 멈추므로, 급하면 이 스위치를 끄세요(그러면 &quot;한 번 더 누르면 전송&quot; 방식으로 돌아갑니다).
+        </p>
+        <Toggle id="f-requestApproval" checked={feature("requestApproval")} onChange={setFeature("requestApproval")}>
+          승인 검토 판정 시 조직 서버로 승인 요청 (범주 ID·목적·사유 전송)
         </Toggle>
       </div>
 

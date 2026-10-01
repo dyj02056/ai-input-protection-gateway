@@ -16,6 +16,7 @@ export const BOOL_FEATURES = [
   "inspectFiles",
   "blockFileSend",
   "uploadAudit",
+  "requestApproval",
 ] as const;
 export type BoolFeature = (typeof BOOL_FEATURES)[number];
 
@@ -44,6 +45,10 @@ export interface Features {
   // 조직 정책 서버에 연결했을 때, 감사 이벤트(시각·조치·범주 ID·정책 버전)를 서버로 보냅니다. 입력 원문·파일 이름은 보내지 않습니다.
   // 별도 동의 스위치이며 기본 꺼짐입니다(서버 연결만으로는 켜지지 않습니다).
   uploadAudit: boolean;
+  // 승인 검토(REQUIRE_APPROVAL) 판정일 때 조직 서버로 승인을 요청합니다. 별도 동의 스위치이며 기본 꺼짐입니다.
+  // 서버로 가는 것: 감지된 범주 ID·업무 목적(선택지)·사용자가 쓴 짧은 사유. 입력 원문·파일 이름·사이트 주소는 보내지 않습니다.
+  // "로컬 정책 적용"과 "승인 확인 단계"가 함께 켜져 있고 서버가 연결돼 있어야 동작합니다.
+  requestApproval: boolean;
 }
 
 export type Enabled = Record<CategoryId, boolean>;
@@ -77,6 +82,7 @@ export const DEFAULT_FEATURES: Readonly<Features> = Object.freeze({
   inspectFiles: true,
   blockFileSend: false,
   uploadAudit: false,
+  requestApproval: false,
 });
 
 // 모든 범주가 기본으로 켜져 있습니다. 새 범주가 생긴 버전으로 올라온 기존 사용자도 켜진 채로 시작합니다.
