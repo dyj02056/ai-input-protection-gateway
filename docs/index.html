@@ -46,33 +46,34 @@ code{background:#eef3ff;border:1px solid var(--line);border-radius:6px;padding:2
 <a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 새 주소 열기</b><br>위와 같은 방식으로 확인</span></a>
 <a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span class="logo c">C</span><span><b>Claude 열기</b><br>가짜 문구로 안내 표시만 확인</span></a>
 <a class="ext" href="https://gemini.google.com/" target="_blank" rel="noopener"><span class="logo m">G</span><span><b>Gemini 참고용으로 열기</b><br>MVP 지원은 ChatGPT·Claude 중심</span></a>
-<div class="warn" style="margin-top:12px">데모·확장은 입력값을 대신 보내지 않으며 자동 전송·차단을 하지 않습니다.</div>
+<div class="warn" style="margin-top:12px">데모는 입력값을 대신 보내지 않으며 자동 전송·차단을 하지 않습니다. 확장은 기본값으로 안내만 하고, 전송 차단은 사용자가 직접 켜야 동작합니다.</div>
 </section>
 <aside class="card">
 <h2>확인 방법 (4단계)</h2>
 <ol>
 <li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
-<li><code>node --test browser-extension/detector.test.js</code> → pass 14</li>
-<li><code>py tools/dom_test.py</code> → 16/16 (헤드리스 Chrome)</li>
+<li><code>node --test browser-extension/detector.test.js browser-extension/policy.test.js</code> → pass 24</li>
+<li><code>py tools/dom_test.py</code> → 44/44 (헤드리스 Chrome)</li>
+<li><code>py tools/policy_parity.py</code> → 12/12 (policy.py ↔ policy.js 대조)</li>
 <li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>
 </ol>
 <p>최종 항목 전문은 <a href="plan.html">계획서</a>와 <code>submission_note.md</code> 누적 기록을 보세요.</p>
 </aside>
 </div>
 <section class="card">
-<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.0)</h2>
+<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.1)</h2>
 <p>ChatGPT · Claude · Gemini 입력창에 검사 안내와 마스킹 버튼을 추가합니다. 검사는 브라우저 안에서만 실행되고 네트워크 요청이 없습니다.</p>
 <div class="grid" style="grid-template-columns:1fr;gap:10px">
 <ul>
-<li><b>구성</b> <code>manifest.json</code>(MV3) · <code>detector.js</code> 탐지 · <code>content.js</code> 안내·마스킹 · <code>background.js</code> 탭 배지 · <code>popup</code> / <code>options</code> / <code>onboarding</code></li>
-<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.0.0.zip</code> — <code>py tools/package_store.py</code>로 생성 (15개 파일, 약 31KB)</li>
+<li><b>구성</b> <code>manifest.json</code>(MV3) · <code>detector.js</code> 탐지 · <code>policy.js</code> 로컬 정책 · <code>content.js</code> 안내·마스킹·실행 취소·전송 차단 · <code>background.js</code> 탭 배지 · <code>popup</code> / <code>options</code> / <code>onboarding</code></li>
+<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.1.0.zip</code> — <code>py tools/package_store.py</code>로 생성 (16개 파일, 약 40KB)</li>
 <li><b>아이콘</b> A안 확정 — <a href="logo-preview.html">아이콘 세트 미리보기</a> · <code>py tools/make_icons.py</code>로 PNG 4종 재생성</li>
 <li><b>설치</b> <code>chrome://extensions</code> → 개발자 모드 → 압축해제된 확장 프로그램 로드 → <code>browser-extension/</code></li>
 <li><b>권한</b> <code>storage</code> + 대상 4개 주소 호스트 권한만 사용 (방문 기록 권한 없음, 원격 코드 없음)</li>
 </ul>
 </div>
 <p><a href="privacy.html">개인정보 처리방침</a> · <a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/docs/store-listing.md">스토어 등재 문안</a> · <a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/browser-extension/README.md">확장 README</a></p>
-<div class="warn">자동 전송 차단은 하지 않습니다. 마스킹은 되돌릴 수 없는 자리표시자 대체이며, 가짜 문구로만 확인하세요.</div>
+<div class="warn">기본값으로는 자동 전송 차단을 하지 않습니다(전송 차단은 설정에서 직접 켜야 동작합니다). 마스킹은 자리표시자 대체이며 직전 한 번만 실행 취소로 되돌릴 수 있으니, 가짜 문구로만 확인하세요.</div>
 </section>
 </div>
 </body>

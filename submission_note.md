@@ -268,3 +268,40 @@
 
 
 
+## 누적 기록 2026-10-01 — 확장 v1.1.0 (지속 감지 안내 + 선택형 강제 기능)
+
+### 요청
+- (1) 감지 안내가 8초 뒤 사라지지 않게 계속 떠 있게 해 달라.
+- (2) 이전에 약속만 하고 없던 기능(실행 취소, 감사 기록, 브라우저 내 정책 엔진, 전송 차단)을 켜고 끌 수 있게 해 달라.
+
+### 무엇을 만들었나
+- `browser-extension/policy.js` 신규. `gateway-core/pdp/policy.py`와 같은 우선순위·기본 매핑·미등록 범주 처리를 브라우저 안에서 계산한다. 범주 ID 배열만 받고 원문 문자열은 `TypeError`로 거절한다. `tools/policy_cases.json`(12 케이스)을 양쪽이 공유하고 `tools/policy_parity.py`가 대조한다.
+- `content.js`: `DEFAULT_FEATURES`와 `coerceFeatures()` 도입, `storage.onChanged`로 `enabled`/`features` 반영, `applySettings()`로 한 곳에 모음.
+- 안내 창을 `alert`/`result`/`info` 세 종류로 나눴다. `alert`만 지속 표시되고(기본), `result`·`info`는 8초. `×` 닫기 버튼과 `실행 취소` 버튼 추가. 안내 위치는 `data-position` CSS로 전환.
+- 실행 취소: 마스킹 시 이전 상태를 최소 정보로 저장(`plain` / `nodes`)해 한 번 되돌린다.
+- 감사 기록: 판정 이름·범주 ID·시각만 `chrome.storage.local.history` 최근 20건. 동일 판정 반복은 1건으로 접는다. 원문·위치 미저장.
+- 전송 차단: Enter / `submit` / 전송 버튼 클릭 캡처 리스너. 첫 시도만 막고 5초 내 재시도는 허용.
+- 설정 화면: 기능 스위치 7개 + 안내 위치 라디오 + 감사 기록 표(최근 20건, 전체 삭제). 기존 1.0.0 사용자에게 `features`가 없으므로 기본값으로 채운다.
+
+### 기본값 원칙
+- **표시 방식**(지속 안내·자동 닫기·실행 취소·위치)만 켜짐.
+- **강제 기능**(정책 적용·전송 차단·승인 확인·감사 기록)은 전부 꺼짐. "기본으로는 자동으로 막지 않는다"는 원칙 유지.
+
+### 구현 중 잡은 실제 결함 2건
+1. **클릭 1회가 click과 submit 두 경로를 탄다** → 재시도 허용 직후 `submit`이 다시 막혀 "5초 내 재시도 허용"이 성립하지 않았다. 허용한 입력 묶음의 제출만 통과시키는 `allowPendingSubmit`을 추가했다. 하네스를 추가한 뒤 처음 드러난 문제다.
+2. **`requireConfirm`이 `blockSend`에 종속** → 승인 확인만 켜도 동작하지 않았다. 두 스위치를 독립 게이트로 분리했다.
+
+### 검증
+- `node --test browser-extension/detector.test.js browser-extension/policy.test.js` → **24/24**.
+- `py tools/dom_test.py` → **44/44** (기존 16 + 신규 28). 가상 시간으로 20초 지속과 8초 자동 닫힘을 확인.
+- `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → **9/9**.
+- `py tools/policy_parity.py` → **12/12**.
+- `py tools/package_store.py` → `dist/ai-input-protection-gateway-1.1.0.zip`, 16개 파일, 원본 88,207B → 41,122B, `testzip()` None.
+- `node --check`로 `content.js`·`options.js`·`policy.js` 문법 확인.
+
+### 남은 위험·다음 단계
+- `policy.js`는 조직 PDP 서버 정책과 같지 않다. 실제 API 연동은 아직 없다.
+- 전송 차단은 확실한 차단이 아니다(첫 시도만 막고 5초 내 재시도로 통과).
+- 세션 토큰 마스킹은 다음 버전. 되돌리기는 직전 1회 실행 취소뿐.
+- `contenteditable` DOM 직접 수정 위험은 그대로다.
+- 스토어 스크린샷 캡처 후 비공개 테스트 → 공개 전환.

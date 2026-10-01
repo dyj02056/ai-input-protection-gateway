@@ -1,9 +1,14 @@
-"""content.js의 contenteditable 마스킹 동작을 실제 Chromium에서 검증합니다.
+"""content.js의 contenteditable 마스킹 동작과 1.1.0 기능을 실제 Chromium에서 검증합니다.
 
 - `tools/dom_test.html`을 헤드리스 Chrome으로 열고, 알림창의 마스킹 버튼까지
   실제로 눌러 결과 DOM 구조와 시각적 줄 수를 확인합니다.
 - ChatGPT·Claude·Gemini처럼 줄마다 `<p>`를 쓰는 편집기에서 마스킹 후 빈 줄이
   생기던 문제(innerText가 `<p>` 경계를 '\\n\\n'로 세는 문제)를 회귀 테스트로 막습니다.
+- 이어서 1.1.0에서 추가한 기능을 확인합니다. 감지 안내가 20초 뒤에도 남아 있는지,
+  닫기·실행 취소 버튼, 기본값에서 전송을 막지 않는지, 전송 차단·승인 확인을 켜면
+  막는지, 감사 기록에 원문이 남지 않는지, 안내 위치 설정을 확인합니다.
+- 시간 관련 검사는 `--virtual-time-budget`의 가상 시간으로 동작하므로
+  테스트 자체는 몇 초 안에 끝납니다.
 
 사용법:
     py tools/dom_test.py
@@ -57,7 +62,9 @@ def run_harness(chrome: str, timeout: int) -> str:
             "--no-sandbox",
             "--no-first-run",
             "--allow-file-access-from-files",
-            "--virtual-time-budget=8000",
+            # 하네스가 20초 유지 + 8초 자동 닫힘 + 1초 여유를 가상 시간으로 확인합니다.
+            # 가상 시간이므로 실제 대기 시간은 거의 없습니다.
+            "--virtual-time-budget=90000",
             "--window-size=1280,800",
             f"--user-data-dir={profile}",
             "--dump-dom",

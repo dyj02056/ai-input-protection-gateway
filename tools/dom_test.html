@@ -12,13 +12,68 @@
 </head>
 <body>
 <div id="editor" contenteditable="true"></div>
+<form id="form" action="#">
+  <input id="apikey" type="text" aria-label="메시지 입력">
+  <button id="send" type="submit">보내기</button>
+</form>
 <pre id="out"></pre>
 <script>
   // 확장 API 스텁. content.js가 저장소와 서비스 워커를 쓰기 때문입니다.
+  // 저장소와 onChanged를 실제로 구현해야 content.js의 기능 켜기/끄기가 그대로 재현됩니다.
+  const store = {
+    enabled: null,
+    features: {
+      persistentAlert: true,
+      autoCloseWhenClean: true,
+      resultAutoHideMs: 8000,
+      noticePosition: "top-right",
+      undoButton: true,
+      auditLog: false,
+      enforcePolicy: false,
+      blockSend: false,
+      requireConfirm: false,
+    },
+    history: [],
+  };
+  const changeListeners = [];
+
   window.chrome = {
     storage: {
-      local: { get(defaults, callback) { if (callback) callback({ enabled: null }); } },
-      onChanged: { addListener() {} },
+      local: {
+        get(defaults, callback) {
+          const keys = defaults && typeof defaults === "object" ? defaults : {};
+          const result = {};
+          for (const [key, fallback] of Object.entries(keys)) {
+            result[key] = Object.prototype.hasOwnProperty.call(store, key)
+              ? store[key]
+              : fallback;
+          }
+          if (callback) callback(result);
+        },
+        set(values, callback) {
+          const changes = {};
+          for (const [key, value] of Object.entries(values || {})) {
+            changes[key] = { oldValue: store[key], newValue: value };
+            store[key] = value;
+          }
+          for (const listener of changeListeners) listener(changes, "local");
+          if (callback) callback();
+        },
+        remove(keys, callback) {
+          for (const key of [].concat(keys)) {
+            delete store[key];
+            changeListeners.forEach((listener) =>
+              listener({ [key]: { oldValue: undefined, newValue: undefined } }, "local"),
+            );
+          }
+          if (callback) callback();
+        },
+      },
+      onChanged: {
+        addListener(fn) {
+          changeListeners.push(fn);
+        },
+      },
     },
     runtime: {
       lastError: null,
@@ -34,13 +89,17 @@
   };
 </script>
 <script src="../browser-extension/detector.js"></script>
+<script src="../browser-extension/policy.js"></script>
 <script src="../browser-extension/content.js"></script>
 <script>
-(() => {
+(async () => {
   "use strict";
 
   const editor = document.getElementById("editor");
   const out = document.getElementById("out");
+  const form = document.getElementById("form");
+  const apiInput = document.getElementById("apikey");
+  const sendButton = document.getElementById("send");
   const results = [];
   const failures = [];
 
@@ -51,6 +110,47 @@
       failures.push(label);
     }
   }
+
+  function finish() {
+    out.textContent = JSON.stringify(
+      { total: results.length, failures, results },
+      null,
+      2,
+    );
+  }
+
+  function noticeHost() {
+    return document.querySelector("[data-ai-input-gateway-notice]");
+  }
+
+  function noticePart(selector) {
+    const host = noticeHost();
+    return host && host.shadowRoot ? host.shadowRoot.querySelector(selector) : null;
+  }
+
+  function noticeTitle() {
+    const title = noticePart(".message strong");
+    return title ? title.textContent : "안내 없음";
+  }
+
+  // 설정 화면에서 토글을 켜는 것과 같은 효과입니다. content.js는 onChanged로 반영합니다.
+  function setFeatures(patch) {
+    window.chrome.storage.local.set({
+      features: Object.assign({}, store.features, patch),
+    });
+  }
+
+  function typeInto(target, value) {
+    if (target instanceof HTMLInputElement) {
+      target.value = value;
+      target.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
+      return;
+    }
+    target.innerHTML = value;
+    target.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
+  }
+
+  const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
   // 화면에 실제로 그려진 줄 수를 셉니다.
   // innerText는 <p> 경계를 '\n\n'로 세므로 시각적 줄 수의 근거가 될 수 없습니다.
@@ -76,8 +176,7 @@
     editor.innerHTML = initialHtml;
     editor.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
 
-    const host = document.querySelector("[data-ai-input-gateway-notice]");
-    const button = host && host.shadowRoot ? host.shadowRoot.querySelector(".mask-button") : null;
+    const button = noticePart(".mask-button");
     if (!button) {
       return null;
     }
@@ -96,6 +195,122 @@
     }
     check(label + " (DOM 구조)", result.html, expectedHtml);
     check(label + " (시각적 줄 수)", result.lines, expectedLines);
+  }
+
+  const API_KEY = "sk-TESTTESTTESTTESTTEST";
+  let submitReachedForm = 0;
+
+  // 차단 여부를 보려면 제출 이벤트가 폼까지 내려왔는지 세어야 합니다.
+  // content.js가 막으면 이벤트 전파를 멈추므로 이 카운터가 늘지 않습니다.
+  form.addEventListener("submit", (event) => {
+    submitReachedForm += 1;
+    event.preventDefault();
+  });
+
+  async function runFeatureTests() {
+    // 1. 기본값 그대로면 자동으로 막지 않습니다.
+    setFeatures({ persistentAlert: true, autoCloseWhenClean: true, undoButton: true, noticePosition: "top-right", auditLog: false, enforcePolicy: false, blockSend: false, requireConfirm: false });
+    typeInto(apiInput, API_KEY);
+    check("감지 안내 표시", noticeTitle(), "형식 패턴 감지 — 전송 전 확인");
+    sendButton.click();
+    check("기본값에서는 전송을 막지 않음", submitReachedForm, 1);
+
+    // 2. 정책 적용 + 전송 차단 ON. 첫 시도는 막습니다.
+    setFeatures({ enforcePolicy: true, blockSend: true });
+    sendButton.click();
+    check("첫 전송 시도는 차단", submitReachedForm, 1);
+    check("차단 안내 표시", noticeTitle(), "전송을 막았습니다 — 형식 패턴 감지");
+
+    // 3. 5초 안에 다시 누르면 그대로 전송됩니다. 클릭과 그 뒤 제출이 모두 통과해야 합니다.
+    sendButton.click();
+    check("5초 이내 재시도는 통과", submitReachedForm, 2);
+
+    // 4. 허용 시간이 지나면 다시 막습니다.
+    await sleep(5500);
+    sendButton.click();
+    check("허용 시간이 지나면 다시 차단", submitReachedForm, 2);
+
+    // 5. 막힌 뒤 바로 다시 누르면 통과합니다. 다음 판정을 새 상태에서 시작하게 됩니다.
+    sendButton.click();
+    check("차단 후 재시도는 통과", submitReachedForm, 3);
+
+    // 6. Enter로 보내기. 막힌 뒤 바로 다시 누르면 통과합니다.
+    const enter = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    apiInput.dispatchEvent(enter);
+    check("Enter 전송 차단", enter.defaultPrevented, true);
+    const enterAgain = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    apiInput.dispatchEvent(enterAgain);
+    check("Enter 재시도는 통과", enterAgain.defaultPrevented, false);
+
+    // 7. 폼 밖의 일반 버튼은 전송으로 보지 않습니다.
+    const harmless = document.createElement("button");
+    harmless.type = "button";
+    harmless.textContent = "취소";
+    document.body.append(harmless);
+    const harmlessClick = new MouseEvent("click", { bubbles: true, cancelable: true });
+    harmless.dispatchEvent(harmlessClick);
+    check("보내기 아닌 버튼은 통과", harmlessClick.defaultPrevented, false);
+    harmless.remove();
+
+    // 8. 전송 차단과 승인 확인은 서로 독립된 스위치입니다.
+    setFeatures({ blockSend: false, requireConfirm: true });
+    sendButton.click();
+    check("승인 확인만 켜면 BLOCK 값은 그대로 전송", submitReachedForm, 4);
+    await sleep(5500);
+    setFeatures({ blockSend: true, requireConfirm: false });
+    sendButton.click();
+    check("전송 차단을 켜면 다시 막음", submitReachedForm, 4);
+    setFeatures({ blockSend: false, requireConfirm: false });
+
+    // 9. 감사 기록에는 원문이 아니라 범주 ID만 남습니다.
+    setFeatures({ auditLog: true, enforcePolicy: false });
+    typeInto(apiInput, "010-0000-0000");
+    const entry = store.history[store.history.length - 1] || null;
+    check("감사 기록 범주", entry ? entry.categories.join(",") : "없음", "phone_number");
+    check("감사 기록 조치", entry ? entry.action : "없음", "MASK");
+    check("감사 기록에 전화번호 원문 없음", JSON.stringify(store.history).includes("010-0000-0000"), false);
+    check("감사 기록에 API 키 원문 없음", JSON.stringify(store.history).includes(API_KEY), false);
+    setFeatures({ auditLog: false });
+
+    // 10. 감지 안내는 닫을 때까지 계속 떠 있어야 합니다.
+    typeInto(editor, "<p>010-0000-0000</p>");
+    check("감지 안내 생성", Boolean(noticeHost()), true);
+    await sleep(20000);
+    check("20초 뒤에도 감지 안내 유지", Boolean(noticeHost()), true);
+    check("20초 뒤 안내 문구 유지", noticeTitle(), "형식 패턴 감지 — 전송 전 확인");
+
+    // 11. 닫기 버튼. 같은 감지는 다시 띄우지 않고, 감지가 사라지면 다시 안내합니다.
+    noticePart(".close-button").click();
+    check("닫기 버튼으로 안내 제거", noticeHost() === null, true);
+    typeInto(editor, "<p>010-0000-0000</p>");
+    check("닫은 뒤 같은 감지는 다시 띄우지 않음", noticeHost() === null, true);
+    typeInto(editor, "<p>보통 문장</p>");
+    typeInto(editor, "<p>010-0000-0000</p>");
+    check("감지가 사라졌다 돌아오면 다시 안내", noticeTitle(), "형식 패턴 감지 — 전송 전 확인");
+
+    // 12. 실행 취소로 마스킹 전 문장을 되돌립니다.
+    noticePart(".mask-button").click();
+    check("마스킹 적용", editor.innerHTML, "<p>[전화번호]</p>");
+    noticePart(".undo-button").click();
+    check("실행 취소로 원문 복구", editor.innerHTML, "<p>010-0000-0000</p>");
+
+    // 13. 실행 취소를 끄면 버튼을 띄우지 않습니다.
+    setFeatures({ undoButton: false });
+    typeInto(editor, "<p>010-0000-0000</p>");
+    noticePart(".mask-button").click();
+    check("실행 취소 꺼지면 버튼 숨김", noticePart(".undo-button").hidden, true);
+
+    // 14. 안내 위치 설정
+    setFeatures({ undoButton: true, noticePosition: "bottom-left" });
+    typeInto(editor, "<p>010-0000-0000</p>");
+    check("안내 위치 적용", noticeHost().dataset.position, "bottom-left");
+
+    // 15. 계속 표시를 끄면 기존처럼 정해진 시간 뒤에 사라집니다.
+    setFeatures({ noticePosition: "top-right", persistentAlert: false });
+    typeInto(editor, "<p>010-0000-0000</p>");
+    check("감지 안내 생성(시간 제한)", Boolean(noticeHost()), true);
+    await sleep(9000);
+    check("계속 표시 끄면 8초 뒤 닫힘", noticeHost() === null, true);
   }
 
   try {
@@ -185,12 +400,35 @@
     check("예외 없이 실행", String(error && error.stack ? error.stack : error), "예외 없음");
   }
 
+  try {
+    await runFeatureTests();
+  } catch (error) {
+    check(
+      "1.1.0 기능 예외 없이 실행",
+      String(error && error.stack ? error.stack : error),
+      "예외 없음",
+    );
+  }
+
+  finish();
+})().catch((error) => {
   out.textContent = JSON.stringify(
-    { total: results.length, failures, results },
+    {
+      total: 1,
+      failures: ["하네스 자체 오류"],
+      results: [
+        {
+          label: "하네스 자체 오류",
+          ok: false,
+          actual: String(error && error.stack ? error.stack : error),
+          expected: "예외 없음",
+        },
+      ],
+    },
     null,
     2,
   );
-})();
+});
 </script>
 </body>
 </html>

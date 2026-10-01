@@ -11,7 +11,7 @@
 | 제품 정의 | 외부 AI 입력·첨부·전송을 전송 직전에 검사하고 ALLOW/MASK/APPROVAL/BLOCK을 강제하며 원문 없이 감사하는 게이트웨이 |
 | 목표 고객 | 50~500명 중소기업 (B2B SaaS·커머스·고객센터·개발) |
 | 도입 형태 | 1) 브라우저 확장 2) API 프록시 |
-| 현 구현 | 로컬 탐지 4종+NFKC+PDP안내+수동마스킹, PDP 데모 판정. 자동 차단·서버 연동 미구현 |
+| 현 구현 | 로컬 탐지 4종+NFKC+수동마스킹+실행 취소, 브라우저 내 로컬 정책 엔진(`policy.js`, 기본 꺼짐), 지속 감지 안내, 선택형 감사 기록·전송 차단. 서버 연동·토큰 마스킹 미구현 |
 | 배포 | Pages 홈·데모·계획서 (`index/demo/plan.html`). 서버 전송 없음 |
 | 목표·일정 | p95 300ms, 재현율 95%+, 오탐 5% 이하. P1 0~8주 / P2 2~4개월 / P3 4~8개월 |
 
@@ -130,3 +130,37 @@ DOM 구조와 화면에 그려진 줄 수를 비교한다(16/16). 수정 전 코
 `node --test browser-extension/detector.test.js` 14/14, PDP 9/9.
 
 D.5 남은 위험: 편집기 DOM을 직접 바꾸는 방식은 사이트 내부 상태·커서 보존을 보장하지 않는다. 문안과 README에 계속 명시한다.
+## 부록 E. v1.1.0 — 지속 감지 안내와 선택형 강제 기능 (2026-10-01)
+
+### E.1 무엇을 Why 했나
+- **문제**: 1.0.0의 감지 안내는 8초 뒤 자동 닫힘이었다. 사용자가 입력을 이어 가리는 동안(특히 큰 문장 붙여넣기) 안내가 사라져, 이후에 마스킹할지 판단할 정보를 잃었다.
+- **또 다른 문제**: 정책의 `BLOCK`·`REQUIRE_APPROVAL`이 브라우저에서 아무 Enforcement 없이 이름 표시에 머물렀다. 약속한 강제 단계가 없었다.
+- **결정**: 화면 표시 방식과 Enforcement를 분리했다. 표시(지속 안내·실행 취소·위치·자동 닫기)는 기본 켜짐, Enforcement(정책 적용·전송 차단·승인 확인·감사 기록)는 **기본 꺼짐**으로 두고 `chrome.storage.local.features` 한 곳에 모아 스위치로 노출했다. "기본으로는 자동으로 막지 않는다"는 원칙은 그대로 지킨다.
+
+### E.2 아키텍처: 브라우저 안 정책 엔진
+- `browser-extension/policy.js` 추가. `gateway-core/pdp/policy.py`와 같은 우선순위(`BLOCK` > `REQUIRE_APPROVAL` > `MASK` > `ALLOW`)·같은 기본 매핑·미등록 범주 → `REQUIRE_APPROVAL` + `UNKNOWN_CATEGORY_PRESENT`를 구현한다.
+- **원문 문자열은 정책에 넘기지 않는다.** 범주 ID 배열만 받으며 문자열을 넘기면 `TypeError`로 거절한다. 양쪽에서 같은 계약이라 회귀가 생기면 즉시 드러난다.
+- `tools/policy_cases.json`을 양쪽이 공유하고 `tools/policy_parity.py`가 `policy.py`와 `policy.js`를 같은 케이스(12개)로 대조한다. **12/12 일치.** 어느 한쪽만 고쳐도 실패한다.
+- `content.js`는 `policy.js`를 쓰고, 파일을 못 읽는 경우에만 같은 규칙의 인라인 폴백을 탄다.
+
+### E.3 Enforcement 상세
+- **지속 감지 안내**: `alert` 종류 안내는 시간 경과로 닫히지 않는다. 우측 상단 `×`로 닫으면 같은 감지가 이어지는 동안 다시 띄우지 않고, 감지가 사라지면 초기화되어 같은 값이 다시 들어오면 다시 안내한다(닫기 자체가 무의미해지지 않게 하기 위한 설계).
+- **실행 취소**: 마스킹 시 이전 상태를 최소 정보로만 저장해(`plain`=값 1개 / `nodes`=변경한 텍스트 노드 목록) 한 번 되돌린다. 무한 히스토리는 두지 않는다.
+- **감사 기록**: 판정 이름·범주 ID·시각만 `chrome.storage.local.history`에 최근 20건. 동일 판정이 반복되면(숫자를 한 자씩 입력하는 경우) 마지막 기록과 비교해 1건만 남긴다. **원문·위치 정보 미저장.**
+- **전송 차단**: Enter / 폼 `submit` / 전송으로 보이는 버튼 클릭의 캡처 리스너 3종. 첫 시도만 막고 5초 창 안에 재시도하면 허용한다.
+
+### E.4 구현 중 잡은 실제 결함 2건
+1. **클릭 1회가 click과 submit 두 경로를 탄다.** 재시도 허용 직후 이어지는 `submit`이 다시 막혀 "5초 안에 다시 누르면 전송"이 실제로 성립하지 않았다. `allowPendingSubmit` 플래그를 두고 같은 입력 묶음에 속한 제출만 통과시킨 뒤 `setTimeout(0)`으로 소멸시킨다. **이 결함은 하네스를 추가한 뒤 처음 드러났다.**
+2. **`requireConfirm`이 `blockSend`에 종속돼 있었다.** 게이팅이 `enforcePolicy && blockSend`로 묶여 있어, 승인 확인만 켜도 동작하지 않았다. 두 스위치를 독립 게이트로 분리했다.
+
+### E.5 검증
+- `node --test browser-extension/detector.test.js browser-extension/policy.test.js` → **24/24** (detector 14 + policy 10).
+- `py tools/dom_test.py` → **44/44**. 저장소 스텁을 실제로 구현해(`get`/`set`/`remove`/`onChanged`) `onChanged` 반영까지 확인하고, 가상 시간(`--virtual-time-budget=90000`)으로 20초 지속과 8초 자동 닫힘을 검증한다. 신규 28개: 기본값 미차단 → 정책+차단 ON 시 차단 → 5초 내 재시도 통과 → 허용 창 만료 후 재차단 → Enter 경로 → 비전송 버튼 통과 → 스위치 독립성 → 감사 기록 원문 없음 → 지속 안내 → 닫기 → 실행 취소 → 위치 → 시간제한 해제.
+- `py -m unittest discover -s gateway-core/pdp` → **9/9**. `py tools/policy_parity.py` → **12/12**.
+- 제출 ZIP `dist/ai-input-protection-gateway-1.1.0.zip`: 16개 파일, 원본 88,207B → ZIP 41,122B, `/` 구분자, 루트 `manifest.json`, `testzip()` None. 테스트 파일·README 제외 확인.
+
+### E.6 남은 위험
+- `policy.js`는 조직 PDP 서버 정책과 **같지 않다.** 브라우저 로컬 판정이므로 실제PDP 연동 전까지 확인 수단으로만 본다.
+- 전송 차단은 "확실한 차단"이 아니다. 첫 시도만 막고 5초 내 재시도로 통과한다.
+- 세션 토큰 마스킹은 다음 버전이다. 되돌리기는 직전 1회의 실행 취소뿐이다.
+- `contenteditable` DOM 직접 수정 위험은 E 부록 D와 동일하게 남는다.

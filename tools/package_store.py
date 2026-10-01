@@ -23,6 +23,7 @@ EXT_DIR = REPO_ROOT / "browser-extension"
 # 배포본에 넣지 않는 파일 (개발·문서·미사용 로고 시안)
 EXCLUDE_FILES = {
     "detector.test.js",
+    "policy.test.js",
     "README.md",
     "icons/logo-a.svg",
     "icons/logo-b.svg",
@@ -33,6 +34,7 @@ EXCLUDE_FILES = {
 REQUIRED_FILES = {
     "manifest.json",
     "detector.js",
+    "policy.js",
     "content.js",
     "background.js",
     "popup.html",
