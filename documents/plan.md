@@ -85,7 +85,7 @@ C.1 이번 과정에서 만든 것: Chrome MV3 확장을 스토어 제출 품질
 `background.js`(설치 시 시작 가이드 1회, 탭별 판정 배지), `popup.html/css/js`(현재 탭 상태·30초 사용법·바로가기),
 `options.html/js`(탐지 4종 on/off, 로컬 기록 삭제), `onboarding.html`(60초 시작 가이드),
 로고 A안 아이콘 PNG 16/32/48/128 생성(`tools/make_icons.py`), 제출 ZIP 생성기(`tools/package_store.py`),
-개인정보 처리방침(`docs/privacy.html`), 스토어 등재 문안(`docs/store-listing.md`).
+개인정보 처리방침(`docs/privacy.html`), 스토어 등재 문안(`documents/store-listing.md`).
 
 C.2 실제 동작(이 작업공간에서 확인):
 - 설정에서 끈 범주는 탐지·마스킹에서 모두 제외된다. `detector.inspect(text, {disabledCategories})`,

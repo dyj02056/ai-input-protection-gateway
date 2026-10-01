@@ -1,36 +1,13 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>개인정보 처리방침 — AI 입력정보 보호 게이트웨이 확장 프로그램</title>
-<link rel="icon" type="image/png" href="icons/icon32.png">
-<style>:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}body{color:var(--ink);background:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}.site-nav [aria-current=page]{font-weight:700}
-body{max-width:840px;margin:0 auto;padding:24px;line-height:1.75}.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;margin-top:14px;padding:20px}h2{margin-top:0}table{border-collapse:collapse;width:100%}th,td{text-align:left;vertical-align:top;border:1px solid #dbe4f3;padding:8px 10px}th{background:#eef3ff}code{background:#eef3ff;border-radius:6px;padding:2px 6px}.small{color:#5a6b8c;font-size:13px}.no{color:#0b6b4a;font-weight:700}
-</style></head>
-<body>
-
-<p class="site-nav">
-  
-      
-      <a href="index.html">홈</a>
-    
-       · 
-      <a href="demo.html">데모</a>
-    
-       · 
-      <a href="plan.html">계획서</a>
-    
-       · 
-      <span aria-current="page">개인정보</span>
-    
-       · 
-      <a href="logo-preview.html">아이콘</a>
-    
-</p>
+---
+import Base from "../layouts/Base.astro";
+import SiteNav from "../components/SiteNav.astro";
+import manifest from "../../../browser-extension/manifest.json";
+---
+<Base title="개인정보 처리방침 — AI 입력정보 보호 게이트웨이 확장 프로그램">
+<SiteNav current="privacy" />
 <div class="card">
 <h1>개인정보 처리방침</h1>
-<p class="small">대상: Chrome 확장 프로그램 <b>AI 입력정보 보호 게이트웨이</b> (버전 1.1.1)<br>
+<p class="small">대상: Chrome 확장 프로그램 <b>AI 입력정보 보호 게이트웨이</b> (버전 {manifest.version})<br>
 시행일: 2026-10-01 · 최종 개정일: 2026-10-01</p>
 
 <h2>한 줄 요약</h2>
@@ -90,7 +67,15 @@ body{max-width:840px;margin:0 auto;padding:24px;line-height:1.75}.card{backgroun
 <h2>9. 문의</h2>
 <p>저장소 이슈: <a href="https://github.com/dyj02056/ai-input-protection-gateway/issues" target="_blank" rel="noopener">github.com/dyj02056/ai-input-protection-gateway/issues</a></p>
 </div>
-
-
-</body>
-</html>
+<style is:global>
+body{max-width:840px;margin:0 auto;padding:24px;line-height:1.75}
+.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:20px;margin-top:14px}
+h2{margin-top:0}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #dbe4f3;padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#eef3ff}
+code{background:#eef3ff;padding:2px 6px;border-radius:6px}
+.small{color:#5a6b8c;font-size:13px}
+.no{color:#0b6b4a;font-weight:700}
+</style>
+</Base>

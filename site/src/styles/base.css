@@ -1,0 +1,18 @@
+/* 모든 페이지가 공유하는 색과 글꼴입니다. 페이지별 배치는 각 페이지의 <style>에 있습니다. */
+:root {
+  --ink: #16213a;
+  --mut: #5a6b8c;
+  --line: #dbe4f3;
+  --brand: #155eef;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+  color: var(--ink);
+  background: #f4f7ff;
+}
+
+/* 계획서·개인정보·아이콘 페이지의 맨 위 링크 줄 */
+.site-nav [aria-current="page"] {
+  font-weight: 700;
+}

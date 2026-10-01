@@ -1,33 +1,9 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>제작 계획서 v2.1 — AI 입력정보 보호 게이트웨이</title>
-<link rel="icon" type="image/png" href="icons/icon32.png">
-<style>:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}body{color:var(--ink);background:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}.site-nav [aria-current=page]{font-weight:700}
-body{max-width:900px;margin:0 auto;padding:24px;line-height:1.7}.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;margin-top:14px;padding:20px}a{color:#155eef}code{background:#eef3ff;border-radius:6px;padding:2px 6px}pre{color:#e8eefc;white-space:pre-wrap;background:#0f1b33;border-radius:10px;padding:12px}
-</style></head>
-<body>
-
-<p class="site-nav">
-  
-      
-      <a href="index.html">홈</a>
-    
-       · 
-      <a href="demo.html">데모</a>
-    
-       · 
-      <span aria-current="page">계획서</span>
-    
-       · 
-      <a href="privacy.html">개인정보</a>
-    
-       · 
-      <a href="logo-preview.html">아이콘</a>
-    
-</p>
+---
+import Base from "../layouts/Base.astro";
+import SiteNav from "../components/SiteNav.astro";
+---
+<Base title="제작 계획서 v2.1 — AI 입력정보 보호 게이트웨이">
+<SiteNav current="plan" />
 <p class="source-link"><a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/documents/plan.md">계획서 원문(md)</a></p>
 <div class="card">
 <h1>중소기업용 생성형 AI 입력정보 보호 게이트웨이 제작 계획서 v2.1</h1>
@@ -62,7 +38,7 @@ body{max-width:900px;margin:0 auto;padding:24px;line-height:1.7}.card{background
 <p><b>다음에 할 일:</b> 스토어 스크린샷 캡처 후 등재, 확장↔PDP 원문 없는 연동, 세션 토큰 마스킹, 파일 검사.</p>
 <p>개인정보 처리방침: <a href="privacy.html">privacy.html</a> · 아이콘 미리보기: <a href="logo-preview.html">logo-preview.html</a></p>
 </div>
-
-
-</body>
-</html>
+<style is:global>
+body{max-width:900px;margin:0 auto;padding:24px;line-height:1.7}.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:20px;margin-top:14px}a{color:#155eef}code{background:#eef3ff;padding:2px 6px;border-radius:6px}pre{background:#0f1b33;color:#e8eefc;padding:12px;border-radius:10px;white-space:pre-wrap}
+</style>
+</Base>

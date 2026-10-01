@@ -8,3 +8,6 @@ __pycache__/
 # Node / 확장 빌드 산출물
 node_modules/
 dist-ext/
+
+# Astro 생성 타입
+site/.astro/

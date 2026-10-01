@@ -58,7 +58,7 @@ export default defineConfig({
   test: {
     root: import.meta.dirname,
     environment: "jsdom",
-    include: ["browser-extension/src/**/*.test.{ts,tsx}"],
+    include: ["browser-extension/src/**/*.test.{ts,tsx}", "site/src/**/*.test.ts"],
     setupFiles: ["browser-extension/src/test/setup.ts"],
   },
 });

@@ -3,9 +3,8 @@
 //   2) 클래식 스크립트(detector.js·policy.js·background.js·content.js): 각각 하나의 IIFE로 번들합니다.
 //      manifest의 content_scripts와 서비스 워커가 모듈이 아닌 일반 스크립트로 읽으므로 ES 모듈로 내면 안 됩니다.
 //      읽기 쉽게 하려고 압축하지 않습니다.
-//   3) docs 데모가 쓰는 docs/detector.js를 같은 산출물로 맞춥니다(소스는 하나).
 // 사용법: node scripts/build.mjs [--watch]
-import { copyFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { build } from "vite";
 
@@ -47,7 +46,3 @@ for (const { name, entry } of CLASSIC_SCRIPTS) {
   });
 }
 
-if (!watch) {
-  copyFileSync(resolve(OUT_DIR, "detector.js"), resolve(ROOT, "docs", "detector.js"));
-  console.log("docs/detector.js ← dist-ext/detector.js");
-}

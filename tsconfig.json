@@ -14,5 +14,5 @@
     "allowImportingTsExtensions": true,
     "types": ["chrome", "node", "vite/client"]
   },
-  "include": ["browser-extension/src", "vite.config.mts"]
+  "include": ["browser-extension/src", "site/src/scripts", "vite.config.mts"]
 }

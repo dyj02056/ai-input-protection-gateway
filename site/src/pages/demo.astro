@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>로컬 탐지 데모 — 최종 제출</title>
-<link rel="icon" type="image/png" href="icons/icon32.png">
-<style>:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}body{color:var(--ink);background:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}.site-nav [aria-current=page]{font-weight:700}
-*{box-sizing:border-box}body{margin:0}.wrap{max-width:1040px;margin:0 auto;padding:24px 18px 56px}.nav{flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:12px;display:flex}a{color:var(--brand)}.btn{border:1px solid var(--brand);border-radius:10px;margin:6px 8px 0 0;padding:10px 16px;font-weight:800;text-decoration:none;display:inline-block}.btn-p{background:var(--brand);color:#fff}.btn-o{color:var(--brand);background:#fff}.card{border:1px solid var(--line);background:#fff;border-radius:16px;margin-top:14px;padding:18px}textarea{border:1px solid var(--line);width:100%;min-height:150px;font:inherit;border-radius:10px;padding:12px}pre{color:#e8eefc;white-space:pre-wrap;overflow-wrap:anywhere;background:#0f1b33;border-radius:10px;padding:12px}.badge{border:1px solid var(--line);background:#eef3ff;border-radius:999px;margin:2px 6px 2px 0;padding:3px 10px;font-size:13px;display:inline-block}.warn{color:#5b4a00;background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;line-height:1.6}.decision{background:#eef3ff;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:800;display:inline-block}.grid{grid-template-columns:1fr;gap:14px;display:grid}@media (width>=900px){.grid{grid-template-columns:1fr 1fr}}.ext{border:1px solid var(--line);color:inherit;border-radius:12px;gap:10px;margin-top:8px;padding:10px;text-decoration:none;display:flex}
-</style></head>
-<body>
-
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="로컬 탐지 데모 — 최종 제출">
 <div class="wrap">
 <div class="nav"><a href="index.html">← 데모 홈</a><span>최종 제출 · 서버 전송 없음</span></div>
 <h1>로컬 탐지 데모</h1>
@@ -43,7 +35,27 @@
 <div class="card"><h2>한계</h2><p>4종 형식만 탐지, 미감지는 안전 아님. 마스킹은 복원 불가 자리표시자. BLOCK은 판정 이름.</p></div>
 </div>
 
-
-<script type="module" src="/ai-input-protection-gateway/assets/demo.astro_astro_type_script_index_0_lang.YztqiKmZ.js"></script>
-</body>
-</html>
+<style is:global>
+*{box-sizing:border-box}
+body{margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding:24px 18px 56px}
+.nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-bottom:12px}
+a{color:var(--brand)}
+.btn{display:inline-block;text-decoration:none;font-weight:800;border-radius:10px;padding:10px 16px;margin:6px 8px 0 0;border:1px solid var(--brand)}
+.btn-p{background:var(--brand);color:#fff}
+.btn-o{background:#fff;color:var(--brand)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}
+pre{background:#0f1b33;color:#e8eefc;border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.badge{display:inline-block;border:1px solid var(--line);background:#eef3ff;border-radius:999px;padding:3px 10px;margin:2px 6px 2px 0;font-size:13px}
+.warn{background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;color:#5b4a00;line-height:1.6}
+.decision{font-size:18px;font-weight:800;padding:10px 14px;border-radius:10px;background:#eef3ff;display:inline-block}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+.ext{display:flex;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px;text-decoration:none;color:inherit;margin-top:8px}
+</style>
+<script>
+  import { initDemo } from "../scripts/demo.ts";
+  initDemo();
+</script>
+</Base>

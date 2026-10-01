@@ -56,10 +56,6 @@ describe("dist-ext 산출물", () => {
     ]);
   });
 
-  it("docs 데모의 detector.js가 확장에 들어가는 것과 같은 산출물이다", () => {
-    expect(readFileSync(resolve(REPO_ROOT, "docs/detector.js"), "utf8")).toBe(read("detector.js"));
-  });
-
   it("확장 페이지 HTML이 소스(.tsx)가 아니라 빌드된 스크립트를 가리킨다", () => {
     for (const page of ["popup.html", "options.html", "onboarding.html"]) {
       const html = read(page);

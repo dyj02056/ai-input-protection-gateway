@@ -1,7 +1,7 @@
-# Chrome 웹 스토어 등재 문안 (v1.1.0)
+# Chrome 웹 스토어 등재 문안 (v1.1.1)
 
-> 확장 버전: 1.1.0 · 작성일: 2026-10-01
-> 제출 패키지: `dist/ai-input-protection-gateway-1.1.0.zip` (`py tools/package_store.py`)
+> 확장 버전: 1.1.1 · 작성일: 2026-10-01
+> 제출 패키지: `dist/ai-input-protection-gateway-1.1.1.zip` (`npm run build` 후 `py tools/package_store.py`)
 
 ## 1. 스토어 기본 정보
 
@@ -11,7 +11,7 @@
 | 요약(132자 이내) | ChatGPT·Claude·Gemini 입력창을 보내기 전에 로컬에서 검사하고 마스킹하는 보호 확장입니다. 서버 전송 없음. |
 | 카테고리 | 생산성(Productivity) |
 | 언어 | 한국어 |
-| 버전 | 1.1.0 |
+| 버전 | 1.1.1 |
 | 아이콘 | `icons/icon128.png` (128×128 PNG) |
 | 홈페이지 URL | https://dyj02056.github.io/ai-input-protection-gateway/ |
 | 개인정보 처리방침 URL | https://dyj02056.github.io/ai-input-protection-gateway/privacy.html |
@@ -110,7 +110,7 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
 
 ## 6. 심사 시 확인 방법
 
-1. 압축 해제 없이 `dist/ai-input-protection-gateway-1.1.0.zip`을 `chrome://extensions` → "압축해제된 확장 프로그램을 로드"로 설치합니다.
+1. `dist/ai-input-protection-gateway-1.1.1.zip`의 압축을 풀고, 풀린 폴더를 `chrome://extensions` → 개발자 모드 → "압축해제된 확장 프로그램을 로드"로 설치합니다. (소스 저장소에서 직접 설치하려면 `npm install` → `npm run build` 후 `dist-ext/` 폴더를 로드합니다. 소스 폴더 `browser-extension/`는 빌드 전 파일이라 로드되지 않습니다.)
 2. 설치 직후 "60초 시작하기" 탭이 열립니다.
 3. ChatGPT 또는 Claude에 아래 가짜 문구를 붙여넣습니다(전송하지 않음).
 
@@ -125,21 +125,40 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
 4. 안내 창이 시간 지나 사라지지 않고 남아 있는지 확인합니다(닫기 × 버튼으로 닫을 수 있습니다).
 5. "감지 항목 마스킹" 버튼을 누르면 네 값만 `[주민등록번호]`, `[전화번호]`, `[이메일]`, `[API 키/토큰]`으로 바뀌고 마지막 문장과 5줄 구조가 유지됩니다. 줄 사이에 빈 줄이 생기지 않아야 합니다.
 6. "실행 취소"를 누르면 마스킹 전 문장으로 돌아갑니다.
-7. 설정에서 "이메일 형식"을 끄고 같은 문구를 다시 붙여넣으면 이메일은 안내에서 제외됩니다.
+7. 설정에서 "이메일 형식"을 끄고 같은 문구를 다시 붙여넣으면 이메일은 안내에서 제외됩니다. 설정에서 안내창 위치를 "왼쪽 아래"로 바꾸면 안내를 닫았다가 다시 띄워도 그 위치가 유지됩니다.
 8. 설정에서 "전송 차단"을 켠 뒤 API 키가 들어 있는 상태에서 보내기를 누르면 첫 시도가 중단되고, 5초 안에 다시 누르면 전송됩니다. 꺼 두면 아무것도 막히지 않습니다.
-9. `node --test browser-extension/detector.test.js browser-extension/policy.test.js`(24개), `py tools/dom_test.py`(44개, 헤드리스 Chrome), `py tools/policy_parity.py`(12개 대조), `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다.
+9. 소스 저장소에서 `npm test`(빌드 후 vitest 229개), `py tools/dom_test.py`(44개, 헤드리스 Chrome, `npm run build` 선행), `py tools/policy_parity.py`(12개 대조), `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다.
 
 ## 7. 제출 전 체크리스트
 
-- [x] `manifest.json` version `1.1.0`, `manifest_version` 3
+- [x] `manifest.json` version `1.1.1`, `manifest_version` 3
 - [x] 아이콘 4종(16/32/48/128 PNG) 존재 및 manifest 참조 일치
 - [x] 단일 목적 문장 작성
 - [x] 권한 사유 작성 (`storage` + 호스트 4개만)
 - [x] 개인정보 처리방침 페이지 공개
 - [x] 데이터 사용 신고 표 작성
 - [x] 제출 ZIP 생성 및 구조 검증(루트 `manifest.json`, `/` 구분자)
-- [x] detector 14/14 · policy 10/10 · 정책 대조 12/12 · PDP 9/9 · contenteditable DOM 44/44 통과
+- [x] vitest 229/229 · 정책 대조 12/12 · PDP 9/9 · contenteditable DOM 44/44 통과
 - [x] 막는 기능은 모두 기본 꺼짐이고, 안내 문구에 기본값 동작을 명시
 - [ ] 스토어 스크린샷 1장 이상 캡처 (7장 권장)
 - [ ] 128×128 아이콘 업로드, 설명·카테고리 입력
 - [ ] 실제 계정으로 비공개 테스트 후 공개 전환
+
+## 8. 변경 내역
+
+### 1.1.1 (스토어 "새로운 기능" 란에 쓸 문구)
+
+```text
+· 안내창 위치를 "왼쪽 아래"로 설정했을 때, 안내를 닫은 뒤 다시 뜨는 안내가 오른쪽 위에 나타나던 문제를 고쳤습니다.
+· 다른 스크립트가 안내창을 지운 경우에도 안내 상태가 어긋나지 않도록 했습니다.
+· 도구 모음 팝업에 표시되는 버전이 실제 버전과 다르던 문제를 고쳤습니다.
+· 기능과 권한은 그대로이며, 서버로 전송하는 정보는 여전히 없습니다.
+```
+
+- 내부: 확장 코드를 TypeScript로 정리하고(설정 화면은 React, 안내창은 Preact) 테스트를 229개로 늘렸습니다. 권한·탐지 규칙·기본 동작은 바뀌지 않았습니다.
+- 1.1.0 ZIP과 달리 파일 수가 늘었습니다(16개 → 21개). 추가된 것은 설정·팝업 화면을 그리는 번들뿐이며 외부 주소를 부르지 않습니다.
+
+### 1.1.0
+
+- 감지 안내가 시간이 지나 사라지던 문제 수정(닫기 × 버튼, 계속 표시), 실행 취소, 선택형 감사 기록·로컬 정책 적용·전송 차단·승인 확인(모두 기본 꺼짐).
+

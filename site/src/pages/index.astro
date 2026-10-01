@@ -1,17 +1,12 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 입력정보 보호 게이트웨이 — 최종 제출</title>
-<link rel="icon" type="image/png" href="icons/icon32.png">
-<style>:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}body{color:var(--ink);background:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}.site-nav [aria-current=page]{font-weight:700}
-*{box-sizing:border-box}body{margin:0}.wrap{max-width:1040px;margin:0 auto;padding:26px 18px 56px}.top{color:var(--mut);flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:13px;display:flex}.hero{color:#fff;background:linear-gradient(135deg,#0b1226,#1a2b66 60%,#155eef);border-radius:20px;padding:30px 26px}.hero h1{margin:8px 0;font-size:32px;line-height:1.25}.hero p{color:#dbe6ff;line-height:1.65}.btn{border-radius:12px;margin:6px 8px 0 0;padding:12px 18px;font-weight:800;text-decoration:none;display:inline-block}.btn-p{color:#0b2c9b;background:#fff}.btn-g{color:#fff;border:1px solid #fff6}.card{border:1px solid var(--line);background:#fff;border-radius:16px;margin-top:16px;padding:18px}.grid{grid-template-columns:1fr;gap:16px;display:grid}@media (width>=900px){.grid{grid-template-columns:1.2fr .8fr}}.ext{border:1px solid var(--line);color:inherit;border-radius:12px;gap:12px;margin-top:10px;padding:12px;text-decoration:none;display:flex}.logo{color:#fff;border-radius:10px;place-items:center;width:40px;height:40px;font-weight:900;display:grid}.g{background:#10a37f}.c{background:#d97757}.m{background:#1a73e8}.warn{color:#5b4a00;background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;line-height:1.6}code{border:1px solid var(--line);background:#eef3ff;border-radius:6px;padding:2px 6px}
-</style></head>
-<body>
+---
+import Base from "../layouts/Base.astro";
+import manifest from "../../../browser-extension/manifest.json";
 
+const { version } = manifest;
+---
+<Base title="AI 입력정보 보호 게이트웨이 — 최종 제출">
 <div class="wrap">
-<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v1.1.1 · vitest 229 · DOM 44 · PDP 9</span></div>
+<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v{version} · vitest 229 · DOM 44 · PDP 9</span></div>
 <header class="hero">
 <div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
 <h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
@@ -44,12 +39,12 @@
 </aside>
 </div>
 <section class="card">
-<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.1.1)</h2>
+<h2>브라우저 확장 프로그램 (Chrome MV3 · v{version})</h2>
 <p>ChatGPT · Claude · Gemini 입력창에 검사 안내와 마스킹 버튼을 추가합니다. 검사는 브라우저 안에서만 실행되고 네트워크 요청이 없습니다.</p>
 <div class="grid" style="grid-template-columns:1fr;gap:10px">
 <ul>
 <li><b>구성</b> <code>manifest.json</code>(MV3) · TypeScript 소스(<code>browser-extension/src/</code>)를 빌드해 <code>detector.js</code> 탐지 · <code>policy.js</code> 로컬 정책 · <code>content.js</code> 안내·마스킹·실행 취소·전송 차단 · <code>background.js</code> 탭 배지를 만들고, <code>popup</code> / <code>options</code> / <code>onboarding</code>은 React 화면</li>
-<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.1.1.zip</code> — <code>npm run build</code> 후 <code>py tools/package_store.py</code>로 생성 (21개 파일, 약 107KB)</li>
+<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-{version}.zip</code> — <code>npm run build</code> 후 <code>py tools/package_store.py</code>로 생성 (21개 파일, 약 107KB)</li>
 <li><b>아이콘</b> A안 확정 — <a href="logo-preview.html">아이콘 세트 미리보기</a> · <code>py tools/make_icons.py</code>로 PNG 4종 재생성</li>
 <li><b>설치</b> <code>npm install</code> → <code>npm run build</code> → <code>chrome://extensions</code> → 개발자 모드 → 압축해제된 확장 프로그램 로드 → <b><code>dist-ext/</code></b> (소스 폴더 <code>browser-extension/</code>가 아닙니다)</li>
 <li><b>권한</b> <code>storage</code> + 대상 4개 주소 호스트 권한만 사용 (방문 기록 권한 없음, 원격 코드 없음)</li>
@@ -59,7 +54,24 @@
 <div class="warn">기본값으로는 자동 전송 차단을 하지 않습니다(전송 차단은 설정에서 직접 켜야 동작합니다). 마스킹은 자리표시자 대체이며 직전 한 번만 실행 취소로 되돌릴 수 있으니, 가짜 문구로만 확인하세요.</div>
 </section>
 </div>
-
-
-</body>
-</html>
+<style is:global>
+*{box-sizing:border-box}
+body{margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding:26px 18px 56px}
+.top{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-bottom:12px;color:var(--mut);font-size:13px}
+.hero{background:linear-gradient(135deg,#0b1226,#1a2b66 60%,#155eef);color:#fff;border-radius:20px;padding:30px 26px}
+.hero h1{margin:8px 0;font-size:32px;line-height:1.25}
+.hero p{color:#dbe6ff;line-height:1.65}
+.btn{display:inline-block;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 18px;margin:6px 8px 0 0}
+.btn-p{background:#fff;color:#0b2c9b}
+.btn-g{color:#fff;border:1px solid rgba(255,255,255,.4)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
+.ext{display:flex;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;text-decoration:none;color:inherit;margin-top:10px}
+.logo{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:900}
+.g{background:#10a37f}.c{background:#d97757}.m{background:#1a73e8}
+.warn{background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;color:#5b4a00;line-height:1.6}
+code{background:#eef3ff;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+</style>
+</Base>

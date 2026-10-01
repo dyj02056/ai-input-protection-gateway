@@ -1,0 +1,22 @@
+---
+// 계획서·개인정보·아이콘 페이지의 맨 위 링크 줄입니다. 현재 페이지는 링크로 만들지 않습니다.
+interface Props {
+  current: "plan" | "privacy" | "logo-preview";
+}
+const { current } = Astro.props;
+const links = [
+  { id: "home", href: "index.html", label: "홈" },
+  { id: "demo", href: "demo.html", label: "데모" },
+  { id: "plan", href: "plan.html", label: "계획서" },
+  { id: "privacy", href: "privacy.html", label: "개인정보" },
+  { id: "logo-preview", href: "logo-preview.html", label: "아이콘" },
+];
+---
+<p class="site-nav">
+  {links.map((link, index) => (
+    <>
+      {index > 0 && " · "}
+      {link.id === current ? <span aria-current="page">{link.label}</span> : <a href={link.href}>{link.label}</a>}
+    </>
+  ))}
+</p>
