@@ -7,7 +7,7 @@ PDP는 쉽게 말해 “무슨 조치를 할지 정하는 판단기”입니다.
 ```text
 gateway-core/pdp/
 ├── policy.py       # 정책과 판정 함수
-├── test_policy.py  # 자동 테스트 7개
+├── test_policy.py  # 자동 테스트 9개
 └── README.md       # 이 안내 문서
 ```
 
@@ -16,7 +16,7 @@ gateway-core/pdp/
 ## 현재 데모 정책
 
 - 탐지 범주 없음 → `ALLOW`
-- `government_id`, `phone_number` → `MASK`
+- `government_id`, `phone_number`, `email` → `MASK`
 - `api_key` → `BLOCK`
 - 정책에 등록되지 않은 범주 → `REQUIRE_APPROVAL`
 - 여러 범주가 있으면 더 엄격한 조치를 선택: `BLOCK` > `REQUIRE_APPROVAL` > `MASK` > `ALLOW`
@@ -31,6 +31,7 @@ gateway-core/pdp/
 |---|---|---|
 | `government_id` | 주민등록번호 형식 | `MASK` |
 | `phone_number` | 전화번호 형식 | `MASK` |
+| `email` | 이메일 형식 | `MASK` |
 | `api_key` | API 키/토큰 형식 | `BLOCK` |
 
 향후 HTTP 연결을 만들 때 사용할 수 있는 원문 없는 요청 모양은 다음과 같습니다.
@@ -55,11 +56,11 @@ Windows에서 `python` 명령이 인식되지 않으면 다음을 사용합니�
 py -m unittest discover -s gateway-core/pdp -p "test_*.py" -v
 ```
 
-정상적으로 7개 테스트를 찾으면 결과 마지막 부분에 `Ran 7 tests`와 `OK`가 표시됩니다.
+정상적으로 9개 테스트를 찾으면 결과 마지막 부분에 `Ran 9 tests`와 `OK`가 표시됩니다.
 
 ### 최근 검증 기록
 
-사용자가 로컬 실행에서 `Ran 7 tests in 0.001s`가 출력됐고 테스트가 통과했다고 확인했습니다. 이는 사용자 보고를 기록한 것이며, 이 작업공간에서 명령을 직접 실행하거나 재검증한 결과는 아닙니다. 코드를 수정한 뒤에는 위 명령으로 다시 확인해 주세요.
+이 작업공간에서 `py -m unittest discover -s gateway-core/pdp -p "test_*.py" -v`를 실행해 9개 통과(`Ran 9 tests`, `OK`)를 확인했습니다. 코드를 수정한 뒤에는 위 명령으로 다시 확인해 주세요.
 
 ## `Ran 0 tests`가 나오면
 

@@ -48,6 +48,17 @@ test("수동 마스킹은 탐지된 값을 유형별 자리표시자로 바꾼�
     detector.mask("테스트 전화번호형식: 010-0000-0000"),
     "테스트 전화번호형식: [전화번호]",
   );
+  assert.equal(
+    detector.mask("테스트 이메일형식: test.user@example.com"),
+    "테스트 이메일형식: [이메일]",
+  );
+});
+
+test("전각 표기 변형도 탐지 범주로 잡힌다", () => {
+  assert.deepEqual(
+    Array.from(detector.inspect("테스트 전각전화: ０１０-００００-００００")),
+    ["phone_number"],
+  );
 });
 
 test("마스킹 문자열은 줄바꿈과 감지되지 않은 문장을 유지한다", () => {

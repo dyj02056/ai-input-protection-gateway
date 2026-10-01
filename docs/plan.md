@@ -1,7 +1,7 @@
 # 중소기업용 생성형 AI 입력정보 보호 게이트웨이 제작 계획서
 
-> 문서 버전: v1.1 (Pages 데모 포함) / 작성일: 2026-10-01
-> 배포 URL(예정): https://dyj02056.github.io/ai-input-protection-gateway/
+> 문서 버전: v1.2 (중간점검 2차) / 작성일: 2026-10-01
+> 배포 URL: https://dyj02056.github.io/ai-input-protection-gateway/
 > 관련 구현: `browser-extension/`, `gateway-core/pdp/`, `submission_note.md`
 
 ## 0. 요약
@@ -11,7 +11,7 @@
 | 제품 정의 | 외부 AI 입력·첨부·전송을 전송 직전에 검사하고 ALLOW/MASK/APPROVAL/BLOCK을 강제하며 원문 없이 감사 기록을 남기는 게이트웨이 |
 | 목표 고객 | 50~500명 중소기업 (우선 B2B SaaS, 커머스, 고객센터, 개발 조직) |
 | 도입 형태 | 1) 브라우저 확장 2) API 프록시 |
-| 현 구현 | 확장 로컬 탐지 3종+수동 마스킹, PDP 데모 판정. 자동 차단·서버 연동 미구현 |
+| 현 구현 | 확장 로컬 탐지 4종(이메일 추가)+NFKC 정규화+PDP 조치 안내+수동 마스킹, PDP 데모 판정. 자동 차단·서버 연동 미구현 |
 | 배포 | GitHub Pages 정적 데모 (`docs/index.html`, `docs/demo.html`). 서버 전송 없음 |
 | 목표·일정 | p95 300ms, 재현율 95%+, 오탐 5% 이하. P1 0~8주 / P2 2~4개월 / P3 4~8개월 |
 
@@ -23,27 +23,27 @@
 판정 속성: 유형·민감도·건수·누적, 역할·부서, 목적, 대상 서비스·계정·지역·학습사용, 문서등급·채널.
 고객: 결정자(대표·CTO), 운영(IT·보안·CPO), 승인자(팀장·CPO), 사용자(상담·영업·개발). ICP는 100~300명·개인정보 대량보유·ISMS-P.
 가치: 1일 적용·정책팩, 4단계 강제, 마스킹후 응답복원, 원문없는 재현, 원문미저장·하이브리드.
-범위 MVP: 확장 MV3, OpenAI/Anthropic 프록시, 주민·전화·키 등 우선탐지, 파일 PDF/DOCX/XLSX/HWPX(구HWP 텍스트한정, OCR 5p). 제외: 모바일·데스크톱앱, 웹출력재검사, RAG·SIEM, 100% 보장. 현구현은 3종+수동마스킹까지.
+범위 MVP: 확장 MV3, OpenAI/Anthropic 프록시, 주민·전화·이메일·키 등 우선탐지, 파일 PDF/DOCX/XLSX/HWPX(구HWP 텍스트한정, OCR 5p). 제외: 모바일·데스크톱앱, 웹출력재검사, RAG·SIEM, 100% 보장. 현구현은 4종+수동마스킹까지.
 
 ## 2. 위협 모델 및 제어 정책
 
 자산: 개인정보·기밀·코드자격증명. 행위자: 부주의(최우선), 우회(높음), 간접공격(높음), 악의(감사억지).
 경로: 프롬프트·분할누적(24h 카운터)·인코딩(정규화)·파일(파싱OCR)·코드(지문)·RAG(ACL)·도구(허용목록)·출력(버퍼재검사)·로그(미저장)·인젝션(경계분리)·우회(강제설치)·자체(메모리·분리).
 조치: ALLOW 원문전송, MASK 토큰치환·복원, APPROVAL 보류후 1회전송, BLOCK 미전송·대안. 전체평가후 최제한, priority는 정렬용, 완화는 exception만(non_overridable 불가), 무매칭 0건 ALLOW/있음 APPROVAL, 변환후 재판정.
-데모대응: policy.py는 0건 ALLOW, government_id/phone MASK, api_key BLOCK, 미등록 APPROVAL, 혼합 최엄격.
+데모대응: policy.py는 0건 ALLOW, government_id/phone/email MASK, api_key BLOCK, 미등록 APPROVAL, 혼합 최엄격.
 
 ### 2.4 정책 JSON 예시
 
 ## 3. 아키텍처 및 핵심 기능
 
 확장PEP(가로채기·로컬탐지 detector.js)→검사API(정규화→탐지→요약)→PDP(판정)→Transformer(토큰화)→Vault(TTL)+승인+감사(해시체인)+파일Worker(격리). 프록시는 요청·SSE·tool_use 검사. 배포는 SaaS/하이브리드/로컬우선. 현구현은 관찰+수동마스킹까지.
-탐지: 정규화(NFKC·전각·한글숫자·디코딩)→정규식→체크섬(2020.10 RRN 가중치만)→NER→문맥→구조→PDP속성. detector.js는 3종만, NER·체크섬·구조 미구현.
+탐지: 정규화(NFKC·전각·한글숫자·디코딩)→정규식→체크섬(2020.10 RRN 가중치만)→NER→문맥→구조→PDP속성. detector.js는 4종(이메일 포함)+NFKC, NER·체크섬·구조 미구현.
 파일: PDF·DOCX·XLSX열판정·HWPX·구HWP텍스트·ZIP1단계·암호화 APPROVAL/BLOCK, 30초 타임아웃 즉시삭제.
 기술: 확장MV3, Go 프록시, Go+Python, OPA/Rego, ONNX CPU, PG+Vault분리, OIDC/SCIM, KMS, OTel 원문차단.
 
 ## 4. UX 및 워크플로우
 
-작성→배지→ ALLOW 즉시 / MASK 미리보기후 1클릭 / APPROVAL 사유→대기→알림 / BLOCK 사유+대안 → 응답복원. 본인화면 로컬하이라이트, 승인자 원문비노출. content.js는 배지+수동마스킹까지.
+작성→배지→ ALLOW 즉시 / MASK 미리보기후 1클릭 / APPROVAL 사유→대기→알림 / BLOCK 사유+대안 → 응답복원. 본인화면 로컬하이라이트, 승인자 원문비노출. content.js는 PDP 조치 안내+수동마스킹까지.
 승인: HMAC바인딩 일회성·1자변경 재승인·자기승인금지·SLA 4h·1h에스컬레이션·재판정.
 콘솔: 온보딩·대시보드·문장형정책·시뮬·승인함·로그·레지스트리·ISMS-P보고서·오탐유형수집. 관찰→안내→강제.
 
@@ -60,7 +60,17 @@ P1 0~8주(2파일럿·확장·프록시·탐지·PDP·마스킹복원·승인·�
 KPI: 지연300→200ms, 재현율95→97, 정밀90→95, 오탐5→3%, 우회80→90%, 설치90→98%.
 MVP완료: 양경로제어·E2E·재현·무저장검증·degraded기록·리포트·단독온보딩.
 
-## 부록 B. 중간점검 1차
+## 부록 B. 중간점검 2차 (1차 유지 + 변경분)
+
+B.1 만든 것(동일 유지): plan, detector inspect/mask, content.js 안내+수동마스킹, policy.py 판정.
+B.1 추가(2차 신규): 이메일 범주 추가(탐지 3종→4종), NFKC 전각 정규화 후 검사, 확장 안내문에 PDP 데모 조치 표시, Pages demo/index 2차 문구 갱신, 테스트 detector 5→6개·PDP 7→9개. node 6/6·PDP 9/9 통과.
+B.2 확인법(3단계): (1) 배포URL demo 가짜5줄 입력→범주·마스킹 확인 (2) node --test browser-extension/detector.test.js→pass 6 (3) py -m unittest discover -s gateway-core/pdp -p "test_*.py"→9 tests OK.
+B.3 바뀐 점과 이유: 탐지범위 확대(이메일 업무빈도 높음), 우회내성 강화(전각 변형 정규화), 조치 가시화(차단 없이 PDP 조치 안내만 표시해 오해 방지), 검증계수 확대(회귀 6+9개). 자동 차단·서버 연동은 미구현 유지.
+B.4 AI/본인: AI는 이메일 정규식·NFKC·안내문·테스트·데모 갱신안 작성. 본인은 가짜문구·미전송 원칙 유지, BLOCK 미동작·서버 미연동 한계 명시 결정, 최종책임 본인.
+B.5 다음: 확장↔PDP 원문없는 연동, BLOCK 전송제어·승인 연결, 파일·감사 확장. 최종 후 RAG·도구·출력·SIEM·업종팩.
+B.6 URL: 배포 https://dyj02056.github.io/ai-input-protection-gateway/demo.html, 저장소 https://github.com/dyj02056/ai-input-protection-gateway.
+
+### 부록 B-1. 중간점검 1차 원문 (유지)
 
 B.1 만든 것: plan v1.1, Pages index/demo, detector inspect/mask, content.js 수동마스킹, policy.py 판정, 테스트 5+7개. node 5/5 통과.
 B.2 확인법: (1) 배포URL demo 가짜4줄 (2) node 테스트 pass5 (3) chrome 확장 가짜입력.

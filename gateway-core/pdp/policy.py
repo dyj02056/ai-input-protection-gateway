@@ -70,6 +70,7 @@ class Policy:
         default_factory=lambda: {
             "government_id": Action.MASK,
             "phone_number": Action.MASK,
+            "email": Action.MASK,
             "api_key": Action.BLOCK,
         }
     )

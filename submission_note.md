@@ -71,3 +71,40 @@
 - 배포 URL: https://dyj02056.github.io/ai-input-protection-gateway/ (Repo Settings → Pages → Deploy from branch → main → /docs 저장 후 유효). 데모 직접경로: .../demo.html.
 - 다음: GitHub Pages 설정 후 URL 접속 확인, plan.md 원본 19KB 백업본에서 축소된 내용 복원 여부 결정.
 
+
+
+## 누적 기록 2026-10-01 — 중간점검 2차
+
+### 이번에 만든 것 (1차 유지 + 2차 신규, 실제 동작)
+- 유지: plan, detector inspect/mask, content.js 안내+수동마스킹, policy.py 범주판정, Pages index/demo.
+- 신규: 이메일 범주 추가 (`email` → MASK, 브라우저·PDP·데모 모두 반영, 탐지 3종→4종).
+- 신규: NFKC 정규화 후 검사 (전각 숫자·하이픈 변형 탐지, `docs/detector.js` 동기화).
+- 신규: 확장 안내문에 PDP 데모 조치 표시 (MASK/BLOCK/APPROVAL 문구, 차단은 하지 않음 명시).
+- 신규: Pages demo 가짜 5줄·2차 변경점 섹션, index 2차 문구·확인법 갱신.
+- 실제 동작: 이메일+전각 혼합 입력에서 `["phone_number","email"]` 반환·마스킹 확인, node 6/6·PDP 9/9 통과.
+
+### 확인하는 방법 (3단계 이내)
+1. 배포 URL demo 접속 → 가짜 5줄 입력 → 범주·마스킹·PDP판정 확인 (실정보·전송 금지).
+2. `node --test browser-extension/detector.test.js` → pass 6 확인.
+3. `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → 9 tests OK 확인.
+
+### 바뀐 점과 이유
+- 1차 동일 부분은 그대로 유지 (plan 구조·3종 탐지·수동마스킹·PDP판정·Pages 기반).
+- 이메일 추가: 업무 입력 빈도가 높아 2차 탐지 확대 대상으로 선정.
+- NFKC 정규화: 전각 변형 우회 내성 강화, 탐지 우선·마스킹 보조 원칙.
+- 조치 안내 표시: BLOCK 오해 방지 (판정 이름만 표시, 전송 미차단 명시).
+- 테스트 확대: detector 5→6개·PDP 7→9개 회귀 보장.
+- 미구현 유지: 자동 차단·서버 연동·NER·파일파싱은 3차·최종 단계로 이월.
+
+### AI에게 맡긴 일과 내가 판단한 일
+- AI가 만든 부분: 이메일 정규식·NFKC 함수·안내문 문구·테스트 2종 추가·데모/index 갱신안·plan v1.2 정리.
+- 내가 판단한 일: 가짜문구·미전송 원칙 유지, BLOCK 미동작·서버 미연동 한계 명시, 전각 마스킹은 탐지 우선로 제한, 최종 제출 범위·표현 책임은 본인.
+
+### 다음에 할 일
+- 다음 점검까지: 확장↔PDP 원문없는 연동 설계·구현, BLOCK 전송제어·승인 연결, 탐지·파일·감사 확장.
+- 최종 제출 뒤: RAG·도구·출력 재검사, SIEM 연동, 업종 정책팩.
+
+### 결과물 URL, 소스 저장소
+- 배포: https://dyj02056.github.io/ai-input-protection-gateway/demo.html (홈: https://dyj02056.github.io/ai-input-protection-gateway/)
+- 저장소: https://github.com/dyj02056/ai-input-protection-gateway
+- 검증: node 6/6·PDP 9/9 이 작업공간 통과, demo vm 로드 확인.

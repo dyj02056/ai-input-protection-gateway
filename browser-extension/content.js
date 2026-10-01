@@ -5,8 +5,30 @@
   const CATEGORY_LABELS = Object.freeze({
     government_id: "주민등록번호 형식",
     phone_number: "전화번호 형식",
+    email: "이메일 형식",
     api_key: "API 키/토큰 형식",
   });
+
+  // PDP 데모 정책과 같은 우선순위를 안내문에도 표시합니다. 실제 차단은 하지 않습니다.
+  const CATEGORY_ACTION_HINT = Object.freeze({
+    government_id: "MASK",
+    phone_number: "MASK",
+    email: "MASK",
+    api_key: "BLOCK",
+  });
+
+  function decideLocalAction(categories) {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return "ALLOW";
+    }
+    if (categories.includes("api_key")) {
+      return "BLOCK";
+    }
+    if (categories.some((category) => !Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category))) {
+      return "REQUIRE_APPROVAL";
+    }
+    return "MASK";
+  }
 
   // 텍스트 입력 요소만 대상으로 합니다. 검사 결과에 원문이나 일치한 문자열은 넣지 않습니다.
   const EDITABLE_SELECTOR = [
@@ -192,9 +214,16 @@
         editor && editor.isConnected && detector && typeof detector.mask === "function",
       );
       const categoryLabels = formatCategoryLabels(categories);
+      const actionHint = decideLocalAction(categories);
+      const actionText =
+        actionHint === "BLOCK"
+          ? "PDP 데모 기준 BLOCK에 해당합니다. 이 확장은 전송을 막지 않으니 보내기 전에 직접 지우거나 마스킹하세요."
+          : actionHint === "REQUIRE_APPROVAL"
+            ? "PDP 데모 기준 승인 검토 대상입니다. 이 확장은 승인 요청을 보내지 않으니 필요하면 별도 절차를 따르세요."
+            : "PDP 데모 기준 MASK 대상입니다. 아래 버튼으로 자리표시자 마스킹을 할 수 있습니다.";
       const description = canMask
-        ? `${categoryLabels}과(와) 일치했습니다. 실제 정보인지 검증하지 않았습니다. 아래 버튼을 누르면 일치한 문자열만 자리표시자로 바꾸며, 입력을 자동 전송하거나 차단하지 않습니다.`
-        : `${categoryLabels}과(와) 일치했습니다. 실제 정보인지 검증하지 않았으며, 입력을 마스킹하거나 차단하지 않습니다.`;
+        ? `${categoryLabels}과(와) 일치했습니다. ${actionText} 실제 정보인지 검증하지 않았고, 입력을 자동 전송하거나 차단하지 않습니다.`
+        : `${categoryLabels}과(와) 일치했습니다. ${actionText} 실제 정보인지 검증하지 않았으며, 입력을 마스킹하거나 차단하지 않습니다.`;
 
       displayNotice(
         "형식 패턴 감지 — 전송 전 확인",

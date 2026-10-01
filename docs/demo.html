@@ -16,12 +16,13 @@ a{color:#155eef}
 </style>
 </head>
 <body>
-<p><a href="index.html">← 중간점검 1차 홈</a></p>
-<h1>로컬 탐지 데모 (서버 전송 없음)</h1>
-<div class="warn"><strong>실제 개인정보·API 키를 입력하지 마세요.</strong> 이 페이지는 <code>browser-extension/detector.js</code>를 그대로 불러와 브라우저 안에서만 검사·마스킹합니다. 입력값은 저장·전송되지 않습니다.</div>
+<p><a href="index.html">← 중간점검 홈</a></p>
+<h1>로컬 탐지 데모 (서버 전송 없음, 2차)</h1>
+<div class="warn"><strong>실제 개인정보·API 키를 입력하지 마세요.</strong> 이 페이지는 <code>docs/detector.js</code>(확장과 동일 규칙)를 브라우저 안에서만 실행합니다. 입력값은 저장·전송되지 않습니다.</div>
 <h2>1. 입력</h2>
 <textarea id="input" aria-label="가짜 테스트 문구 입력">가짜 주민번호 000000-1000000
 가짜 전화번호 010-0000-0000
+가짜 이메일 test.user@example.com
 가짜 키 sk-TESTTESTTESTTESTTEST
 그대로 남아야 할 문장</textarea>
 <div>
@@ -37,14 +38,19 @@ a{color:#155eef}
 <h2>4. PDP 데모 정책 대응</h2>
 <ul>
 <li><code>없음</code> → <code>ALLOW</code></li>
-<li><code>government_id</code>, <code>phone_number</code> → <code>MASK</code></li>
-<li><code>api_key</code> → <code>BLOCK</code> (이 데모·확장은 전송을 막지 않음, 판정 이름만 표시)</li>
+<li><code>government_id</code>, <code>phone_number</code>, <code>email</code> → <code>MASK</code></li>
+<li><code>api_key</code> → <code>BLOCK</code> (이 데모·확장은 전송을 막지 않음, 판정 이름과 안내문만 표시)</li>
 <li>미등록 범주 → <code>REQUIRE_APPROVAL</code></li>
 </ul>
 <p id="pdp"></p>
+<h2>2차에서 바뀐 점</h2>
+<ul>
+<li>이메일 범주 추가 + 전각 숫자·하이픈 정규화(NFKC) 후 검사</li>
+<li>안내문에 PDP 데모 조치(BLOCK/MASK/APPROVAL) 표시, 차단은 하지 않음</li>
+</ul>
 <h2>한계</h2>
 <ul>
-<li>3종 형식만 탐지하며 미감지는 안전 판정이 아닙니다.</li>
+<li>4종 형식만 탐지하며 미감지는 안전 판정이 아닙니다.</li>
 <li>마스킹은 복원 불가 자리표시자이며 Token Vault 토큰화가 아닙니다.</li>
 <li>BLOCK은 판정 이름이며 자동 전송 차단이 없습니다.</li>
 </ul>
@@ -57,9 +63,8 @@ var cats=document.getElementById("cats");
 var catJson=document.getElementById("catJson");
 var masked=document.getElementById("masked");
 var pdp=document.getElementById("pdp");
-var LABELS={government_id:"주민등록번호 형식",phone_number:"전화번호 형식",api_key:"API 키/토큰 형식"};
-var ACTION={government_id:"MASK",phone_number:"MASK",api_key:"BLOCK"};
-var SAMPLE="가짜 주민번호 000000-1000000\n가짜 전화번호 010-0000-0000\n가짜 키 sk-TESTTESTTESTTESTTEST\n그대로 남아야 할 문장";
+var LABELS={government_id:"주민등록번호 형식",phone_number:"전화번호 형식",email:"이메일 형식",api_key:"API 키/토큰 형식"};
+var SAMPLE="가짜 주민번호 000000-1000000\n가짜 전화번호 010-0000-0000\n가짜 이메일 test.user@example.com\n가짜 키 sk-TESTTESTTESTTESTTEST\n그대로 남아야 할 문장";
 function decide(list){
 if(!list.length) return "ALLOW";
 if(list.indexOf("api_key")>=0) return "BLOCK";

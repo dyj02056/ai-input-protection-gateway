@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 입력정보 보호 게이트웨이 — 중간점검 1차</title>
+<title>AI 입력정보 보호 게이트웨이 — 중간점검 2차</title>
 <style>
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#172033;line-height:1.6}
 .card{border:1px solid #c7d2e1;border-radius:12px;padding:16px;margin:16px 0}
@@ -14,9 +14,9 @@ code{background:#f1f4f9;padding:2px 6px;border-radius:6px}
 </style>
 </head>
 <body>
-<p>중간점검 1차 제출용</p>
+<p>중간점검 2차 제출용 (1차 내용 유지 + 변경분 추가)</p>
 <h1>중소기업용 생성형 AI 입력정보 보호 게이트웨이</h1>
-<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 현 구현은 로컬 탐지 3종 + 수동 마스킹 + PDP 데모 판정까지이며 자동 차단·서버 연동은 미구현입니다.</p>
+<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 현 구현은 로컬 탐지 4종(이메일 추가) + 전각 정규화 + PDP 조치 안내 + 수동 마스킹까지이며 자동 차단·서버 연동은 미구현입니다.</p>
 <div class="warn"><strong>주의:</strong> 실제 개인정보·키는 입력하지 마세요. 데모는 100% 브라우저 로컬 처리이며 서버 전송이 없습니다.</div>
 <div class="card">
 <h2>바로 확인</h2>
@@ -27,17 +27,17 @@ code{background:#f1f4f9;padding:2px 6px;border-radius:6px}
 <div class="card">
 <h2>확인 방법 (3단계)</h2>
 <ol>
-<li><code>demo.html</code>에서 가짜 4줄 입력 → 범주 표시 확인</li>
-<li>로컬에서 <code>node --test browser-extension/detector.test.js</code> → pass 5 확인</li>
-<li><code>chrome://extensions</code>에서 확장 로드 후 ChatGPT/Claude 가짜 입력 확인 (전송 금지)</li>
+<li><code>demo.html</code>에서 가짜 5줄 입력 → 범주 표시 확인</li>
+<li>로컬에서 <code>node --test browser-extension/detector.test.js</code> → pass 6 확인</li>
+<li>로컬에서 <code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK 확인</li>
 </ol>
 </div>
 <div class="card">
 <h2>제출 항목 요약</h2>
 <ul>
-<li>만든 것: plan v1.0, detector inspect/mask, content.js 안내+수동마스킹, policy.py 판정, 테스트 5+7개</li>
-<li>바뀐 점: 무매칭 분리, RRN 가중치화, 로컬1차·하이브리드, 24h 누적, 승인바인딩 강화</li>
-<li>다음: Chrome 줄바꿈 재확인, PDP 재실행, 원문없는 연동·BLOCK·승인 연결</li>
+<li>만든 것(유지): plan, detector inspect/mask, content.js 안내+수동마스킹, policy.py 판정</li>
+<li>2차 변경: 이메일 탐지 추가(탐지 3종→4종), NFKC 전각 정규화, 확장 안내문에 PDP 조치 표시, 테스트 5+7개→6+9개</li>
+<li>다음: 확장↔PDP 원문없는 연동, BLOCK 전송제어·승인 연결, 파일·감사 확장</li>
 </ul>
 </div>
 </body>

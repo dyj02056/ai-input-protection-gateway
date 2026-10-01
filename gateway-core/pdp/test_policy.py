@@ -15,6 +15,14 @@ class PolicyDecisionTests(unittest.TestCase):
         result = decide(InspectionSummary({"government_id"}))
         self.assertEqual(result.action, Action.MASK)
 
+    def test_email_category_returns_mask(self):
+        result = decide(InspectionSummary({"email"}))
+        self.assertEqual(result.action, Action.MASK)
+
+    def test_email_and_api_key_selects_block(self):
+        result = decide(InspectionSummary({"email", "api_key"}))
+        self.assertEqual(result.action, Action.BLOCK)
+
     def test_api_key_category_returns_block(self):
         result = decide(InspectionSummary({"api_key"}))
         self.assertEqual(result.action, Action.BLOCK)

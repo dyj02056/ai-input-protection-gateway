@@ -26,18 +26,36 @@
       // 일부 키 접두사만 다룹니다. 모든 서비스의 키를 찾지는 않습니다.
       pattern: /(?<![A-Za-z0-9])(?:sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,}|github_pat_[A-Za-z0-9_]{20,}|(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})(?![A-Za-z0-9])/,
     },
+    {
+      categoryId: "email",
+      maskLabel: "이메일",
+      // RFC 전체가 아니라 업무용 식별 목적의 실용 패턴입니다.
+      pattern: /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![A-Za-z])/,
+    },
   ];
+
+  function normalizeForDetection(text) {
+    // 전각 숫자·하이픈 등 표기 변형을 NFKC로 정규화한 뒤 검사합니다.
+    // 마스킹은 원문 표기를 최대한 유지하며, 전각 변형은 탐지 우선·마스킹 제한을 README에 명시합니다.
+    try {
+      return typeof text.normalize === "function" ? text.normalize("NFKC") : text;
+    } catch {
+      return text;
+    }
+  }
 
   globalThis.AIInputGatewayDetector = Object.freeze({
     inspect(text) {
-      const source = typeof text === "string" ? text : "";
+      const source = typeof text === "string" ? normalizeForDetection(text) : "";
       return RULES.filter((rule) => rule.pattern.test(source)).map(
         (rule) => rule.categoryId,
       );
     },
 
     mask(text) {
-      let masked = typeof text === "string" ? text : "";
+      const source = typeof text === "string" ? text : "";
+      const normalized = typeof text === "string" ? normalizeForDetection(text) : "";
+      let masked = source;
 
       for (const rule of RULES) {
         // 전역 정규식은 호출 때마다 새로 만들어 lastIndex 상태를 공유하지 않습니다.
@@ -46,6 +64,21 @@
           pattern,
           () => `[${rule.maskLabel}]`,
         );
+      }
+
+      // 전각 변형 등 원문 표기가 달라 치환되지 않은 경우,
+      // 정규화된 보기에서 탐지된 부분은 가려 구조 노출을 줄입니다.
+      if (normalized !== source) {
+        let normalizedMasked = normalized;
+        for (const rule of RULES) {
+          normalizedMasked = normalizedMasked.replace(
+            new RegExp(rule.pattern.source, "g"),
+            () => `[${rule.maskLabel}]`,
+          );
+        }
+        if (normalizedMasked !== normalized && masked === source) {
+          masked = normalizedMasked;
+        }
       }
 
       return masked;
