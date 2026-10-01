@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 입력정보 보호 게이트웨이 — 발표자료</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--bg:#f4f7ff;--brand:#155eef;--green:#0e9f6e;--amber:#f79009;--purple:#7a5af8;--red:#d92d20}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b1226;overflow:hidden;font-family:"Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;color:var(--ink)}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center}
+.slide{position:absolute;inset:0;width:1280px;height:720px;background:var(--bg);padding:48px 64px;display:none;overflow:hidden;font-size:20px}
+.slide.on{display:block}
+.slide.dark{background:radial-gradient(1200px 700px at 80% 0%,#1a2b66 0%,#0b1226 60%);color:#fff}
+.slide.fade{background:linear-gradient(135deg,#eaf1ff 0%,#f7f9ff 60%,#fff 100%)}
+
+/* 공통 요소 */
+.sh{display:flex;align-items:center;gap:12px;color:var(--brand);font-weight:800;font-size:20px;margin-bottom:6px}
+.sh i{font-size:20px}
+h2{font-size:44px;line-height:1.2;font-weight:900;margin-bottom:26px}
+.row{display:flex;gap:22px}
+.grid{display:grid;gap:22px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;box-shadow:0 6px 18px rgba(21,94,239,.07)}
+.card .ico{width:84px;height:84px;border-radius:24px;display:grid;place-items:center;font-size:40px;color:#fff;background:var(--brand)}
+.card b{font-size:26px;font-weight:800}
+.card span.sub{font-size:20px;color:var(--mut)}
+.c-green .ico{background:var(--green)}.c-amber .ico{background:var(--amber)}.c-purple .ico{background:var(--purple)}.c-red .ico{background:var(--red)}.c-ink .ico{background:#22304a}
+.chip{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:10px 20px;font-size:20px;font-weight:700}
+.chip i{color:var(--brand)}
+.chips{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.big{font-size:84px;font-weight:900;line-height:1;color:var(--brand)}
+.big small{font-size:40px;font-weight:800}
+.arrow{display:grid;place-items:center;font-size:34px;color:var(--brand)}
+.num{font-size:20px;font-weight:900;color:var(--brand)}
+.fill{height:calc(100% - 100px)}
+
+/* 목차 */
+.toc{display:flex;flex-direction:column;gap:14px}
+.toc .it{display:flex;align-items:center;gap:24px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 24px}
+.toc .it .n{font-size:40px;font-weight:900;color:var(--brand);width:80px}
+.toc .it .t{font-size:32px;font-weight:800;flex:1}
+.toc .it i{font-size:32px;color:var(--brand);width:48px;text-align:center}
+
+/* 단원 도입 */
+.div{display:flex;flex-direction:column;justify-content:center;height:100%;padding-left:40px}
+.div .n{font-size:200px;font-weight:900;line-height:1;color:var(--brand);opacity:.18;letter-spacing:-6px}
+.div .t{font-size:96px;font-weight:900;line-height:1.1;margin-top:-30px}
+.div .s{display:flex;align-items:center;gap:16px;font-size:32px;color:var(--mut);margin-top:18px;font-weight:700}
+.div .bigico{position:absolute;right:90px;top:50%;transform:translateY(-50%);font-size:260px;color:var(--brand);opacity:.12}
+
+/* 타이틀/마무리 */
+.hero{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;height:100%;padding-left:40px;position:relative}
+.hero .ico{position:absolute;right:100px;top:50%;transform:translateY(-50%);font-size:300px;color:#4d86ff;opacity:.9}
+.hero .k{font-size:28px;color:#9db8ff;font-weight:800;margin-bottom:12px}
+.hero .t1{font-size:84px;font-weight:900;line-height:1.1}
+.hero .t2{font-size:120px;font-weight:900;line-height:1.05;color:#7fa8ff}
+.hero .tag{font-size:36px;margin:22px 0 28px;font-weight:700;color:#dbe6ff}
+.hero .chips .chip{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+.hero .chips .chip i{color:#7fa8ff}
+
+/* 목업 */
+.win{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 10px 28px rgba(21,32,58,.12)}
+.win .bar{display:flex;align-items:center;gap:8px;background:#eef3ff;padding:12px 16px;border-bottom:1px solid var(--line)}
+.win .bar i{font-size:14px;color:#b6c3dd}
+.win .bar span{margin-left:10px;font-size:18px;color:var(--mut);font-weight:700}
+.win .body{padding:20px}
+.input{border:2px solid var(--line);border-radius:14px;padding:16px 18px;font-size:24px;font-weight:700;background:#fafcff;display:flex;align-items:center;gap:12px}
+.hl{background:#fee4e2;color:var(--red);border-radius:6px;padding:0 8px}
+.tok{background:#dcfae6;color:#067647;border-radius:6px;padding:0 8px}
+.notice{border:1px solid #c7d2e1;border-radius:12px;padding:14px 16px;box-shadow:0 6px 18px rgba(0,0,0,.14);background:#fff;display:flex;flex-direction:column;gap:10px}
+.notice strong{font-size:20px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:8px 16px;font-size:18px;font-weight:800;background:var(--brand);color:#fff}
+.btn.o{background:#eef2f9;color:#22304a;border:1px solid #c7d2e1}
+.btn.a{background:#b77900}.btn.g{background:var(--green)}.btn.r{background:var(--red)}
+.tab{display:inline-block;padding:10px 20px;border:1px solid var(--line);border-radius:12px;font-size:20px;font-weight:800;background:#fff}
+.tab.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #e6ecf8;font-size:20px}
+th{color:var(--mut);font-weight:800}
+.st{font-weight:900;color:var(--amber)}
+
+/* 흐름도 */
+.flow{display:flex;align-items:stretch;gap:12px}
+.flow .step{flex:1;background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px 10px;display:flex;flex-direction:column;align-items:center;gap:12px;font-size:24px;font-weight:800;text-align:center}
+.flow .step i{font-size:44px;color:var(--brand)}
+.flow .arr{display:grid;place-items:center;font-size:28px;color:#9db8ff}
+.box{background:#fff;border:2px solid var(--brand);border-radius:20px;padding:20px;text-align:center;font-size:26px;font-weight:900;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+.box i{font-size:42px;color:var(--brand)}
+.box.alt{border-color:var(--purple)}.box.alt i{color:var(--purple)}
+.box .in{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.box .in span{font-size:18px;background:#eef3ff;border-radius:8px;padding:4px 12px;font-weight:700;color:var(--ink)}
+.lbl{font-size:20px;color:var(--mut);font-weight:800;text-align:center}
+.dash{border-top:4px dashed #9db8ff}
+
+/* 진행 표시/노트 (슬라이드 바깥) */
+#bar{position:fixed;left:0;bottom:0;height:5px;background:var(--brand);width:0;transition:width .2s}
+#cnt{position:fixed;right:14px;bottom:10px;color:#9db8ff;font-size:18px;font-weight:800}
+#notes{position:fixed;left:0;right:0;bottom:0;background:rgba(11,18,38,.94);color:#e8eefc;padding:16px 28px;font-size:20px;line-height:1.5;display:none;max-height:30vh;overflow:auto}
+#notes.show{display:block}
+a.link{color:inherit}
+.notes{display:none}
+
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{height:auto;overflow:visible;background:#fff}
+  #stage{position:static;transform:none!important;width:1280px;height:auto}
+  .slide{display:block!important;position:relative;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #bar,#cnt,#notes{display:none!important}
+  .notes{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 1. 타이틀 -->
+<section class="slide dark" data-title="타이틀">
+<div class="hero">
+  <i class="fa-solid fa-shield-halved ico"></i>
+  <div class="k">PROJECT</div>
+  <div class="t1">AI 입력정보 보호</div>
+  <div class="t2">게이트웨이</div>
+  <div class="tag">보내기 전에 검사</div>
+  <div class="chips">
+    <span class="chip"><i class="fa-brands fa-chrome"></i>Chrome 확장</span>
+    <span class="chip"><i class="fa-solid fa-server"></i>FastAPI 서버</span>
+    <span class="chip"><i class="fa-solid fa-tag"></i>v1.7.0</span>
+  </div>
+</div>
+<aside class="notes">ChatGPT, Claude, Gemini에 글을 보내기 직전에 민감정보를 검사하고 가려 주는 크롬 확장과, 조직이 규칙과 승인을 관리하는 선택형 서버 프로젝트입니다.</aside>
+</section>
+
+<!-- 2. 목차 -->
+<section class="slide" data-title="목차">
+<div class="sh"><i class="fa-solid fa-list"></i><span>AGENDA</span></div>
+<h2>목차</h2>
+<div class="toc">
+  <div class="it"><span class="n">01</span><span class="t">프로젝트 개요</span><i class="fa-solid fa-bullseye"></i></div>
+  <div class="it"><span class="n">02</span><span class="t">핵심 기능</span><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+  <div class="it"><span class="n">03</span><span class="t">시스템 구조</span><i class="fa-solid fa-sitemap"></i></div>
+  <div class="it"><span class="n">04</span><span class="t">서버·승인</span><i class="fa-solid fa-user-check"></i></div>
+  <div class="it"><span class="n">05</span><span class="t">검증·계획</span><i class="fa-solid fa-flag-checkered"></i></div>
+</div>
+<aside class="notes">발표는 다섯 부분입니다. 문제와 목표, 핵심 기능, 시스템 구조, 서버와 승인 흐름, 검증 결과와 앞으로의 계획 순서입니다.</aside>
+</section>
+
+<!-- 3. 단원 01 -->
+<section class="slide fade" data-title="01 도입">
+<div class="div">
+  <i class="fa-solid fa-bullseye bigico"></i>
+  <div class="n">01</div>
+  <div class="t">프로젝트 개요</div>
+  <div class="s"><i class="fa-solid fa-circle-question"></i>문제와 목표</div>
+</div>
+</section>
+
+<!-- 4. 01-A 문제 -->
+<section class="slide" data-title="문제">
+<div class="sh"><i class="fa-solid fa-bullseye"></i><span>01 프로젝트 개요</span></div>
+<h2>왜 필요한가</h2>
+<div class="row" style="align-items:center;height:430px">
+  <div class="grid g2" style="flex:1;height:100%">
+    <div class="card c-amber"><div class="ico"><i class="fa-solid fa-address-book"></i></div><b>고객정보</b></div>
+    <div class="card c-purple"><div class="ico"><i class="fa-solid fa-code"></i></div><b>소스코드</b></div>
+    <div class="card c-red"><div class="ico"><i class="fa-solid fa-key"></i></div><b>API 키</b></div>
+    <div class="card"><div class="ico"><i class="fa-solid fa-file-contract"></i></div><b>계약서</b></div>
+  </div>
+  <div class="arrow" style="font-size:56px"><i class="fa-solid fa-arrow-right"></i></div>
+  <div class="card c-ink" style="flex:.7;height:100%"><div class="ico" style="width:120px;height:120px;font-size:60px"><i class="fa-solid fa-robot"></i></div><b>외부 AI 입력</b><span class="chip" style="background:#fee4e2;border-color:#fecdca;color:var(--red)"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i>유출 위험</span></div>
+</div>
+<div class="chips" style="margin-top:20px"><span class="chip"><i class="fa-solid fa-ban"></i>차단만 = 우회</span><span class="chip"><i class="fa-solid fa-graduation-cap"></i>교육만 = 한계</span></div>
+<aside class="notes">직원들이 업무 속도를 위해 고객 목록, 소스코드, 키, 계약서를 외부 AI에 그대로 붙여넣는 일이 흔합니다. 교육만으로는 보내는 순간을 막을 수 없고, 전부 차단하면 개인 계정으로 우회합니다.</aside>
+</section>
+
+<!-- 5. 01-B 목표 -->
+<section class="slide" data-title="목표">
+<div class="sh"><i class="fa-solid fa-bullseye"></i><span>01 프로젝트 개요</span></div>
+<h2>해결 목표</h2>
+<div class="grid g4" style="height:380px">
+  <div class="card"><div class="big">0<small>건</small></div><b>원문 전송</b><i class="fa-solid fa-lock" style="font-size:36px;color:var(--green)"></i></div>
+  <div class="card"><div class="big">9<small>종</small></div><b>형식 탐지</b><i class="fa-solid fa-magnifying-glass" style="font-size:36px;color:var(--brand)"></i></div>
+  <div class="card"><div class="big">4<small>단계</small></div><b>판정 조치</b><i class="fa-solid fa-layer-group" style="font-size:36px;color:var(--purple)"></i></div>
+  <div class="card"><div class="big">1<small>클릭</small></div><b>마스킹</b><i class="fa-solid fa-computer-mouse" style="font-size:36px;color:var(--amber)"></i></div>
+</div>
+<div class="chips" style="margin-top:26px"><span class="chip"><i class="fa-solid fa-route"></i>안전한 통과 경로</span><span class="chip"><i class="fa-solid fa-user-shield"></i>사용자 우선</span></div>
+<aside class="notes">막기만 하는 도구가 아니라, 마스킹과 승인이라는 안전한 통과 경로를 함께 제공해 직원이 통제 경로 안에 머물게 하는 것이 목표입니다. 검사는 전부 브라우저 안에서 하고 입력 원문은 서버로 보내지 않습니다.</aside>
+</section>
+
+<!-- 6. 단원 02 -->
+<section class="slide fade" data-title="02 도입">
+<div class="div">
+  <i class="fa-solid fa-wand-magic-sparkles bigico"></i>
+  <div class="n">02</div>
+  <div class="t">핵심 기능</div>
+  <div class="s"><i class="fa-solid fa-magnifying-glass"></i>탐지·마스킹·판정</div>
+</div>
+</section>
+
+<!-- 7. 02-A 9종 탐지 -->
+<section class="slide" data-title="9종 탐지">
+<div class="sh"><i class="fa-solid fa-wand-magic-sparkles"></i><span>02 핵심 기능</span></div>
+<h2>9종 탐지</h2>
+<div class="grid g5" style="gap:14px">
+  <div class="card" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-id-card"></i></div><b style="font-size:22px">주민번호</b></div>
+  <div class="card c-green" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-phone"></i></div><b style="font-size:22px">전화번호</b></div>
+  <div class="card c-amber" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-envelope"></i></div><b style="font-size:22px">이메일</b></div>
+  <div class="card c-red" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-key"></i></div><b style="font-size:22px">API 키</b></div>
+  <div class="card c-red" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-credit-card"></i></div><b style="font-size:22px">카드번호</b></div>
+  <div class="card c-purple" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-building-columns"></i></div><b style="font-size:22px">계좌번호</b></div>
+  <div class="card c-ink" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-passport"></i></div><b style="font-size:22px">여권번호</b></div>
+  <div class="card c-green" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-car"></i></div><b style="font-size:22px">운전면허</b></div>
+  <div class="card c-red" style="padding:16px 10px;gap:8px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-lock"></i></div><b style="font-size:22px">비밀번호</b></div>
+  <div class="card" style="padding:16px 10px;gap:8px;background:#eef3ff;border-style:dashed"><div class="ico" style="width:64px;height:64px;font-size:30px;background:#9db8ff"><i class="fa-solid fa-ellipsis"></i></div><b style="font-size:22px">미등록</b></div>
+</div>
+<div class="lbl" style="margin:22px 0 10px">우회 대응</div>
+<div class="chips"><span class="chip"><i class="fa-solid fa-text-width"></i>전각 문자</span><span class="chip"><i class="fa-solid fa-eye-slash"></i>숨김 문자</span><span class="chip"><i class="fa-solid fa-language"></i>한글 숫자</span><span class="chip"><i class="fa-solid fa-link"></i>URL·Base64</span></div>
+<aside class="notes">주민등록번호, 전화번호, 이메일, API 키, 카드번호, 계좌번호, 여권번호, 운전면허번호, 비밀번호 아홉 가지 형식을 찾습니다. 전각 문자, 보이지 않는 문자, 한글로 쓴 숫자, URL이나 Base64로 숨긴 값도 풀어서 검사합니다.</aside>
+</section>
+
+<!-- 8. 02-B 4단계 판정 -->
+<section class="slide" data-title="4단계 판정">
+<div class="sh"><i class="fa-solid fa-wand-magic-sparkles"></i><span>02 핵심 기능</span></div>
+<h2>4단계 판정</h2>
+<div class="grid g4" style="height:360px">
+  <div class="card c-green"><div class="ico"><i class="fa-solid fa-circle-check"></i></div><b>허용</b><span class="chip">ALLOW</span><span class="sub">그대로 전송</span></div>
+  <div class="card c-amber"><div class="ico"><i class="fa-solid fa-eraser"></i></div><b>마스킹</b><span class="chip">MASK</span><span class="sub">가려서 전송</span></div>
+  <div class="card c-purple"><div class="ico"><i class="fa-solid fa-user-check"></i></div><b>승인</b><span class="chip">APPROVAL</span><span class="sub">관리자 허락</span></div>
+  <div class="card c-red"><div class="ico"><i class="fa-solid fa-ban"></i></div><b>차단</b><span class="chip">BLOCK</span><span class="sub">전송 중단</span></div>
+</div>
+<div class="chips" style="margin-top:28px"><span class="chip"><i class="fa-solid fa-scale-balanced"></i>엄격 우선</span><span class="chip"><i class="fa-solid fa-toggle-off"></i>기본은 안내만</span></div>
+<aside class="notes">감지된 항목마다 정책이 조치를 정하고, 여러 항목이 함께 있으면 가장 엄격한 조치를 따릅니다. 설치만 하면 아무것도 막지 않고 안내만 하며, 전송 차단과 승인은 설정에서 직접 켜야 동작합니다.</aside>
+</section>
+
+<!-- 9. 02-C 마스킹·복원 -->
+<section class="slide" data-title="마스킹 복원">
+<div class="sh"><i class="fa-solid fa-wand-magic-sparkles"></i><span>02 핵심 기능</span></div>
+<h2>마스킹·복원</h2>
+<div class="row" style="align-items:stretch;height:480px">
+  <div class="win" style="flex:1"><div class="bar"><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><span>입력</span></div>
+    <div class="body" style="display:flex;flex-direction:column;gap:18px">
+      <div class="input"><i class="fa-solid fa-phone" style="color:var(--mut)"></i><span class="hl">010-0000</span></div>
+      <div class="notice"><strong><i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i> 전화번호 감지</strong><div style="display:flex;gap:10px"><span class="btn"><i class="fa-solid fa-eraser"></i>마스킹</span><span class="btn o">실행 취소</span></div></div>
+      <div class="lbl">전송본</div>
+      <div class="input"><i class="fa-solid fa-arrow-right" style="color:var(--green)"></i><span class="tok">[전화_1]</span></div>
+    </div></div>
+  <div class="arrow" style="font-size:48px"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+  <div class="win" style="flex:1"><div class="bar"><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><span>AI 답변</span></div>
+    <div class="body" style="display:flex;flex-direction:column;gap:10px">
+      <div class="lbl">AI가 보는 값</div>
+      <div class="input"><i class="fa-solid fa-robot" style="color:var(--mut)"></i><span class="tok">[전화_1]</span></div>
+      <div class="arrow" style="font-size:28px"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="lbl">내가 보는 값</div>
+      <div class="input"><i class="fa-solid fa-user" style="color:var(--brand)"></i><span>010-0000</span></div>
+      <div class="chips"><span class="chip"><i class="fa-solid fa-eye"></i>내 화면만</span></div>
+    </div></div>
+</div>
+<aside class="notes">세션 토큰 방식은 전화번호를 전화 밑줄 1 같은 토큰으로 바꿔 보냅니다. AI 답변에 나온 토큰은 이 탭의 화면에서만 원래 값으로 보여 주며, 복원한 값은 어디로도 전송되지 않고 새로고침하면 사라집니다.</aside>
+</section>
+
+<!-- 10. 02-D 첨부파일 -->
+<section class="slide" data-title="첨부파일">
+<div class="sh"><i class="fa-solid fa-wand-magic-sparkles"></i><span>02 핵심 기능</span></div>
+<h2>첨부파일 검사</h2>
+<div class="grid g5" style="height:300px">
+  <div class="card"><div class="ico" style="background:#5a6b8c"><i class="fa-solid fa-file-lines"></i></div><b>TXT</b></div>
+  <div class="card c-green"><div class="ico"><i class="fa-solid fa-file-csv"></i></div><b>CSV</b></div>
+  <div class="card"><div class="ico" style="background:#2b579a"><i class="fa-solid fa-file-word"></i></div><b>DOCX</b></div>
+  <div class="card c-green"><div class="ico" style="background:#217346"><i class="fa-solid fa-file-excel"></i></div><b>XLSX</b></div>
+  <div class="card c-purple"><div class="ico"><i class="fa-solid fa-file"></i></div><b>HWPX</b></div>
+</div>
+<div class="row" style="margin-top:34px;justify-content:center;gap:40px;align-items:center">
+  <div class="chip" style="font-size:24px;padding:16px 28px"><i class="fa-solid fa-laptop"></i>로컬 검사</div>
+  <div class="chip" style="font-size:24px;padding:16px 28px"><i class="fa-solid fa-table-list"></i>행 수 판단</div>
+  <div class="chip" style="font-size:24px;padding:16px 28px"><i class="fa-solid fa-file-shield"></i>대량 반출 탐지</div>
+</div>
+<aside class="notes">텍스트, CSV, 워드, 엑셀, 한글(hwpx) 파일의 내용을 브라우저 안에서 검사하고 파일은 어디로도 보내지 않습니다. 표는 감지된 행 수가 기준 이상이면 대량 반출로 봅니다.</aside>
+</section>
+
+<!-- 11. 단원 03 -->
+<section class="slide fade" data-title="03 도입">
+<div class="div">
+  <i class="fa-solid fa-sitemap bigico"></i>
+  <div class="n">03</div>
+  <div class="t">시스템 구조</div>
+  <div class="s"><i class="fa-solid fa-laptop"></i>로컬 우선 설계</div>
+</div>
+</section>
+
+<!-- 12. 03-A 아키텍처 -->
+<section class="slide" data-title="아키텍처">
+<div class="sh"><i class="fa-solid fa-sitemap"></i><span>03 시스템 구조</span></div>
+<h2>전체 구조</h2>
+<div class="row" style="align-items:center;height:210px">
+  <div class="box" style="width:200px;height:190px"><i class="fa-solid fa-user"></i>사용자</div>
+  <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+  <div class="box" style="flex:1;height:210px"><i class="fa-brands fa-chrome"></i>확장 프로그램<div class="in"><span>탐지</span><span>정책</span><span>마스킹</span></div></div>
+  <div class="arrow"><i class="fa-solid fa-arrow-right"></i></div>
+  <div class="box" style="width:220px;height:190px"><i class="fa-solid fa-robot"></i>AI 사이트</div>
+</div>
+<div class="row" style="justify-content:center;gap:120px;margin:6px 0">
+  <div class="lbl"><i class="fa-solid fa-arrows-up-down"></i> 정책 표</div>
+  <div class="lbl"><i class="fa-solid fa-arrow-down"></i> 감사 이벤트</div>
+  <div class="lbl"><i class="fa-solid fa-arrows-up-down"></i> 승인 요청</div>
+</div>
+<div class="row" style="align-items:center;height:190px">
+  <div class="box alt" style="flex:1;height:190px"><i class="fa-solid fa-server"></i>조직 서버<div class="in"><span>정책</span><span>승인</span><span>감사</span></div></div>
+  <div class="arrow" style="color:var(--purple)"><i class="fa-solid fa-arrow-right"></i></div>
+  <div class="box alt" style="width:330px;height:190px"><i class="fa-solid fa-desktop"></i>관리 콘솔</div>
+</div>
+<aside class="notes">확장이 입력을 가로채 검사하고 정책 표로 판정합니다. 서버는 정책을 내려주고, 사용자가 별도로 동의한 감사 이벤트와 승인 요청만 받으며, 관리 콘솔에서 승인 처리와 정책 변경을 합니다. 서버를 연결하지 않으면 네트워크 요청은 없습니다.</aside>
+</section>
+
+<!-- 13. 03-B 기술 스택 -->
+<section class="slide" data-title="기술 스택">
+<div class="sh"><i class="fa-solid fa-sitemap"></i><span>03 시스템 구조</span></div>
+<h2>기술 스택</h2>
+<div class="grid g4" style="grid-template-rows:repeat(2,1fr);height:430px">
+  <div class="card"><div class="ico" style="background:#3178c6"><i class="fa-solid fa-code"></i></div><b>TypeScript</b></div>
+  <div class="card"><div class="ico" style="background:#149eca"><i class="fa-brands fa-react"></i></div><b>React</b></div>
+  <div class="card c-purple"><div class="ico"><i class="fa-solid fa-bolt"></i></div><b>Vite</b></div>
+  <div class="card"><div class="ico" style="background:#4285f4"><i class="fa-brands fa-chrome"></i></div><b>Chrome MV3</b></div>
+  <div class="card c-green"><div class="ico" style="background:#059669"><i class="fa-solid fa-server"></i></div><b>FastAPI</b></div>
+  <div class="card"><div class="ico" style="background:#3776ab"><i class="fa-brands fa-python"></i></div><b>Python</b></div>
+  <div class="card c-amber"><div class="ico" style="background:#ff5d01"><i class="fa-solid fa-rocket"></i></div><b>Astro</b></div>
+  <div class="card c-green"><div class="ico" style="background:#6e9f18"><i class="fa-solid fa-vial-circle-check"></i></div><b>Vitest</b></div>
+</div>
+<aside class="notes">확장은 TypeScript로 쓰고 Vite로 번들하며, 설정과 팝업 화면은 React, 안내창은 가벼운 Preact로 만들었습니다. 서버는 Python FastAPI, 공개 사이트는 Astro, 테스트는 Vitest와 unittest를 씁니다.</aside>
+</section>
+
+<!-- 14. 03-C 개인정보 원칙 -->
+<section class="slide" data-title="원칙">
+<div class="sh"><i class="fa-solid fa-sitemap"></i><span>03 시스템 구조</span></div>
+<h2>개인정보 원칙</h2>
+<div class="grid g4" style="height:360px">
+  <div class="card c-green"><div class="ico"><i class="fa-solid fa-laptop"></i></div><b>로컬 검사</b><span class="sub">브라우저 안</span></div>
+  <div class="card"><div class="ico"><i class="fa-solid fa-ban"></i></div><b>원문 저장 0</b><span class="sub">서버 미전송</span></div>
+  <div class="card c-amber"><div class="ico"><i class="fa-solid fa-toggle-on"></i></div><b>별도 동의</b><span class="sub">기본 꺼짐</span></div>
+  <div class="card c-purple"><div class="ico"><i class="fa-solid fa-link"></i></div><b>해시 체인</b><span class="sub">변조 탐지</span></div>
+</div>
+<div class="chips" style="margin-top:28px"><span class="chip"><i class="fa-solid fa-key"></i>키 해시만 저장</span><span class="chip"><i class="fa-solid fa-user-lock"></i>최소 권한</span></div>
+<aside class="notes">입력한 글과 파일은 브라우저 밖으로 나가지 않습니다. 서버로 가는 것은 범주 ID, 조치, 시각, 정책 버전과 승인 요청 시의 목적과 짧은 사유뿐이고 모두 사용자가 별도로 동의해야 합니다. 서버는 API 키의 해시만 가지며, 감사 로그는 해시 체인으로 변조를 알아볼 수 있습니다.</aside>
+</section>
+
+<!-- 15. 단원 04 -->
+<section class="slide fade" data-title="04 도입">
+<div class="div">
+  <i class="fa-solid fa-user-check bigico"></i>
+  <div class="n">04</div>
+  <div class="t">서버·승인</div>
+  <div class="s"><i class="fa-solid fa-gauge-high"></i>관리자 흐름</div>
+</div>
+</section>
+
+<!-- 16. 04-A 승인 흐름 -->
+<section class="slide" data-title="승인 흐름">
+<div class="sh"><i class="fa-solid fa-user-check"></i><span>04 서버·승인</span></div>
+<h2>승인 흐름</h2>
+<div class="flow" style="height:230px">
+  <div class="step"><i class="fa-solid fa-hand"></i>전송 중단</div>
+  <div class="arr"><i class="fa-solid fa-chevron-right"></i></div>
+  <div class="step"><i class="fa-solid fa-paper-plane"></i>승인 요청</div>
+  <div class="arr"><i class="fa-solid fa-chevron-right"></i></div>
+  <div class="step"><i class="fa-solid fa-user-check" style="color:var(--purple)"></i>관리자 승인</div>
+  <div class="arr"><i class="fa-solid fa-chevron-right"></i></div>
+  <div class="step"><i class="fa-solid fa-circle-check" style="color:var(--green)"></i>알림 수령</div>
+  <div class="arr"><i class="fa-solid fa-chevron-right"></i></div>
+  <div class="step"><i class="fa-solid fa-1" style="color:var(--amber)"></i>1회 전송</div>
+</div>
+<div class="grid g3" style="margin-top:36px">
+  <div class="card c-red" style="padding:20px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-pen"></i></div><b style="font-size:24px">내용 변경 시 무효</b></div>
+  <div class="card c-amber" style="padding:20px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-rotate-left"></i></div><b style="font-size:24px">재사용 불가</b></div>
+  <div class="card c-ink" style="padding:20px"><div class="ico" style="width:64px;height:64px;font-size:30px"><i class="fa-solid fa-server"></i></div><b style="font-size:24px">서버 장애 시 차단</b></div>
+</div>
+<aside class="notes">승인 필요 판정을 받은 글은 전송이 멈추고, 사용자가 업무 목적을 골라 요청합니다. 관리자가 승인하면 딱 한 번만 통과합니다. 승인 뒤 글자를 하나라도 바꾸면 무효이고, 같은 승인으로 두 번 보낼 수 없으며, 서버가 응답하지 않아도 승인 없이는 통과하지 않습니다. 내용 비교는 탭 메모리 안에서만 합니다.</aside>
+</section>
+
+<!-- 17. 04-B 콘솔 -->
+<section class="slide" data-title="관리 콘솔">
+<div class="sh"><i class="fa-solid fa-user-check"></i><span>04 서버·승인</span></div>
+<h2>관리 콘솔</h2>
+<div class="win" style="height:440px"><div class="bar"><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><i class="fa-solid fa-circle"></i><span>/console</span></div>
+  <div class="body">
+    <div style="display:flex;gap:10px;margin-bottom:14px"><span class="tab on"><i class="fa-solid fa-inbox"></i> 승인함</span><span class="tab"><i class="fa-solid fa-sliders"></i> 정책</span><span class="tab"><i class="fa-solid fa-clipboard-list"></i> 감사 로그</span><span class="tab"><i class="fa-solid fa-clock-rotate-left"></i> 관리 기록</span></div>
+    <table>
+      <thead><tr><th>범주</th><th>목적</th><th>상태</th><th>처리</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip" style="padding:4px 14px"><i class="fa-solid fa-phone"></i>전화번호</span></td><td>고객 응대</td><td class="st">대기</td><td><span class="btn g">승인</span> <span class="btn r">거절</span></td></tr>
+        <tr><td><span class="chip" style="padding:4px 14px"><i class="fa-solid fa-envelope"></i>이메일</span></td><td>문서 검토</td><td class="st">대기</td><td><span class="btn g">승인</span> <span class="btn r">거절</span></td></tr>
+        <tr><td><span class="chip" style="padding:4px 14px"><i class="fa-solid fa-key"></i>API 키</span></td><td>코드 작업</td><td class="st" style="color:var(--green)">승인됨</td><td>boss</td></tr>
+      </tbody>
+    </table>
+  </div></div>
+<div class="chips" style="margin-top:22px"><span class="chip"><i class="fa-solid fa-code-branch"></i>버전 관리</span><span class="chip"><i class="fa-solid fa-rotate-left"></i>롤백</span><span class="chip"><i class="fa-solid fa-link"></i>체인 검증</span></div>
+<aside class="notes">관리 콘솔은 서버가 내려주는 정적 화면으로, 관리자 키로 로그인합니다. 승인함에서 요청을 건별로 승인하거나 거절하고, 정책 탭에서 새 버전을 만들거나 이전 버전으로 되돌립니다. 감사 로그와 관리 기록은 체인 검증으로 조작 여부를 확인합니다. 화면의 데이터는 모두 텍스트로만 그려 악성 입력이 실행되지 않습니다.</aside>
+</section>
+
+<!-- 18. 단원 05 -->
+<section class="slide fade" data-title="05 도입">
+<div class="div">
+  <i class="fa-solid fa-flag-checkered bigico"></i>
+  <div class="n">05</div>
+  <div class="t">검증·계획</div>
+  <div class="s"><i class="fa-solid fa-vial-circle-check"></i>테스트와 로드맵</div>
+</div>
+</section>
+
+<!-- 19. 05-A 테스트 -->
+<section class="slide" data-title="테스트">
+<div class="sh"><i class="fa-solid fa-flag-checkered"></i><span>05 검증·계획</span></div>
+<h2>테스트 결과</h2>
+<div class="grid g5" style="height:330px;gap:16px">
+  <div class="card" style="padding:20px 10px"><div class="big" style="font-size:72px">964</div><b style="font-size:24px">확장 테스트</b><i class="fa-solid fa-circle-check" style="font-size:30px;color:var(--green)"></i></div>
+  <div class="card" style="padding:20px 10px"><div class="big" style="font-size:72px">84</div><b style="font-size:24px">서버 테스트</b><i class="fa-solid fa-circle-check" style="font-size:30px;color:var(--green)"></i></div>
+  <div class="card" style="padding:20px 10px"><div class="big" style="font-size:72px">65</div><b style="font-size:24px">실제 Chrome</b><i class="fa-solid fa-circle-check" style="font-size:30px;color:var(--green)"></i></div>
+  <div class="card" style="padding:20px 10px"><div class="big" style="font-size:72px">13</div><b style="font-size:24px">연동 e2e</b><i class="fa-solid fa-circle-check" style="font-size:30px;color:var(--green)"></i></div>
+  <div class="card" style="padding:20px 10px"><div class="big" style="font-size:60px">40/40</div><b style="font-size:24px">정책 대조</b><i class="fa-solid fa-circle-check" style="font-size:30px;color:var(--green)"></i></div>
+</div>
+<div class="chips" style="margin-top:28px"><span class="chip"><i class="fa-solid fa-shuffle"></i>확장↔서버 일치</span><span class="chip"><i class="fa-solid fa-user-secret"></i>키 노출 검사</span></div>
+<aside class="notes">확장 vitest 964개, 서버 84개, 실제 Chrome DOM 65개, 서버와 확장을 실제 HTTP로 연결한 e2e 13개, 확장과 파이썬 PDP와 서버가 같은 판정을 내는지 대조한 40개가 모두 통과했습니다. 저장소에 키 형식이 노출되지 않는지도 테스트로 검사합니다.</aside>
+</section>
+
+<!-- 20. 05-B 한계·로드맵 -->
+<section class="slide" data-title="한계와 계획">
+<div class="sh"><i class="fa-solid fa-flag-checkered"></i><span>05 검증·계획</span></div>
+<h2>한계 · 다음 단계</h2>
+<div class="row" style="height:420px">
+  <div class="card" style="flex:1;align-items:stretch;gap:10px;padding:22px 28px">
+    <div style="display:flex;align-items:center;gap:14px;font-size:32px;font-weight:900;color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i>한계</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-bug" style="color:var(--red)"></i>오탐·누락</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-user-slash" style="color:var(--red)"></i>이름 미탐지</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-house-laptop" style="color:var(--red)"></i>로컬 서버</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-globe" style="color:var(--red)"></i>실사이트 미검증</div>
+  </div>
+  <div class="arrow" style="font-size:44px"><i class="fa-solid fa-arrow-right"></i></div>
+  <div class="card c-green" style="flex:1;align-items:stretch;gap:10px;padding:22px 28px">
+    <div style="display:flex;align-items:center;gap:14px;font-size:32px;font-weight:900;color:var(--green)"><i class="fa-solid fa-road"></i>다음</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-id-badge" style="color:var(--green)"></i>SSO·사용자 키</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-shuffle" style="color:var(--green)"></i>API 프록시</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-file-pdf" style="color:var(--green)"></i>PDF·OCR</div>
+    <div class="chip" style="justify-content:flex-start"><i class="fa-solid fa-signature" style="color:var(--green)"></i>이름·주소 탐지</div>
+  </div>
+</div>
+<aside class="notes">형식 기반 탐지라 오탐과 누락이 있고 이름과 주소는 아직 찾지 못합니다. 서버는 로컬 시연용이고 ChatGPT 같은 실제 사이트 화면에서는 직접 확인이 더 필요합니다. 다음 단계는 사용자별 키와 SSO, 사내 챗봇을 위한 API 프록시, PDF와 이미지 검사, 이름과 주소 탐지입니다.</aside>
+</section>
+
+<!-- 21. Q&A -->
+<section class="slide fade" data-title="Q&A">
+<div class="div" style="align-items:center;padding-left:0;text-align:center">
+  <i class="fa-solid fa-comments" style="font-size:150px;color:var(--brand);margin-bottom:10px"></i>
+  <div class="t" style="font-size:150px;margin-top:0">Q &amp; A</div>
+  <div class="s"><i class="fa-solid fa-circle-question"></i>질문 환영</div>
+</div>
+</section>
+
+<!-- 22. 감사 -->
+<section class="slide dark" data-title="감사">
+<div class="hero" style="align-items:center;text-align:center;padding-left:0">
+  <i class="fa-solid fa-heart" style="position:static;transform:none;font-size:90px;color:#ff7a8a;margin-bottom:18px"></i>
+  <div class="t1" style="font-size:110px">감사합니다</div>
+  <div class="tag" style="font-size:48px;margin:6px 0 34px;color:#9db8ff">Thank You</div>
+  <a class="chip link" href="https://github.com/dyj02056/ai-input-protection-gateway" target="_blank" rel="noopener" style="background:#fff;color:#0b1226;font-size:32px;padding:18px 36px;text-decoration:none"><i class="fa-brands fa-github" style="color:#0b1226;font-size:40px"></i>GitHub 저장소</a>
+  <div class="chips" style="margin-top:22px"><span class="chip"><i class="fa-solid fa-user"></i>dyj02056</span></div>
+</div>
+<aside class="notes">저장소 주소는 github.com/dyj02056/ai-input-protection-gateway 입니다. 사용법 홈페이지는 같은 이름의 GitHub Pages에서 볼 수 있습니다. 질문과 피드백 감사합니다.</aside>
+</section>
+
+</div>
+
+<div id="bar"></div>
+<div id="cnt"></div>
+<div id="notes"></div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage');
+  var bar = document.getElementById('bar');
+  var cnt = document.getElementById('cnt');
+  var notes = document.getElementById('notes');
+  var cur = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  function show(i) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (el, n) { el.classList.toggle('on', n === cur); });
+    bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+    cnt.textContent = (cur + 1) + ' / ' + slides.length;
+    var n = slides[cur].querySelector('.notes');
+    notes.textContent = n ? n.textContent : '';
+    try { history.replaceState(null, '', '#' + (cur + 1)); } catch (e) {}
+  }
+  document.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); show(cur + 1); }
+    else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); show(cur - 1); }
+    else if (k === 'Home') show(0);
+    else if (k === 'End') show(slides.length - 1);
+    else if (k === 'f' || k === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+    else if (k === 'n' || k === 'N') notes.classList.toggle('show');
+  });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;
+    show(e.clientX > window.innerWidth / 2 ? cur + 1 : cur - 1);
+  });
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', function () { var n = parseInt(location.hash.slice(1), 10); if (n) show(n - 1); });
+  fit();
+  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>
