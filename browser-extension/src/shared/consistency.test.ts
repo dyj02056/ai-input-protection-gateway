@@ -1,4 +1,4 @@
-// content.js·background.js는 아직 번들 밖의 별도 파일이라 같은 값을 따로 가지고 있습니다.
+// content.js는 아직 번들 밖의 별도 파일이라 같은 값을 따로 가지고 있습니다(4단계에서 정리).
 // 한쪽만 고쳐서 어긋나는 일을 막기 위해 원본 파일에서 값을 읽어 대조합니다.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -30,12 +30,5 @@ describe("지원 호스트 목록", () => {
     const expected = [...SUPPORTED_HOSTS].sort();
     expect(hostsOf(manifest.host_permissions)).toEqual(expected);
     expect(hostsOf(manifest.content_scripts[0]!.matches)).toEqual(expected);
-  });
-
-  it("background.js의 SUPPORTED_HOSTS와 일치한다", () => {
-    const match = /const SUPPORTED_HOSTS = (\[[^\]]*\]);/.exec(read("background.js"));
-    expect(match).not.toBeNull();
-    const fromBackground = JSON.parse(match![1]!) as string[];
-    expect([...fromBackground].sort()).toEqual([...SUPPORTED_HOSTS].sort());
   });
 });

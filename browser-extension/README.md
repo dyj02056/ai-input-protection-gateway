@@ -9,20 +9,22 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 | 파일 | 역할 |
 |---|---|
 | `manifest.json` | MV3 설정. 버전 1.1.0, 아이콘 4종, `options_page`, 백그라운드 서비스 워커, `storage` 권한, 대상 호스트 4개 |
-| `detector.js` | 로컬 정규식 탐지·마스킹. `inspect()`는 범주 ID 배열만, `mask()`는 자리표시자 대체 문자열만, `findMatches()`/`applyMatches()`는 일치 구간의 위치를 다룹니다 |
-| `policy.js` | 브라우저 안에서 도는 로컬 정책 엔진. `policy.py`와 같은 우선순위(BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)와 같은 기본 매핑을 따릅니다 |
+| `src/engine/detector.ts` → `dist-ext/detector.js` | 로컬 정규식 탐지·마스킹. `inspect()`는 범주 ID 배열만, `mask()`는 자리표시자 대체 문자열만, `findMatches()`/`applyMatches()`는 일치 구간의 위치를 다룹니다 |
+| `src/engine/policy.ts` → `dist-ext/policy.js` | 브라우저 안에서 도는 로컬 정책 엔진. `policy.py`와 같은 우선순위(BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)와 같은 기본 매핑을 따릅니다 |
 | `content.js` | 입력·붙여넣기 감지 → 안내 창 → 수동 마스킹. 실행 취소, 감사 기록, 선택형 전송 차단 |
-| `background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지 |
+| `src/background/background.ts` → `dist-ext/background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지 |
 | `popup.html` · `options.html` · `onboarding.html` | 확장 페이지의 진입점. 비어 있는 `#root`에 `src/`의 React 화면을 붙입니다 |
 | `src/popup/` | 도구 모음 팝업(React). 현재 탭의 지원 여부와 버전만 표시 |
 | `src/options/` | 설정 화면(React). 탐지 4종 on/off, 안내 표시·실행 취소, 감사 기록 보기/삭제, 전송 보호 스위치 |
 | `src/onboarding/` | 설치 직후 열리는 60초 시작 가이드(React) |
-| `src/shared/` | 화면이 공유하는 상수·설정 읽기/쓰기·호스트 판별. `consistency.test.ts`가 `content.js`·`background.js`·`manifest.json`의 같은 값과 대조합니다 |
-| `src/test/` | 테스트용 `chrome.*` 스텁 |
+| `src/entries/` | `detector.js`·`policy.js`의 진입점. 전역 `AIInputGatewayDetector`·`AIInputGatewayPolicy`를 노출합니다(`content.js`가 이 이름으로 접근) |
+| `src/shared/` | 화면·백그라운드가 공유하는 상수·설정 읽기/쓰기·호스트 판별. `consistency.test.ts`가 `content.js`·`background.js`·`manifest.json`의 같은 값과 대조합니다 |
+| `src/test/` | 테스트용 `chrome.*` 스텁, 빌드 산출물을 vm에서 실행하는 도우미 |
 | `icons/logo.svg` · `icon16/32/48/128.png` | 최종 로고(A안). PNG는 `py tools/make_icons.py`로 생성 |
-| `detector.test.js` · `policy.test.js` | Node.js 내장 테스트 (개발용, 제출 ZIP에 들어가지 않음) |
 
-`detector.js` · `policy.js` · `content.js` · `background.js`는 아직 번들하지 않고 **내용을 바꾸지 않은 채 그대로 `dist-ext/`에 복사**합니다(`vite.config.mts`의 `STATIC_FILES`). 따라서 `tools/dom_test.html`은 계속 이 폴더의 `content.js`를 직접 읽습니다.
+`detector.js` · `policy.js` · `background.js`는 TypeScript 소스(`src/`)를 **하나의 일반 스크립트(IIFE)로 번들**해 같은 이름으로 `dist-ext/`에 만듭니다. `manifest.json`의 `content_scripts`와 서비스 워커는 모듈이 아닌 일반 스크립트로 읽으므로 ES 모듈로 내지 않고, 읽기 쉽도록 압축하지 않습니다. `content.js`는 아직 TS로 옮기지 않아 **내용을 바꾸지 않은 채 그대로 복사**합니다(`vite.config.mts`의 `STATIC_FILES`).
+
+`docs/detector.js`(공개 데모가 읽는 파일)는 직접 고치지 않습니다. 빌드가 `dist-ext/detector.js`를 복사해 덮어쓰므로 탐지기 소스는 `src/engine/detector.ts` 하나입니다.
 
 ## 빌드·테스트
 
@@ -32,7 +34,7 @@ Node.js 20.19 이상이 필요합니다. 저장소 루트에서 실행합니다.
 npm install          # 처음 한 번
 npm run build        # 타입 검사 + dist-ext/ 생성
 npm run dev          # 변경 감시 빌드 (chrome://extensions → 압축해제된 확장 → dist-ext/ 로드)
-npm test             # detector·policy(node --test) + React 화면·공유 로직(vitest)
+npm test             # 빌드 후 vitest 전체 (탐지기·정책·백그라운드·React 화면·산출물 검사)
 py tools/package_store.py   # dist-ext/ → dist/ai-input-protection-gateway-<버전>.zip
 ```
 
@@ -158,26 +160,30 @@ detector.applyMatches(text, matches);
 
 ## 테스트 실행
 
-프로젝트 루트에서 Node.js 내장 테스트 실행:
+프로젝트 루트에서 실행합니다. 먼저 빌드한 뒤 vitest가 돕니다.
 
 ```text
-node --test browser-extension/detector.test.js browser-extension/policy.test.js
+npm test
 ```
 
-외부 npm 패키지는 필요하지 않습니다. 탐지 범주, 원문 미반환, 이메일 마스킹, 전각 변형 탐지, 기본 마스킹과 문자열 수준의 줄바꿈 보존, 설정에서 끈 범주 제외, 옵션 미지정 시 하위 호환, `findMatches()`/`applyMatches()`의 위치 정확성과 `mask()`와의 결과 일치(14개), 그리고 정책 엔진의 우선순위·알 수 없는 범주 처리·원문 문자열 거부(10개)를 확인합니다.
+- `src/engine/detector.test.ts` · `policy.test.ts`: 같은 케이스를 **TS 모듈**과 **빌드된 `dist-ext/*.js`(빈 전역에서 실행)** 양쪽에 돌립니다. 탐지 범주, 원문 미반환, 전각 변형, 줄바꿈 보존, 설정에서 끈 범주 제외, `findMatches()`/`applyMatches()`와 `mask()`의 일치, 정책 우선순위·알 수 없는 범주 처리·원문 문자열 거부를 확인합니다.
+- `src/background/background.test.ts`: 설치 시 시작 가이드, 배지 색·문자, 알 수 없는 판정 이름 처리를 모듈과 산출물 양쪽에서 확인합니다.
+- `src/build-artifacts.test.ts`: `manifest.json`이 가리키는 파일이 모두 있는지, 일반 스크립트에 `import`/`export`가 없는지, `content.js`가 원본과 같은지, `docs/detector.js`가 확장에 들어가는 것과 같은지 확인합니다.
+- `src/**/*.test.tsx`: popup·options·onboarding 화면. `src/shared/consistency.test.ts`는 `content.js`·`manifest.json`과 겹치는 값(기본 설정, 지원 호스트)이 어긋나는지 대조합니다.
 
 `contenteditable`의 DOM 조작은 실제 브라우저에서만 확인할 수 있습니다. 로컬 Chrome을 헤드리스로 띄워 확장 코드를 그대로 실행하는 회귀 테스트가 있습니다.
 
 ```text
+npm run build
 py tools/dom_test.py
 ```
 
-알림 창의 마스킹 버튼까지 실제로 눌러 결과 DOM 구조와 화면에 그려진 줄 수를 비교합니다. `<p>`·`<div>`·`<br>` 세 가지 줄 구조, 5줄 예시, 빈 줄 유지, 한 줄에 값이 여러 개인 경우, 값이 여러 인라인 요소에 나뉜 경우 등 16개를 확인하고, 이어서 1.1.0 기능 28개를 확인합니다. 시간 검사는 Chrome의 가상 시간(`--virtual-time-budget`)으로 도는 덕분에 20초 유지와 8초 자동 닫힘을 확인해도 실제 실행은 몇 초면 끝납니다. Chrome 실행 파일을 자동으로 찾지 못하면 `--chrome` 옵션으로 지정합니다.
+하네스는 소스가 아니라 빌드 산출물(`dist-ext/`)을 읽습니다. 알림 창의 마스킹 버튼까지 실제로 눌러 결과 DOM 구조와 화면에 그려진 줄 수를 비교합니다. `<p>`·`<div>`·`<br>` 세 가지 줄 구조, 5줄 예시, 빈 줄 유지, 한 줄에 값이 여러 개인 경우, 값이 여러 인라인 요소에 나뉜 경우 등 16개를 확인하고, 이어서 1.1.0 기능 28개를 확인합니다. 시간 검사는 Chrome의 가상 시간(`--virtual-time-budget`)으로 도는 덕분에 20초 유지와 8초 자동 닫힘을 확인해도 실제 실행은 몇 초면 끝납니다. Chrome 실행 파일을 자동으로 찾지 못하면 `--chrome` 옵션으로 지정합니다.
 
 파이썬 쪽 정책과 브라우저 쪽 정책이 같은 답을 내는지 확인합니다.
 
 ```text
-py tools/policy_parity.py          # policy.py ↔ policy.js 같은 케이스 12개 대조
+py tools/policy_parity.py          # policy.py ↔ policy.ts 같은 케이스 12개 대조(Python 쪽 확인)
 py -m pytest gateway-core/pdp -q   # 정책 엔진 자체 테스트
 ```
 
@@ -186,10 +192,11 @@ py -m pytest gateway-core/pdp -q   # 정책 엔진 자체 테스트
 ## 제출 패키지 만들기
 
 ```text
+npm run build
 py tools/package_store.py
 ```
 
-`dist/ai-input-protection-gateway-<버전>.zip`이 생성됩니다. `detector.test.js`, `policy.test.js`, `README.md`, 미사용 시안(`logo-a/b/c.svg`)은 제외하고, `manifest.json`이 참조하는 아이콘이 실제로 있는지 먼저 검사합니다. ZIP 항목 경로는 항상 `/` 구분자입니다.
+`dist/ai-input-protection-gateway-<버전>.zip`이 생성됩니다. `dist-ext/`만 담으며, 테스트·소스맵·TypeScript 소스가 섞여 있거나 HTML이 참조하는 파일 또는 `manifest.json`이 참조하는 아이콘이 없으면 ZIP을 만들지 않습니다. ZIP 항목 경로는 항상 `/` 구분자입니다.
 
 아이콘을 다시 만들려면:
 

@@ -6,14 +6,13 @@ import { defineConfig } from "vitest/config";
 
 const EXT_ROOT = resolve(import.meta.dirname, "browser-extension");
 
-// 1단계에서는 아직 번들하지 않는 기존 확장 파일입니다. 내용을 바꾸지 않고 그대로 산출물에 복사합니다.
-// 이 목록이 곧 제출 ZIP에 들어가는 비-React 파일의 전부입니다(테스트·README·로고 시안은 제외).
+// 아직 번들하지 않는 기존 확장 파일입니다. 내용을 바꾸지 않고 그대로 산출물에 복사합니다.
+// (content.js는 4단계에서 정리합니다. detector.js·policy.js·background.js는 scripts/build.mjs가
+// src/에서 만들어 같은 이름으로 dist-ext/에 넣습니다.)
+// 이 목록은 제출 ZIP에 들어가는 정적 파일의 전부입니다(테스트·README·로고 시안은 제외).
 const STATIC_FILES = [
   "manifest.json",
-  "background.js",
   "content.js",
-  "detector.js",
-  "policy.js",
   "icons/logo.svg",
   "icons/icon16.png",
   "icons/icon32.png",
@@ -46,7 +45,8 @@ export default defineConfig({
   plugins: [react(), copyStaticFiles()],
   build: {
     outDir: resolve(import.meta.dirname, "dist-ext"),
-    emptyOutDir: true,
+    // dist-ext/ 비우기는 scripts/build.mjs가 한 번만 합니다(이어서 클래식 스크립트를 같은 폴더에 만들기 때문).
+    emptyOutDir: false,
     target: "es2022",
     modulePreload: { polyfill: false },
     rollupOptions: {

@@ -10,7 +10,11 @@
 - 시간 관련 검사는 `--virtual-time-budget`의 가상 시간으로 동작하므로
   테스트 자체는 몇 초 안에 끝납니다.
 
+하네스는 소스가 아니라 빌드 산출물(`dist-ext/`의 detector.js·policy.js·content.js)을 읽으므로,
+먼저 `npm run build`가 필요합니다.
+
 사용법:
+    npm run build
     py tools/dom_test.py
     py tools/dom_test.py --chrome "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 """
@@ -29,6 +33,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HARNESS = Path(__file__).resolve().parent / "dom_test.html"
+DIST_DIR = REPO_ROOT / "dist-ext"
+DIST_SCRIPTS = ("detector.js", "policy.js", "content.js")
 
 CHROME_CANDIDATES = (
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
@@ -92,6 +98,14 @@ def main() -> int:
     parser.add_argument("--chrome", default=None, help="Chrome 실행 파일 경로")
     parser.add_argument("--timeout", type=int, default=90, help="실행 제한 시간(초)")
     args = parser.parse_args()
+
+    missing = [name for name in DIST_SCRIPTS if not (DIST_DIR / name).is_file()]
+    if missing:
+        print(
+            "dist-ext/에 " + ", ".join(missing) + "이(가) 없습니다. 먼저 `npm run build`를 실행하세요.",
+            file=sys.stderr,
+        )
+        return 1
 
     chrome = find_chrome(args.chrome)
     print(f"chrome  : {chrome}")
