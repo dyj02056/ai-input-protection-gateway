@@ -3,62 +3,268 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 입력정보 보호 게이트웨이 — 최종 제출</title>
+<title>AI 입력정보 보호 게이트웨이 — 사용법</title>
 <link rel="icon" type="image/png" href="icons/icon32.png">
 <style>:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}body{color:var(--ink);background:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}.site-nav [aria-current=page]{font-weight:700}
-*{box-sizing:border-box}body{margin:0}.wrap{max-width:1040px;margin:0 auto;padding:26px 18px 56px}.top{color:var(--mut);flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:13px;display:flex}.hero{color:#fff;background:linear-gradient(135deg,#0b1226,#1a2b66 60%,#155eef);border-radius:20px;padding:30px 26px}.hero h1{margin:8px 0;font-size:32px;line-height:1.25}.hero p{color:#dbe6ff;line-height:1.65}.btn{border-radius:12px;margin:6px 8px 0 0;padding:12px 18px;font-weight:800;text-decoration:none;display:inline-block}.btn-p{color:#0b2c9b;background:#fff}.btn-g{color:#fff;border:1px solid #fff6}.card{border:1px solid var(--line);background:#fff;border-radius:16px;margin-top:16px;padding:18px}.grid{grid-template-columns:1fr;gap:16px;display:grid}@media (width>=900px){.grid{grid-template-columns:1.2fr .8fr}}.ext{border:1px solid var(--line);color:inherit;border-radius:12px;gap:12px;margin-top:10px;padding:12px;text-decoration:none;display:flex}.logo{color:#fff;border-radius:10px;place-items:center;width:40px;height:40px;font-weight:900;display:grid}.g{background:#10a37f}.c{background:#d97757}.m{background:#1a73e8}.warn{color:#5b4a00;background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;line-height:1.6}code{border:1px solid var(--line);background:#eef3ff;border-radius:6px;padding:2px 6px}
+*{box-sizing:border-box}body{margin:0;line-height:1.6}html{scroll-behavior:smooth}.wrap{max-width:1040px;margin:0 auto;padding:26px 18px 56px}.top{color:var(--mut);flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:13px;display:flex}.hero{color:#fff;background:linear-gradient(135deg,#0b1226,#1a2b66 60%,#155eef);border-radius:20px;padding:30px 26px}.hero h1{margin:8px 0;font-size:32px;line-height:1.25}.hero p{color:#dbe6ff;line-height:1.65}.btn{border-radius:12px;margin:6px 8px 0 0;padding:12px 18px;font-weight:800;text-decoration:none;display:inline-block}.btn-p{color:#0b2c9b;background:#fff}.btn-g{color:#fff;border:1px solid #fff6}.toc{z-index:5;backdrop-filter:blur(6px);background:#f4f7fff0;flex-wrap:wrap;gap:6px;margin-top:12px;padding:10px 0;display:flex;position:sticky;top:0}.toc a{color:var(--brand);border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;text-decoration:none}.card{border:1px solid var(--line);background:#fff;border-radius:16px;margin-top:16px;padding:20px;scroll-margin-top:60px}.card h2{margin:0 0 10px}.card h3{margin:20px 0 6px;font-size:16px}.small{color:var(--mut);font-size:13px}.cols{grid-template-columns:1fr;gap:12px;display:grid}@media (width>=760px){.cols{grid-template-columns:repeat(3,1fr)}.cols.four{grid-template-columns:repeat(4,1fr)}}.mini{border:1px solid var(--line);background:#fafcff;border-radius:12px;padding:12px 14px}.mini p{margin:6px 0 0;font-size:14px}.a-allow{border-left:5px solid #0e9f6e}.a-mask{border-left:5px solid #b77900}.a-appr{border-left:5px solid #7a5af8}.a-block{border-left:5px solid #d92d20}.step{gap:14px;margin-top:16px;display:flex}.step h3{margin:0 0 4px}.num{background:var(--brand);color:#fff;border-radius:50%;flex:none;place-items:center;width:30px;height:30px;margin-top:2px;font-weight:800;display:grid}.step>div{flex:1;min-width:0}.ext{border:1px solid var(--line);color:inherit;border-radius:12px;gap:12px;margin-top:8px;padding:10px 12px;text-decoration:none;display:flex}.logo{color:#fff;border-radius:10px;flex:none;place-items:center;width:36px;height:36px;font-weight:900;display:grid}.g{background:#10a37f}.c{background:#d97757}.m{background:#1a73e8}.warn{color:#5b4a00;background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;margin-top:14px;padding:12px;line-height:1.6}code{border:1px solid var(--line);background:#eef3ff;border-radius:6px;padding:1px 6px;font-size:.92em}pre{color:#e8eefc;background:#0f1b33;border-radius:10px;margin:8px 0;padding:12px 14px;overflow-x:auto}pre code{color:inherit;background:0 0;border:0;padding:0}table{border-collapse:collapse;width:100%;margin-top:8px;font-size:14px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #e6ecf8;padding:8px 10px}th{color:var(--mut);white-space:nowrap}.tag{white-space:nowrap;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:800;display:inline-block}.t-MASK{color:#8a5a00;background:#fff4d6}.t-BLOCK{color:#b42318;background:#fee4e2}.t-ALLOW{color:#067647;background:#dcfae6}.t-REQUIRE_APPROVAL{color:#5925dc;background:#ebe9fe}ol.flow>li{margin:6px 0}dt{margin-top:12px;font-weight:800}dd{margin:2px 0 0}a{color:var(--brand)}@media (width<=600px){.hero h1{font-size:25px}table{display:block;overflow-x:auto}}
 </style></head>
 <body>
 
 <div class="wrap">
-<div class="top"><span>최종 제출 · 로컬 처리 · 입력 내용 서버 전송 없음</span><span>plan v2.1 · 확장 v1.7.0 · vitest 964 · DOM 65 · PDP 9 · 서버 84</span></div>
+<div class="top"><span>로컬 처리 · 기본 설정에서는 네트워크 요청 없음</span><span>확장 v1.7.0 · vitest 964 · DOM 65 · PDP 9 · 서버 84 · e2e 13</span></div>
+
 <header class="hero">
 <div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
-<h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
-<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 데모는 브라우저 로컬에서만 동작합니다.</p>
-<a class="btn btn-p" href="demo.html">로컬 탐지 데모 열기</a>
+<h1>보내기 전에 검사하고,<br>안전하게 가려서 보내세요.</h1>
+<p>ChatGPT·Claude·Gemini 입력창에 주민번호·전화번호·API 키 같은 민감정보가 들어가면 <b>보내기 직전에</b> 알려 주고, 한 번의 클릭으로 가려 줍니다. 검사는 <b>내 브라우저 안에서만</b> 이루어지고, 입력한 글은 어디로도 전송되지 않습니다.</p>
+<a class="btn btn-p" href="#start">사용법 시작하기</a>
+<a class="btn btn-g" href="demo.html">로컬 탐지 데모</a>
 <a class="btn btn-g" href="https://github.com/dyj02056/ai-input-protection-gateway" target="_blank" rel="noopener">소스 저장소</a>
-<a class="btn btn-g" href="plan.html">계획서 페이지</a>
-<a class="btn btn-g" href="privacy.html">개인정보 처리방침</a>
 </header>
-<div class="grid">
-<section class="card">
-<h2>실제 AI 사이트에서 확장으로 확인</h2>
-<p><b>실제 개인정보·키는 입력하지 마세요. 전송 버튼도 누르지 마세요.</b> 버튼은 외부 사이트를 새 탭으로 열기만 합니다.</p>
-<a class="ext" href="https://chat.openai.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 열기</b><br>가짜 5줄로 안내 표시만 확인</span></a>
-<a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 새 주소 열기</b><br>위와 같은 방식으로 확인</span></a>
-<a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span class="logo c">C</span><span><b>Claude 열기</b><br>가짜 문구로 안내 표시만 확인</span></a>
-<a class="ext" href="https://gemini.google.com/" target="_blank" rel="noopener"><span class="logo m">G</span><span><b>Gemini 참고용으로 열기</b><br>MVP 지원은 ChatGPT·Claude 중심</span></a>
-<div class="warn" style="margin-top:12px">데모는 입력값을 대신 보내지 않으며 자동 전송·차단을 하지 않습니다. 확장은 기본값으로 안내만 하고, 전송 차단은 사용자가 직접 켜야 동작합니다.</div>
+
+<nav class="toc" aria-label="이 페이지의 목차">
+<a href="#overview">한눈에 보기</a>
+<a href="#start">시작하기</a>
+<a href="#actions">판정과 기본 정책</a>
+<a href="#settings">설정 가이드</a>
+<a href="#server">조직 서버 연결</a>
+<a href="#approval">승인 흐름</a>
+<a href="#faq">문제 해결</a>
+<a href="#status">검증 현황</a>
+</nav>
+
+<section class="card" id="overview">
+<h2>한눈에 보기</h2>
+<div class="cols">
+<div class="mini"><b>① 확장 프로그램</b><p>각자 컴퓨터의 크롬에서 입력창을 지켜보는 <b>현장 경비원</b>. 이것만 설치해도 모든 기본 기능이 동작합니다.</p></div>
+<div class="mini"><b>② 조직 서버 (선택)</b><p>회사가 규칙을 통일하고 기록·승인을 관리하는 <b>본사 관리실</b>. 필요할 때만 추가합니다.</p></div>
+<div class="mini"><b>③ 관리 콘솔</b><p>서버에 딸린 관리 화면. 승인 처리, 정책 변경·되돌리기, 감사 로그 확인을 합니다.</p></div>
+</div>
+<div class="warn"><b>꼭 알아 두세요.</b> 설치만 하면 <b>아무것도 막지 않고 알려 주기만</b> 합니다. 전송 차단·승인은 설정에서 직접 켜야 동작합니다. 이 도구는 형식을 보고 찾기 때문에 <b>감지되지 않았다고 안전한 것은 아닙니다.</b> 시험할 때는 가짜 값만 쓰세요.</div>
 </section>
-<aside class="card">
-<h2>확인 방법 (5단계)</h2>
+
+<section class="card" id="start">
+<h2>시작하기 — 확장 설치부터 첫 마스킹까지</h2>
+<p class="small">필요한 것: Node.js 20.19 이상, Chrome(또는 Edge), 이 저장소를 내려받은 폴더</p>
+
+<div class="step"><span class="num">1</span><div>
+<h3>확장 만들기</h3>
+<p>터미널에서 프로젝트 폴더로 이동해 실행합니다.</p>
+<pre><code>npm install
+npm run build        # 확장이 dist-ext/ 폴더에 만들어집니다</code></pre>
+</div></div>
+
+<div class="step"><span class="num">2</span><div>
+<h3>크롬에 설치하기</h3>
 <ol>
-<li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
-<li><code>npm test</code> → 964 통과 (빌드 후 vitest: 탐지기·정책·백그라운드·화면·콘텐츠 스크립트·산출물·서버 연동·승인 흐름 검사)</li>
-<li><code>py tools/dom_test.py</code> → 65/65 (헤드리스 Chrome, <code>npm run build</code> 선행)</li>
-<li><code>py tools/policy_parity.py</code> → 12/12 (policy.py ↔ policy.ts 대조)</li>
-<li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>
+<li>주소창에 <code>chrome://extensions</code> 입력</li>
+<li>오른쪽 위 <b>개발자 모드</b> 켜기</li>
+<li><b>압축해제된 확장 프로그램을 로드합니다</b> 클릭</li>
+<li><b><code>dist-ext/</code></b> 폴더 선택 (소스 폴더 <code>browser-extension/</code>가 아닙니다)</li>
 </ol>
-<p>최종 항목 전문은 <a href="plan.html">계획서</a>와 <code>submission_note.md</code> 누적 기록을 보세요.</p>
-</aside>
+<p class="small">설치되면 시작 안내 탭이 한 번 열립니다. 열려 있던 AI 사이트 탭은 <b>새로고침</b>해야 적용됩니다.</p>
+</div></div>
+
+<div class="step"><span class="num">3</span><div>
+<h3>가짜 값으로 체험하기</h3>
+<p>ChatGPT·Claude·Gemini 중 한 곳의 입력창에 아래 가짜 값을 붙여넣습니다.</p>
+<pre><code>가짜 전화번호 010-0000-0000
+가짜 이메일 test.user@example.com
+가짜 키 sk-TESTTESTTESTTESTTEST</code></pre>
+<div class="links">
+<a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 열기</b><br>chatgpt.com</span></a>
+<a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span class="logo c">C</span><span><b>Claude 열기</b><br>claude.ai</span></a>
+<a class="ext" href="https://gemini.google.com/" target="_blank" rel="noopener"><span class="logo m">G</span><span><b>Gemini 열기</b><br>gemini.google.com</span></a>
 </div>
-<section class="card">
-<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.7.0)</h2>
-<p>ChatGPT · Claude · Gemini 입력창에 검사 안내와 마스킹 버튼을 추가합니다. 검사는 브라우저 안에서만 실행되고 네트워크 요청이 없습니다.</p>
-<div class="grid" style="grid-template-columns:1fr;gap:10px">
+<p class="small"><b>전송 버튼은 누르지 마세요.</b> 링크는 새 탭으로 사이트를 열기만 합니다.</p>
+</div></div>
+
+<div class="step"><span class="num">4</span><div>
+<h3>안내창 사용하기</h3>
+<p>입력창에 민감정보가 들어오면 오른쪽 위에 <b>안내창</b>이 뜹니다.</p>
 <ul>
-<li><b>구성</b> <code>manifest.json</code>(MV3) · TypeScript 소스(<code>browser-extension/src/</code>)를 빌드해 <code>detector.js</code> 탐지 · <code>policy.js</code> 로컬 정책 · <code>content.js</code> 안내·마스킹·실행 취소·전송 차단 · <code>background.js</code> 탭 배지를 만들고, <code>popup</code> / <code>options</code> / <code>onboarding</code>은 React 화면</li>
-<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.7.0.zip</code> — <code>npm run build</code> 후 <code>py tools/package_store.py</code>로 생성 (21개 파일, 약 131KB)</li>
-<li><b>아이콘</b> A안 확정 — <a href="logo-preview.html">아이콘 세트 미리보기</a> · <code>py tools/make_icons.py</code>로 PNG 4종 재생성</li>
-<li><b>설치</b> <code>npm install</code> → <code>npm run build</code> → <code>chrome://extensions</code> → 개발자 모드 → 압축해제된 확장 프로그램 로드 → <b><code>dist-ext/</code></b> (소스 폴더 <code>browser-extension/</code>가 아닙니다)</li>
-<li><b>권한</b> <code>storage</code> + 대상 4개 주소 호스트 권한만 사용 (방문 기록 권한 없음, 원격 코드 없음)</li>
+<li><b>감지 항목 마스킹</b> — 민감한 부분만 <code>[전화번호]</code>처럼 가립니다. 문단·줄바꿈은 그대로 둡니다.</li>
+<li><b>실행 취소</b> — 마스킹 직후 한 번 되돌릴 수 있습니다.</li>
+<li><b>×</b> — 안내를 닫습니다. 같은 감지가 계속되는 동안은 다시 뜨지 않습니다.</li>
 </ul>
+<p>브라우저 도구 모음의 확장 아이콘을 누르면 지금 탭이 보호 대상인지 보입니다. 아이콘의 배지 색으로 마지막 판정(초록=감지 없음, 주황=마스킹·승인 필요, 빨강=차단 판정)도 알 수 있습니다.</p>
+</div></div>
+
+<p>설치 없이 탐지 결과만 보고 싶다면 <a href="demo.html">로컬 탐지 데모</a>에서 같은 탐지 코드를 브라우저 안에서 실행해 볼 수 있습니다.</p>
+</section>
+
+<section class="card" id="actions">
+<h2>판정 4단계와 기본 정책</h2>
+<p>감지된 항목마다 정책이 조치를 정하고, 여러 항목이 함께 있으면 <b>가장 엄격한 조치</b>를 따릅니다.</p>
+<div class="cols four">
+<div class="mini a-allow"><b>허용 ALLOW</b><p>그대로 보내도 됩니다.</p></div>
+<div class="mini a-mask"><b>마스킹 MASK</b><p>민감한 부분만 가려서 보냅니다.</p></div>
+<div class="mini a-appr"><b>승인 필요 REQUIRE_APPROVAL</b><p>관리자 승인이 필요합니다.</p></div>
+<div class="mini a-block"><b>차단 BLOCK</b><p>보내면 안 되는 정보입니다.</p></div>
 </div>
-<p><a href="privacy.html">개인정보 처리방침</a> · <a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/documents/store-listing.md">스토어 등재 문안</a> · <a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/browser-extension/README.md">확장 README</a></p>
-<div class="warn">기본값으로는 자동 전송 차단을 하지 않습니다(전송 차단은 설정에서 직접 켜야 동작합니다). 마스킹은 자리표시자 대체이며 직전 한 번만 실행 취소로 되돌릴 수 있으니, 가짜 문구로만 확인하세요.</div>
+<h3>감지하는 9종과 기본 판정</h3>
+<table>
+<thead><tr><th>감지 항목</th><th>기본 판정</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>주민등록번호 형식</td><td><span class="tag t-MASK">마스킹</span></td><td></td></tr><tr><td>전화번호 형식</td><td><span class="tag t-MASK">마스킹</span></td><td></td></tr><tr><td>이메일 형식</td><td><span class="tag t-MASK">마스킹</span></td><td></td></tr><tr><td>API 키/토큰 형식</td><td><span class="tag t-BLOCK">차단 판정</span></td><td></td></tr><tr><td>카드번호 형식</td><td><span class="tag t-BLOCK">차단 판정</span></td><td></td></tr><tr><td>계좌번호 형식</td><td><span class="tag t-MASK">마스킹</span></td><td>단독 숫자열은 오탐이 많아 문맥 단어(예: 계좌, 비밀번호)가 있을 때만 감지</td></tr><tr><td>여권번호 형식</td><td><span class="tag t-MASK">마스킹</span></td><td>단독 숫자열은 오탐이 많아 문맥 단어(예: 계좌, 비밀번호)가 있을 때만 감지</td></tr><tr><td>운전면허번호 형식</td><td><span class="tag t-MASK">마스킹</span></td><td>단독 숫자열은 오탐이 많아 문맥 단어(예: 계좌, 비밀번호)가 있을 때만 감지</td></tr><tr><td>비밀번호 표기</td><td><span class="tag t-BLOCK">차단 판정</span></td><td>단독 숫자열은 오탐이 많아 문맥 단어(예: 계좌, 비밀번호)가 있을 때만 감지</td></tr>
+<tr><td>등록되지 않은 항목</td><td><span class="tag t-REQUIRE_APPROVAL">승인 필요</span></td><td>서버 정책이 정하는 기본 조치</td></tr>
+</tbody>
+</table>
+<p class="small">전각 문자·보이지 않는 문자·한글로 쓴 숫자·URL/Base64로 숨긴 값도 풀어서 검사합니다. 조직 서버를 연결하면 이 표를 콘솔에서 바꿀 수 있지만, <b>API 키·카드번호·비밀번호는 BLOCK보다 약하게 바꿀 수 없습니다.</b></p>
+</section>
+
+<section class="card" id="settings">
+<h2>설정 가이드 (확장 아이콘 → 옵션)</h2>
+<p>옵션 화면은 아래 순서로 구성되어 있습니다. 막는 기능은 모두 <b>기본 꺼짐</b>입니다.</p>
+<table>
+<thead><tr><th>설정</th><th>무엇을 하나요</th><th>기본</th></tr></thead>
+<tbody>
+<tr><td>탐지 항목</td><td>9종을 각각 켜고 끕니다. 끈 항목은 안내와 마스킹에서 빠집니다</td><td>모두 켬</td></tr>
+<tr><td>무시할 값(허용 목록)</td><td>회사 대표번호처럼 감지에서 빼고 싶은 값을 한 줄에 하나씩 적습니다</td><td>비어 있음</td></tr>
+<tr><td>마스킹 방식</td><td><b>자리표시자</b> <code>[전화번호]</code> 또는 <b>세션 토큰</b> <code>[전화_1]</code>. 토큰을 고르면 AI 답변에 나온 토큰을 <b>이 탭 화면에서만</b> 원래 값으로 보여 줍니다(전송되지 않음, 새로고침하면 사라짐)</td><td>자리표시자</td></tr>
+<tr><td>안내 표시</td><td>감지 안내 계속 표시, 깨끗해지면 자동 닫기, 실행 취소 버튼, 안내창 위치(오른쪽 위 / 왼쪽 아래)</td><td>켬</td></tr>
+<tr><td>감사 기록</td><td>판정 이름·범주·시각만 최근 20건 이 브라우저에 기록(원문 없음)</td><td>꺼짐</td></tr>
+<tr><td>전송 보호 3종</td><td><b>로컬 정책 적용</b>(판정에 따라 문구 변경), <b>전송 차단</b>(BLOCK이면 첫 보내기 중단, 5초 안에 다시 누르면 전송), <b>승인 확인 단계</b>(승인 필요면 확인 요구). 차단·승인 확인은 로컬 정책 적용과 <b>함께</b> 켜야 동작합니다</td><td>모두 꺼짐</td></tr>
+<tr><td>첨부파일 검사</td><td>txt · csv · docx · xlsx · hwpx 내용을 이 브라우저 안에서 검사합니다. 표는 감지된 행 수가 기준 이상이면 대량 반출로 봅니다. <b>첨부파일 전송 차단</b>을 켜면 위험한 첨부가 있을 때 첫 보내기를 중단합니다</td><td>검사 켬 / 차단 꺼짐</td></tr>
+<tr><td>조직 서버 연결</td><td>아래 <a href="#server">조직 서버 연결</a>을 보세요</td><td>연결 안 됨</td></tr>
+<tr><td>감사 이벤트 서버 전송</td><td>서버 연결 후 <b>별도 동의</b>로 켭니다. 보내는 것: 시각·조치·범주 ID·입력/파일 구분·정책 버전</td><td>꺼짐</td></tr>
+<tr><td>관리자 승인 요청</td><td>서버 연결 후 <b>별도 동의</b>로 켭니다. 보내는 것: 범주 ID·업무 목적·짧은 사유</td><td>꺼짐</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card" id="server">
+<h2>조직 서버 연결 (선택)</h2>
+<p>회사가 정책을 통일하고 승인·기록을 관리하고 싶을 때만 필요합니다. 서버를 연결하지 않으면 확장은 <b>네트워크 요청을 전혀 하지 않습니다.</b> 서버가 받는 것은 정책 요청, 그리고 사용자가 별도로 동의한 감사 이벤트·승인 요청뿐이며, <b>입력한 글과 파일은 받지 않습니다.</b></p>
+
+<h3>먼저 헷갈리기 쉬운 점: 키 본체와 해시</h3>
+<table>
+<thead><tr><th>값</th><th>생김새</th><th>어디에 넣나요</th></tr></thead>
+<tbody>
+<tr><td><b>키 본체</b></td><td>43자 정도의 무작위 영문·숫자 (한 번만 보여 줌)</td><td>직원용 → 확장 옵션 / 관리자용 → 콘솔 로그인 화면</td></tr>
+<tr><td><b>해시 줄</b></td><td><code>PDP_..._SHA256=이름=64자리</code></td><td>서버 설정 파일 <code>.env</code> (해시를 콘솔에 넣으면 거부됩니다)</td></tr>
+</tbody>
+</table>
+
+<h3>관리자: 서버 준비하기</h3>
+<div class="step"><span class="num">1</span><div>
+<p>키 두 개를 만듭니다. 각 명령이 <b>키 본체</b>와 <b>해시 줄</b>을 출력합니다. 키 본체는 따로 안전하게 보관하세요.</p>
+<pre><code>py tools/server.py setup                           # 처음 한 번: 서버 준비
+py tools/server.py newkey --name my-user           # 직원용 키 만들기
+py tools/server.py newkey --admin --name my-admin  # 관리자 키 만들기</code></pre>
+</div></div>
+<div class="step"><span class="num">2</span><div>
+<p><code>gateway-core/server/.env</code> 파일을 만들어 <b>해시 줄만</b> 넣습니다. 형식은 <code>이름=해시</code>이고 공백·따옴표는 넣지 않습니다. 키 해시는 일반용과 관리자용이 서로 달라야 합니다.</p>
+<pre><code># gateway-core/server/.env  (직접 만드는 파일. 저장소에는 올라가지 않습니다)
+PDP_API_KEYS_SHA256=my-user=&lt;직원용 키의 해시 64자리&gt;
+PDP_ADMIN_KEYS_SHA256=my-admin=&lt;관리자 키의 해시 64자리&gt;</code></pre>
+</div></div>
+<div class="step"><span class="num">3</span><div>
+<p>서버를 시작합니다. <code>.env</code>를 바꿨다면 서버를 껐다 켜야 합니다.</p>
+<pre><code>py tools/server.py run          # 서버 시작: http://127.0.0.1:8787
+# 콘솔: http://127.0.0.1:8787/console</code></pre>
+</div></div>
+
+<h3>관리자: 관리 콘솔 쓰기</h3>
+<p><code>http://127.0.0.1:8787/console</code>에 접속해 <b>관리자 키 본체</b>를 입력합니다(일반 키는 거부됩니다). 키는 화면 메모리에만 있고 저장되지 않아, 새로고침하면 다시 입력합니다.</p>
+<table>
+<thead><tr><th>탭</th><th>할 수 있는 일</th></tr></thead>
+<tbody>
+<tr><td>승인함</td><td>직원의 승인 요청을 보고 건별로 <b>승인·거절</b> (대기 건수 표시, 15초마다 자동 갱신)</td></tr>
+<tr><td>정책</td><td>현재 정책에서 시작해 항목별 조치를 바꿔 <b>새 버전 만들기</b>(바로 적용 선택), 문제가 생기면 <b>이전 버전으로 되돌리기</b></td></tr>
+<tr><td>감사 로그</td><td>확장이 보낸 이벤트(최근 100건)와 <b>체인 검증</b>으로 조작 여부 확인</td></tr>
+<tr><td>관리 기록</td><td>누가 언제 정책을 바꾸고 무엇을 승인·거절했는지, 마찬가지로 체인 검증</td></tr>
+</tbody>
+</table>
+
+<h3>직원: 확장 연결하기</h3>
+<ol>
+<li>확장 <b>옵션</b> → <b>조직 정책 서버</b>에 서버 주소(예: <code>http://127.0.0.1:8787</code>)와 <b>직원용 키 본체</b>를 입력합니다.</li>
+<li><b>연결하고 정책 받기</b>를 누르고, 브라우저가 서버 접근 허용을 물으면 허용합니다.</li>
+<li>"상태: 연결됨"과 적용 중인 정책(예: default v1)이 보이면 성공입니다. 이후 안내 문구가 <b>"조직 정책(v1) 판정이 …"</b>로 바뀝니다.</li>
+<li>콘솔에서 정책을 바꾸면 옵션의 <b>지금 동기화</b>를 눌러 바로 받을 수 있습니다(자동으로는 사이트를 열 때 10분 간격).</li>
+</ol>
+<p class="small">서버 주소는 https만 쓸 수 있습니다(개발용 localhost·127.0.0.1은 http 가능). <b>연결 끊기</b>를 누르면 저장된 주소·키·정책과 동의 설정이 지워집니다.</p>
+</section>
+
+<section class="card" id="approval">
+<h2>관리자 승인 흐름</h2>
+<p>옵션에서 <b>로컬 정책 적용</b> + <b>승인 확인 단계</b> + <b>관리자 승인 요청</b>을 모두 켜고 서버를 연결했을 때, 판정이 <b>승인 필요</b>인 글은 이렇게 처리됩니다.</p>
+<ol class="flow">
+<li><b>전송이 멈춥니다.</b> 보내기를 눌러도, 다시 눌러도 통과하지 않습니다. 안내창에 업무 목적 선택·사유 칸·<b>승인 요청 보내기</b>가 나옵니다.</li>
+<li><b>요청합니다.</b> 목적(고객 응대·문서 검토·코드 작업·데이터 분석·기타)을 고르고, 필요하면 짧은 사유를 적습니다. 서버에는 <b>범주 ID·목적·사유만</b> 갑니다. 사유에는 이름·전화번호 같은 개인정보를 쓰지 마세요.</li>
+<li><b>관리자가 처리합니다.</b> 콘솔 <b>승인함</b>에서 승인 또는 거절합니다.</li>
+<li><b>결과가 안내창에 나타납니다.</b> 5초 간격으로 확인해 "승인되었습니다" 또는 거절(처리 메모 포함)로 바뀝니다.</li>
+<li><b>승인되면 딱 한 번 통과합니다.</b> 내용을 <b>바꾸지 말고</b> 보내기를 다시 누르세요.</li>
+</ol>
+<table>
+<thead><tr><th>상황</th><th>결과</th></tr></thead>
+<tbody>
+<tr><td>승인 후 글자를 하나라도 바꿈</td><td>막힘. 바뀐 내용으로 다시 요청해야 합니다 (원래대로 되돌리면 다시 유효)</td></tr>
+<tr><td>같은 승인으로 두 번 보내려 함</td><td>두 번째는 막힘 (승인은 한 번만 유효)</td></tr>
+<tr><td>거절됨 / 만료됨</td><td>통과하지 않음. 요청이 4시간 안에 처리되지 않거나, 승인 후 30분 안에 쓰지 않으면 만료됩니다(다시 요청하면 됩니다)</td></tr>
+<tr><td>서버가 응답하지 않음</td><td>통과하지 않고 이유를 안내. 급하면 옵션에서 승인 요청 스위치를 끄면 기존 "5초 안에 다시 누르면 전송" 방식으로 돌아감</td></tr>
+</tbody>
+</table>
+<p class="small">"내용이 같은가"의 비교는 <b>이 탭의 메모리 안에서만</b> 합니다. 비교용 값은 서버로 보내지 않고 저장하지 않으며, 탭을 닫거나 새로고침하면 사라집니다.</p>
+</section>
+
+<section class="card" id="faq">
+<h2>문제 해결과 자주 묻는 질문</h2>
+<table>
+<thead><tr><th>증상</th><th>확인할 것</th></tr></thead>
+<tbody>
+<tr><td>안내창이 뜨지 않음</td><td>확장을 다시 로드(<code>chrome://extensions</code>의 ↻)한 뒤 AI 사이트 탭을 <b>새로고침</b>했는지, 지원 사이트(ChatGPT·Claude·Gemini)인지, 옵션에서 해당 항목이 켜져 있는지 확인</td></tr>
+<tr><td>콘솔에 관리자 키를 넣어도 들어가지지 않음</td><td>입력한 값이 <b>키 본체</b>인지(해시가 아닌지), <b>관리자용</b> 키인지, <code>.env</code>의 관리자 해시 줄과 짝인지, <code>.env</code> 수정 뒤 서버를 껐다 켰는지</td></tr>
+<tr><td>"확장 프로그램 안에서 응답이 없습니다"</td><td>v1.7.0 이전 버전의 결함이었습니다. 최신으로 <code>npm run build</code> 후 확장을 새로고침(↻)하세요</td></tr>
+<tr><td>"서버에 연결하지 못했습니다"</td><td>서버가 켜져 있는지, 주소·포트가 맞는지</td></tr>
+<tr><td>인증 거부 문구</td><td>확장 칸에는 <b>직원용 키 본체</b>를 넣었는지, <code>.env</code>의 직원용 해시와 짝인지</td></tr>
+<tr><td>정책을 바꿨는데 반영이 안 됨</td><td>옵션에서 <b>지금 동기화</b>를 누르세요 (자동은 최대 10분 걸림)</td></tr>
+<tr><td>키를 잃어버림</td><td><code>newkey</code>를 다시 실행해 새 키·새 해시로 <code>.env</code>를 바꾸고 서버를 재시작</td></tr>
+</tbody>
+</table>
+<h3>자주 묻는 질문</h3>
+<dl>
+<dt>서버가 제 입력을 보나요?</dt>
+<dd>아니요. 서버로 가는 것은 감지된 종류·조치·시각·정책 버전, 승인 요청 시의 업무 목적·짧은 사유뿐입니다. 입력한 글, 파일(이름 포함), 사이트 주소는 보내지 않습니다.</dd>
+<dt>설치하자마자 전송이 막히나요?</dt>
+<dd>아니요. 기본은 안내만 합니다. 막는 기능은 직접 켜야 합니다.</dd>
+<dt>감지가 100% 정확한가요?</dt>
+<dd>아닙니다. 형식 기반이라 오탐과 누락이 있고, 이름·주소는 아직 감지하지 못합니다. 감지되지 않았다고 안전한 것은 아닙니다.</dd>
+<dt>실제 AI 사이트에서 검증되었나요?</dt>
+<dd>자동 시험(가상 환경·헤드리스 Chrome)까지 통과했지만, 각 사이트의 실제 화면에서의 동작은 직접 확인이 필요합니다. 사이트가 바뀌면 입력창·답변 위치 인식이 달라질 수 있습니다.</dd>
+<dt>서버를 회사 밖에서도 쓸 수 있나요?</dt>
+<dd>현재 서버는 로컬 개발·시연용입니다. TLS, 속도 제한, 사용자별 키·SSO가 없으니, 운영하려면 HTTPS를 처리하는 프록시 뒤에 두고 서버 README의 "운영 전에 해야 할 일"을 따르세요.</dd>
+</dl>
+</section>
+
+<section class="card" id="status">
+<h2>검증 현황과 더 알아보기</h2>
+<table>
+<thead><tr><th>명령</th><th>결과</th></tr></thead>
+<tbody>
+<tr><td><code>npm test</code> (빌드 후 vitest)</td><td>964 통과</td></tr>
+<tr><td><code>py tools/server.py test</code></td><td>서버 84 통과</td></tr>
+<tr><td><code>py tools/server.py e2e</code> (서버+확장 실제 연동)</td><td>13 통과</td></tr>
+<tr><td><code>py tools/policy_parity.py</code></td><td>40/40 (확장·PDP·서버 판정 일치)</td></tr>
+<tr><td><code>py tools/dom_test.py</code> (실제 Chrome DOM)</td><td>65/65</td></tr>
+<tr><td><code>py -m unittest discover -s gateway-core/pdp</code></td><td>9 통과</td></tr>
+</tbody>
+</table>
+<p>권한은 <code>storage</code>와 지원 사이트 4곳뿐이며(서버 접근은 연결할 때만 브라우저가 묻습니다), 방문 기록 권한과 원격 코드는 없습니다.</p>
+<p>
+<a href="demo.html">로컬 탐지 데모</a> ·
+<a href="plan.html">계획서 요약</a> ·
+<a href="privacy.html">개인정보 처리방침</a> ·
+<a href="logo-preview.html">아이콘</a> ·
+<a href="https://github.com/dyj02056/ai-input-protection-gateway" target="_blank" rel="noopener">GitHub 저장소</a> ·
+<a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/gateway-core/server/README.md" target="_blank" rel="noopener">서버 README</a> ·
+<a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/browser-extension/README.md" target="_blank" rel="noopener">확장 README</a> ·
+<a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/documents/plan.md" target="_blank" rel="noopener">전체 계획서</a>
+</p>
 </section>
 </div>
+
 
 
 </body>
