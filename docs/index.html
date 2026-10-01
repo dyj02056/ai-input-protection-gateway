@@ -28,7 +28,7 @@ code{background:#eef3ff;border:1px solid var(--line);border-radius:6px;padding:2
 </head>
 <body>
 <div class="wrap">
-<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v1.0 · detector 8 · PDP 9</span></div>
+<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v1.0 · detector 14 · DOM 16 · PDP 9</span></div>
 <header class="hero">
 <div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
 <h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
@@ -49,10 +49,11 @@ code{background:#eef3ff;border:1px solid var(--line);border-radius:6px;padding:2
 <div class="warn" style="margin-top:12px">데모·확장은 입력값을 대신 보내지 않으며 자동 전송·차단을 하지 않습니다.</div>
 </section>
 <aside class="card">
-<h2>확인 방법 (3단계)</h2>
+<h2>확인 방법 (4단계)</h2>
 <ol>
 <li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
-<li><code>node --test browser-extension/detector.test.js</code> → pass 8</li>
+<li><code>node --test browser-extension/detector.test.js</code> → pass 14</li>
+<li><code>py tools/dom_test.py</code> → 16/16 (헤드리스 Chrome)</li>
 <li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>
 </ol>
 <p>최종 항목 전문은 <a href="plan.html">계획서</a>와 <code>submission_note.md</code> 누적 기록을 보세요.</p>
