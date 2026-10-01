@@ -154,3 +154,11 @@
 - 검증: detector 6/6·PDP 9/9 이 작업공간 통과. 로고 시각 확인은 배포 URL에서 직접 확인 필요.
 - 로고 URL: https://dyj02056.github.io/ai-input-protection-gateway/logo-preview.html
 
+## 누적 기록 — 로고 B·C안 추가
+
+- `browser-extension/icons/logo-b.svg` 신규: 파란 둥근 사각 + 흰색 눈 외곽 + 검은 마스킹 바 (마스킹 강조).
+- `browser-extension/icons/logo-c.svg` 신규: 검은 둥근 사각 + 파란 게이트 틀 + 흰색/파란 점 3개 (게이트웨이 컨셉).
+- `docs/logo-preview.html` 개편: A·B·C안 비교 (128/48/16px + 다크 배경).
+- 검증: detector 6/6·PDP 9/9 이 작업공간 통과. 시각 확인은 배포 URL에서 직접 확인 필요.
+
+

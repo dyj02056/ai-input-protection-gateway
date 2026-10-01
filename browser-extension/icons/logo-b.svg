@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>AI 입력정보 보호 게이트웨이 로고 B안</title>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#155eef"/>
+  <ellipse cx="64" cy="60" rx="38" ry="24" fill="none" stroke="#ffffff" stroke-width="7"/>
+  <circle cx="64" cy="60" r="11" fill="#ffffff"/>
+  <rect x="18" y="50" width="92" height="20" rx="10" fill="#0b1226"/>
+  <rect x="26" y="56" width="20" height="8" rx="4" fill="#ffffff" opacity="0.95"/>
+  <rect x="50" y="56" width="14" height="8" rx="4" fill="#ffffff" opacity="0.65"/>
+  <rect x="68" y="56" width="22" height="8" rx="4" fill="#ffffff" opacity="0.85"/>
+</svg>
