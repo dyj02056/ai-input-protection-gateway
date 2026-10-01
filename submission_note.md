@@ -43,3 +43,20 @@
 - 탐지기 JavaScript 테스트: 기존 4개 테스트가 통과했고 이전 브라우저 확인도 완료됐다고 사용자가 보고함. 추가한 다섯 번째 문자열 테스트는 이전에 재실행되지 않았고, 이번 contenteditable 수정도 아직 자동·브라우저 검증되지 않았다.
 - 줄바꿈 수정: contenteditable 전체 교체를 제거하고 기존 텍스트 노드만 수정하도록 Workbench 파일을 변경했다. 수정 후 Chrome 확인은 대기 중이다.
 - 이 작업 공간에서는 Chrome이나 사용자의 로컬 터미널을 직접 실행하지 않았다.
+
+## 누적 기록 2026-10-01 — 계획서 v1.0 및 중간점검 1차
+
+### 계획서 작성
+- `docs/plan.md` v1.0 신규 작성. 필수 6항(개요·위협/정책·아키텍처·UX·보안·로드맵/KPI) 포함, 정책 JSON·PDP 입출력·감사로그 JSON 예시 포함.
+- 참고안 대비 변경: 무매칭 ALLOW/APPROVAL 분리, RRN 체크섬 가중치화, 로컬1차·하이브리드 추가, 24h 누적카운터, 승인바인딩 강화, 현 구현 한계 명시.
+- 현 구현 연결 명시: detector 3종·수동마스킹·PDP데모는 최소구현, 자동차단·서버연동·NER·파일파싱은 로드맵으로 분리.
+
+### 중간점검 1차 제출 항목
+- 만든 것: plan v1.0, detector inspect/mask, content.js 관찰+수동마스킹, policy.py 판정, 테스트 5+7개.
+- 동작 확인: 이 작업공간 `node --test browser-extension/detector.test.js` → pass 5 fail 0. PDP 7개는 사용자 로컬 보고 통과.
+- 확인법: (1) node 테스트 (2) chrome://extensions 가짜4줄 안내확인 (3) plan JSON과 README 범주계약 대조.
+- 바뀐 점과 이유: 위 정책 의미론·RRN·원문전송·누적·바인딩 변경, 이유는 오탐/오탈락/우회/재사용 방지.
+- AI/본인: AI는 구조화·예시·정규식·수정안·데모·뼈대. 본인은 가짜문구·미전송원칙·한계명시·재확인 분리 결정, 최종책임 본인.
+- 다음 할 일: Chrome줄바꿈 재확인, PDP재실행, 원문없는 연동·BLOCK제어·승인연결, 탐지·파일·감사확장.
+- URL·저장소: https://github.com/dyj02056/ai-input-protection-gateway, 별도배포없음, 작업공간 c:\Users\User\Documents\ai-input-protection-gateway.
+- 검증: detector 5/5 이 작업공간 통과. 브라우저 재확인·PDP재실행은 다음 점검까지 직접 수행 예정.
