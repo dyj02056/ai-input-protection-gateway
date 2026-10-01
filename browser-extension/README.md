@@ -1,6 +1,6 @@
-# 브라우저 확장 프로그램 — AI 입력정보 보호 게이트웨이 (v1.4.0)
+# 브라우저 확장 프로그램 — AI 입력정보 보호 게이트웨이 (v1.5.0)
 
-Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 텍스트 입력·붙여넣기에서 일부 개인정보 형식을 **로컬에서만** 검사하고, 사용자가 선택할 때만 마스킹합니다. 서버 전송·외부 요청·원격 코드가 없습니다.
+Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 텍스트 입력·붙여넣기에서 일부 개인정보 형식을 **로컬에서만** 검사하고, 사용자가 선택할 때만 마스킹합니다. 입력 내용은 서버로 보내지 않으며 원격 코드가 없습니다. 외부 요청은 기본으로 전혀 없고, 설정에서 조직 정책 서버를 연결한 경우에만 정책을 내려받는 요청을 합니다.
 
 ## 파일 구성
 
@@ -8,11 +8,11 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 
 | 파일 | 역할 |
 |---|---|
-| `manifest.json` | MV3 설정. 버전 1.4.0, 아이콘 4종, `options_page`, 백그라운드 서비스 워커, `storage` 권한, 대상 호스트 4개 |
+| `manifest.json` | MV3 설정. 버전 1.5.0, 아이콘 4종, `options_page`, 백그라운드 서비스 워커, `storage` 권한, 대상 호스트 4개, 선택 권한 `optional_host_permissions`(서버 연결 시에만 요청) |
 | `src/engine/detector.ts` → `dist-ext/detector.js` | 로컬 정규식 탐지·마스킹. `inspect()`는 범주 ID 배열만, `mask()`는 자리표시자 대체 문자열만, `findMatches()`/`applyMatches()`는 일치 구간의 위치를 다룹니다 |
 | `src/engine/policy.ts` → `dist-ext/policy.js` | 브라우저 안에서 도는 로컬 정책 엔진. `policy.py`와 같은 우선순위(BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)와 같은 기본 매핑을 따릅니다 |
 | `src/content/` → `dist-ext/content.js` | 입력·붙여넣기 감지 → 안내 창 → 수동 마스킹. 실행 취소, 감사 기록, 선택형 전송 차단. 아래 "콘텐츠 스크립트 구조" 참고 |
-| `src/background/background.ts` → `dist-ext/background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지 |
+| `src/background/background.ts` → `dist-ext/background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지, 조직 정책 서버 동기화(`policySync.ts`) |
 | `popup.html` · `options.html` · `onboarding.html` | 확장 페이지의 진입점. 비어 있는 `#root`에 `src/`의 React 화면을 붙입니다 |
 | `src/popup/` | 도구 모음 팝업(React). 현재 탭의 지원 여부와 버전만 표시 |
 | `src/options/` | 설정 화면(React). 탐지 범주 on/off·엄격 검증·허용 목록, 안내 표시·실행 취소, 감사 기록 보기/삭제, 전송 보호 스위치 |
@@ -81,6 +81,25 @@ py tools/package_store.py   # dist-ext/ → dist/ai-input-protection-gateway-<�
 단독 숫자열은 오탐이 많아서 계좌·여권·면허·비밀번호는 **문맥 단어가 있을 때만** 잡습니다. 마스킹은 키워드는 남기고 값만 바꿉니다(`비밀번호: [비밀번호]`).
 
 이 ID들은 `gateway-core/pdp/policy.py`의 정책 범주와 맞춥니다. `policy.js`는 그 정책을 브라우저 안에서 그대로 계산합니다(파이썬 PDP를 호출하지는 않습니다). 기본값으로는 **판정 결과를 안내 문구에만 쓰고 아무것도 막지 않습니다.** 전각 변형은 탐지를 우선하고, 마스킹은 원문 표기 그대로 치환을 시도한 뒤 필요하면 정규화 보기에서 가립니다.
+
+## 1.5.0에서 바뀐 것: 조직 정책 서버 연동 (선택)
+
+설정 화면에 **조직 정책 서버** 카드가 생겼습니다. **기본은 꺼짐**이고, 연결하지 않으면 네트워크 요청이 전혀 없습니다. 연결하면 확장은 서버에서 **정책 표(범주별 조치 + 대량 기준)를 내려받아 이 브라우저에서 판정**합니다.
+
+| 보내는 것 | 받는 것 |
+|---|---|
+| API 키(`Authorization` 헤더), 이전 정책의 ETag(`If-None-Match`) | 정책 JSON(범주별 조치, 미등록 범주 조치, 대량 행 기준, 버전) |
+
+- **입력한 글·파일·감지된 범주·건수는 서버로 보내지 않습니다.** 판정은 예전과 같이 브라우저 안에서 동기적으로 합니다. (요청마다 서버에 묻는 방식은 입력 길이·범주 같은 메타데이터가 새고, 응답을 기다리는 동안 전송 차단 이벤트를 놓칩니다. 서버에는 `/v1/decide`가 있지만 확장은 쓰지 않습니다.)
+- **권한은 연결할 때만 요청합니다.** `manifest.json`의 `optional_host_permissions`(`https://*/*`, `http://localhost/*`, `http://127.0.0.1/*`)로 선언하고, "연결" 버튼을 누르면 브라우저가 그 서버 주소 하나에 대한 접근을 묻습니다. 설치할 때 요구하는 권한(`storage` + 지원 사이트 4곳)은 그대로입니다. 연결을 끊으면 그 권한도 돌려줍니다.
+- **서버 주소는 https만**(개발용 `localhost`·`127.0.0.1`은 http 가능). 주소에 경로·쿼리·사용자 정보는 넣을 수 없습니다.
+- **API 키는 코드·설정 파일에 두지 않습니다.** 설정 화면에서 직접 입력하면 이 브라우저의 `chrome.storage.local`(별도 키 `serverApiKey`)에만 저장되고, 요청은 서비스 워커(`background.js`)만 보냅니다. 입력란은 `password` 형식이고 저장된 키를 화면에 다시 채우지 않습니다. 이 저장소는 공개이므로 키가 들어간 파일은 커밋하지 않습니다(`.gitignore`와 `shared/secrets.test.ts`가 지킵니다). *정직한 한계:* `chrome.storage.local`은 같은 확장의 콘텐츠 스크립트도 읽을 수 있습니다. 페이지의 스크립트는 읽지 못합니다(격리된 세계).
+- **요청 방식**: `GET {주소}/v1/policy`, `credentials: omit`, `cache: no-store`, `redirect: error`, 5초 제한, `Referer` 없음. 응답은 20,000자 이하이고 모든 항목을 엄격히 검사해(조치 이름 4개만, 범주 ID 형식, 숫자 범위) **하나라도 어긋나면 그 정책을 버리고 이전 정책을 유지**합니다. 서버가 죽었거나 키가 틀려도 이전 정책으로 계속 판정하고, 그 사실을 설정 화면에 보여 줍니다.
+- **동기화 시점**: 지원 사이트를 열 때(10분 이내 재요청은 건너뜀)와 설정 화면의 "지금 동기화". 알람 권한을 쓰지 않으므로 사이트를 한동안 열지 않으면 정책이 오래될 수 있습니다.
+- **적용 방식**: 정책이 있으면 안내 문구가 `조직 정책(v3) 판정이 …`으로 바뀌고, 전송 차단·승인 확인·첨부파일 차단이 그 판정을 따릅니다. 이 스위치들은 여전히 **사용자가 켜야 동작**합니다(서버가 켜 줄 수는 없습니다). 연결을 끊으면 내장 정책으로 돌아갑니다.
+- **서버 정책과 확장의 규칙을 같게 유지**: `tools/policy_cases.json`의 공용 케이스 표(프롬프트 20 + 조직 정책 6 + 파일 14)를 `policy.js`·`policy.py`·서버 코드·확장의 파일 판정이 모두 통과해야 하고(`py tools/policy_parity.py`, vitest), 서버 기본 정책 파일이 범주 등록부와 같은지도 검사합니다. 실제 서버와 붙인 시험(`py tools/server.py e2e`)은 확장의 판정을 서버 `/v1/decide`와 직접 비교합니다.
+
+서버를 직접 돌려 보려면 [`gateway-core/server/README.md`](../gateway-core/server/README.md)를 보세요.
 
 ## 1.4.0에서 바뀐 것: 첨부파일 검사
 

@@ -1,4 +1,4 @@
-// 설정 저장: chrome.storage.local만 사용합니다. 서버 전송 없음.
+// 설정 저장: chrome.storage.local만 사용합니다. 입력 내용은 서버로 보내지 않습니다.
 // 이름과 기본값은 content.js의 DEFAULT_FEATURES와 같아야 하며(consistency.test.ts가 대조합니다),
 // 차단·승인·정책·감사 기록은 기본 꺼짐이 원칙입니다.
 import { CATEGORY_IDS, type CategoryId } from "./constants.ts";

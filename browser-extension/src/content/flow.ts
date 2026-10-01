@@ -2,7 +2,7 @@
 // 입력은 관찰만 합니다. 사용자가 알림 버튼을 누르기 전에는 내용을 수정하지 않습니다.
 import { DEFAULT_FEATURES } from "../shared/settings.ts";
 import { recordAudit, reportAction } from "./audit.ts";
-import { alertKey, decideLocalAction, formatCategoryLabels } from "./decision.ts";
+import { alertKey, decideLocalAction, formatCategoryLabels, policyName } from "./decision.ts";
 import { findEditableTarget, isPlainEditor, readEditorText } from "./editable.ts";
 import {
   dispatchInputEvent,
@@ -129,17 +129,17 @@ function actionTextFor(action: string, canMask: boolean): string {
   const enforcing = feature("enforcePolicy");
   if (action === "BLOCK") {
     return enforcing && feature("blockSend")
-      ? "로컬 정책 판정이 BLOCK이고 전송 차단이 켜져 있어, 전송을 막습니다. 값을 지우거나 마스킹한 뒤 보내세요."
-      : "로컬 정책 판정이 BLOCK에 해당합니다. 이 확장은 전송을 막지 않으니 보내기 전에 직접 지우거나 마스킹하세요.";
+      ? `${policyName()} 판정이 BLOCK이고 전송 차단이 켜져 있어, 전송을 막습니다. 값을 지우거나 마스킹한 뒤 보내세요.`
+      : `${policyName()} 판정이 BLOCK에 해당합니다. 이 확장은 전송을 막지 않으니 보내기 전에 직접 지우거나 마스킹하세요.`;
   }
   if (action === "REQUIRE_APPROVAL") {
     return enforcing && feature("requireConfirm")
-      ? "로컬 정책 판정이 승인 검토 대상이고 승인 단계가 켜져 있어, 확인을 거쳐야 전송됩니다."
-      : "로컬 정책 판정이 승인 검토 대상입니다. 이 확장은 승인 요청을 보내지 않으니 필요하면 별도 절차를 따르세요.";
+      ? `${policyName()} 판정이 승인 검토 대상이고 승인 단계가 켜져 있어, 확인을 거쳐야 전송됩니다.`
+      : `${policyName()} 판정이 승인 검토 대상입니다. 이 확장은 승인 요청을 보내지 않으니 필요하면 별도 절차를 따르세요.`;
   }
   return canMask
-    ? "로컬 정책 판정이 MASK 대상입니다. 아래 버튼으로 자리표시자 마스킹을 할 수 있습니다."
-    : "로컬 정책 판정이 MASK 대상입니다. 아래 버튼 없이 직접 값을 수정해 주세요.";
+    ? `${policyName()} 판정이 MASK 대상입니다. 아래 버튼으로 자리표시자 마스킹을 할 수 있습니다.`
+    : `${policyName()} 판정이 MASK 대상입니다. 아래 버튼 없이 직접 값을 수정해 주세요.`;
 }
 
 export function renderNotice(

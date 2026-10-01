@@ -22,10 +22,14 @@ CASES_PATH = Path(__file__).resolve().parent / "policy_cases.json"
 PDP_DIR = REPO_ROOT / "gateway-core" / "pdp"
 
 sys.path.insert(0, str(PDP_DIR))
+sys.path.insert(0, str(REPO_ROOT / "gateway-core"))
 
 from policy import DEFAULT_POLICY, InspectionSummary, decide  # noqa: E402
+from server.decision import FileStatus, decide_file  # noqa: E402
+from server.policies import PolicyStore, parse_policy  # noqa: E402
 
 REGISTRY_TS = REPO_ROOT / "browser-extension" / "src" / "shared" / "categories.ts"
+SERVER_POLICY_DIR = REPO_ROOT / "gateway-core" / "server" / "policy_files"
 
 
 def load_registry() -> list[dict]:
@@ -61,8 +65,67 @@ def check_registry_defaults() -> list[str]:
     return problems
 
 
+def check_server_default_policy() -> list[str]:
+    """서버가 기본으로 내려주는 정책 파일이 범주 등록부의 기본 조치와 같은지 확인합니다.
+
+    다르면 "서버에 연결하지 않은 확장"과 "기본 정책을 받은 확장"의 판정이 달라집니다.
+    """
+    problems = []
+    registry = {item["id"]: item["defaultAction"] for item in load_registry()}
+    store = PolicyStore.from_directory(SERVER_POLICY_DIR)
+    document = parse_policy(
+        json.loads((SERVER_POLICY_DIR / "default.v1.json").read_text(encoding="utf-8")), "default.v1.json"
+    )
+    served = {category: action.value for category, action in document.category_actions.items()}
+    if store.active.version < 1:
+        problems.append("활성 정책 버전이 올바르지 않습니다")
+    for category, action in registry.items():
+        if served.get(category) != action:
+            problems.append(f"서버 기본 정책 {category}: {served.get(category)} / 등록부 {action}")
+    for category in served:
+        if category not in registry:
+            problems.append(f"서버 기본 정책의 {category}가 등록부에 없습니다")
+    if document.unknown_category_action.value != "REQUIRE_APPROVAL":
+        problems.append("서버 기본 정책의 미등록 범주 조치가 REQUIRE_APPROVAL이 아닙니다")
+    if document.bulk_record_threshold != 100:
+        problems.append("서버 기본 정책의 대량 기준이 100이 아닙니다(확장의 BULK_RECORD_THRESHOLD와 같아야 합니다)")
+    return problems
+
+
+def run_policy_cases(data: dict) -> list[str]:
+    """조직 정책(custom_policy)으로 판정한 결과가 케이스 표와 같은지 확인합니다."""
+    failures = []
+    document = parse_policy(data["custom_policy"], "custom_policy")
+    for case in data["policy_cases"]:
+        decision = decide(InspectionSummary(frozenset(case["categories"])), document.to_policy())
+        actual = (decision.action.value, list(decision.reason_codes))
+        if actual != (case["action"], case["reasonCodes"]):
+            failures.append(f"{case['name']}: 기대 {case['action']}/{case['reasonCodes']} 실제 {actual}")
+        else:
+            print(f"[PASS] {case['name']}: {actual[0]}")
+    return failures
+
+
+def run_file_cases(data: dict) -> list[str]:
+    """첨부파일 판정(서버 decide_file)이 케이스 표와 같은지 확인합니다."""
+    failures = []
+    default_document = parse_policy(
+        json.loads((SERVER_POLICY_DIR / "default.v1.json").read_text(encoding="utf-8")), "default.v1.json"
+    )
+    custom_document = parse_policy(data["custom_policy"], "custom_policy")
+    for case in data["file_cases"]:
+        document = custom_document if case["policy"] == "custom" else default_document
+        decision = decide_file(FileStatus(case["status"]), case["categories"], case["recordCount"], document)
+        if decision.action.value != case["action"]:
+            failures.append(f"{case['name']}: 기대 {case['action']} 실제 {decision.action.value}")
+        else:
+            print(f"[PASS] {case['name']}: {decision.action.value}")
+    return failures
+
+
 def main() -> int:
-    cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))["cases"]
+    data = json.loads(CASES_PATH.read_text(encoding="utf-8"))
+    cases = data["cases"]
     failures = []
 
     for case in cases:
@@ -89,13 +152,25 @@ def main() -> int:
         return 1
     print("[PASS] 범주 등록부의 기본 조치가 policy.py와 같음")
 
+    server_problems = check_server_default_policy()
+    if server_problems:
+        print("\n서버 기본 정책 ↔ 범주 등록부 불일치:")
+        for problem in server_problems:
+            print(f"  - {problem}")
+        return 1
+    print("[PASS] 서버 기본 정책 파일이 범주 등록부·확장 기본값과 같음")
+
+    failures += run_policy_cases(data)
+    failures += run_file_cases(data)
+
     if failures:
-        print(f"\n{len(cases) - len(failures)}/{len(cases)} 일치, {len(failures)} 불일치")
+        print(f"\n{len(failures)}건 불일치")
         for failure in failures:
             print(f"  - {failure}")
         return 1
 
-    print(f"\n{len(cases)}/{len(cases)} 일치 (policy.py 기준)")
+    total = len(cases) + len(data["policy_cases"]) + len(data["file_cases"])
+    print(f"\n{total}/{total} 일치 (policy.py·서버 기준)")
     return 0
 
 

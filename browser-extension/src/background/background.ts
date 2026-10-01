@@ -1,6 +1,8 @@
 // 스토어 등재용 백그라운드: 설치 시 시작 가이드 1회, 탭별 판정 배지.
 // 네트워크 요청 없음. 원문·범주 ID를 저장하지 않고 판정 이름만 배지 색으로 표시합니다.
 import { isSupportedUrl } from "../shared/hosts.ts";
+import { POLICY_PROBE_MESSAGE, POLICY_SYNC_MESSAGE } from "../shared/serverPolicy.ts";
+import { chromeDeps, probeServer, syncPolicy } from "./policySync.ts";
 
 interface BadgeStyle {
   readonly color: string;
@@ -29,9 +31,30 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
   if (!message || typeof message !== "object") return;
   const { type, action } = message as { type?: unknown; action?: unknown };
+
+  // 조직 정책 동기화: 콘텐츠 스크립트(탭)는 "확인해 달라"고만 요청할 수 있고, 즉시 강제 확인과 연결 시험은 확장 화면만 합니다.
+  if (type === POLICY_SYNC_MESSAGE) {
+    const fromExtensionPage = !sender || !sender.tab;
+    const force = fromExtensionPage && (message as { force?: unknown }).force === true;
+    syncPolicy(chromeDeps(), force).then(
+      (status) => respond(status),
+      () => respond(null),
+    );
+    return true; // 응답을 비동기로 돌려줍니다
+  }
+  if (type === POLICY_PROBE_MESSAGE) {
+    if (sender && sender.tab) return; // 탭(웹 페이지가 있는 곳)에서 온 요청은 받지 않습니다
+    const { url, key } = message as { url?: unknown; key?: unknown };
+    probeServer(chromeDeps(), typeof url === "string" ? url : "", typeof key === "string" ? key : "").then(
+      (status) => respond(status),
+      () => respond(null),
+    );
+    return true;
+  }
+
   if (type !== "gateway:action") return;
 
   const tabId = sender && sender.tab ? sender.tab.id : undefined;

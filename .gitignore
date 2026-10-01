@@ -63,3 +63,6 @@ local.settings.json
 *.tfstate
 *.tfstate.*
 
+
+# Python 가상환경(PDP 서버)
+.venv/

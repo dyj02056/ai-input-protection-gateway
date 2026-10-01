@@ -9,6 +9,7 @@ import {
   type Features,
   type MaskStyle,
 } from "../shared/settings.ts";
+import { POLICY_SYNC_MESSAGE, readStoredPolicy, SERVER_KEYS, type ServerPolicy } from "../shared/serverPolicy.ts";
 import type { AttachedFile } from "./files/types.ts";
 import type { Editor, UndoEntry } from "./types.ts";
 
@@ -48,6 +49,8 @@ export const state = {
   lastAuditKey: "",
   // 첨부로 기억하는 파일의 검사 결과(내용 없음). 첨부파일 전송 차단 판정에 씁니다.
   attachedFiles: [] as AttachedFile[],
+  // 조직 PDP 서버에서 내려받아 적용 중인 정책. 없으면 내장 기본 정책으로 판정합니다.
+  serverPolicy: null as ServerPolicy | null,
 };
 
 export function feature(name: BoolFeature): boolean {
@@ -94,12 +97,30 @@ export function applySettings(data: StoredSettings | null | undefined): void {
   }
 }
 
+// 백그라운드가 내려받아 검사를 통과시킨 조직 정책을 적용합니다. 저장소 값도 한 번 더 검사하고,
+// 올바르지 않거나 지워졌으면 내장 기본 정책으로 돌아갑니다.
+export function applyServerPolicy(stored: unknown): void {
+  state.serverPolicy = readStoredPolicy(stored);
+}
+
+// 서버 연동이 켜져 있으면 백그라운드가 정책을 확인하도록 요청합니다(너무 잦은 호출은 백그라운드가 막습니다).
+// 응답은 쓰지 않습니다. 새 정책은 저장소 변경으로 들어옵니다.
+function requestPolicySync(): void {
+  try {
+    chrome.runtime.sendMessage({ type: POLICY_SYNC_MESSAGE }, () => void chrome.runtime.lastError);
+  } catch {
+    // 확장이 새로 고쳐진 뒤의 옛 탭 등에서는 메시지를 보낼 수 없습니다. 기존 정책으로 계속 동작합니다.
+  }
+}
+
 // 저장된 설정을 읽고, 이후 바뀌는 설정을 다음 검사부터 바로 반영합니다.
 // chrome.storage를 쓸 수 없는 환경에서는 기본값으로만 동작합니다.
 export function watchSettings(onChanged: () => void): void {
   try {
-    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES, allowlist: [], maskStyle: "placeholder" }, (data) => {
+    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES, allowlist: [], maskStyle: "placeholder", [SERVER_KEYS.policy]: null }, (data) => {
       applySettings(data);
+      applyServerPolicy(data[SERVER_KEYS.policy]);
+      requestPolicySync();
     });
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== "local") {
@@ -113,6 +134,9 @@ export function watchSettings(onChanged: () => void): void {
         }
       }
       applySettings(next);
+      if (Object.prototype.hasOwnProperty.call(changes, SERVER_KEYS.policy)) {
+        applyServerPolicy(changes[SERVER_KEYS.policy]?.newValue);
+      }
       onChanged();
     });
   } catch {

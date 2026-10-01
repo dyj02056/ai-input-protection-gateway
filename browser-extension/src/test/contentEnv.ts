@@ -34,6 +34,7 @@ export function resetContentState(features: Partial<Features> = {}): void {
     allowPendingSubmit: false,
     lastAuditKey: "",
     attachedFiles: [],
+    serverPolicy: null,
   });
 }
 

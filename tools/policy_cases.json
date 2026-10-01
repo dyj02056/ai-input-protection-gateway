@@ -1,5 +1,5 @@
 {
-  "_comment": "policy.js(브라우저)와 policy.py(PDP)가 같은 판정을 내는지 확인하는 공용 케이스 표입니다. 한쪽만 고치면 나머지 한쪽 테스트가 실패합니다.",
+  "_comment": "policy.js(브라우저)와 policy.py·서버(PDP)가 같은 판정을 내는지 확인하는 공용 케이스 표입니다. cases는 기본 정책, policy_cases는 custom_policy(조직 정책), file_cases는 첨부파일 판정입니다. 한쪽만 고치면 나머지 쪽 테스트가 실패합니다.",
   "cases": [
     {
       "name": "탐지 없음",
@@ -223,6 +223,212 @@
       "reasonCodes": [
         "BLOCK_POLICY_MATCHED"
       ]
+    }
+  ],
+  "custom_policy": {
+    "policy_id": "strict-demo",
+    "version": 7,
+    "description": "공용 케이스 표용 시험 정책",
+    "category_actions": {
+      "email": "BLOCK",
+      "phone_number": "ALLOW",
+      "government_id": "REQUIRE_APPROVAL"
+    },
+    "unknown_category_action": "BLOCK",
+    "bulk_record_threshold": 50
+  },
+  "policy_cases": [
+    {
+      "name": "조직 정책: 탐지 없음",
+      "categories": [],
+      "action": "ALLOW",
+      "reasonCodes": [
+        "NO_DETECTED_CATEGORY"
+      ]
+    },
+    {
+      "name": "조직 정책: 이메일은 차단",
+      "categories": [
+        "email"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "조직 정책: 전화는 허용",
+      "categories": [
+        "phone_number"
+      ],
+      "action": "ALLOW",
+      "reasonCodes": [
+        "ALLOW_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "조직 정책: 전화+주민번호는 승인 검토",
+      "categories": [
+        "phone_number",
+        "government_id"
+      ],
+      "action": "REQUIRE_APPROVAL",
+      "reasonCodes": [
+        "APPROVAL_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "조직 정책: 표에 없는 범주는 미등록 조치(차단)",
+      "categories": [
+        "api_key"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    },
+    {
+      "name": "조직 정책: 허용 범주와 미등록 범주가 섞이면 미등록 조치",
+      "categories": [
+        "phone_number",
+        "credit_card"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    }
+  ],
+  "file_cases": [
+    {
+      "name": "파일: 깨끗함",
+      "policy": "default",
+      "status": "clean",
+      "categories": [],
+      "recordCount": 0,
+      "action": "ALLOW"
+    },
+    {
+      "name": "파일: 깨끗함이면 행 수가 커도 허용",
+      "policy": "default",
+      "status": "clean",
+      "categories": [],
+      "recordCount": 500,
+      "action": "ALLOW"
+    },
+    {
+      "name": "파일: 전화번호(MASK)는 마스킹 불가라 승인 검토",
+      "policy": "default",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 3,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "파일: API 키는 차단",
+      "policy": "default",
+      "status": "detected",
+      "categories": [
+        "api_key"
+      ],
+      "recordCount": 0,
+      "action": "BLOCK"
+    },
+    {
+      "name": "파일: 99행은 대량 아님",
+      "policy": "default",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 99,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "파일: 100행은 대량 → 차단",
+      "policy": "default",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 100,
+      "action": "BLOCK"
+    },
+    {
+      "name": "파일: 검사 못함(암호화)",
+      "policy": "default",
+      "status": "encrypted",
+      "categories": [],
+      "recordCount": 0,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "파일: 검사 못함(미지원)",
+      "policy": "default",
+      "status": "uninspected",
+      "categories": [],
+      "recordCount": 0,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "파일: 검사 못함(너무 큼)",
+      "policy": "default",
+      "status": "too-large",
+      "categories": [],
+      "recordCount": 0,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "파일: 검사 못함(실패)",
+      "policy": "default",
+      "status": "failed",
+      "categories": [],
+      "recordCount": 0,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "조직 정책 파일: 전화(허용)도 감지되면 승인 검토",
+      "policy": "custom",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 1,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "조직 정책 파일: 이메일은 차단",
+      "policy": "custom",
+      "status": "detected",
+      "categories": [
+        "email"
+      ],
+      "recordCount": 1,
+      "action": "BLOCK"
+    },
+    {
+      "name": "조직 정책 파일: 49행은 대량 아님",
+      "policy": "custom",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 49,
+      "action": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "조직 정책 파일: 50행은 조직 기준으로 대량 → 차단",
+      "policy": "custom",
+      "status": "detected",
+      "categories": [
+        "phone_number"
+      ],
+      "recordCount": 50,
+      "action": "BLOCK"
     }
   ]
 }

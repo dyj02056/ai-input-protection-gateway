@@ -1,0 +1,18 @@
+{
+  "policy_id": "default",
+  "version": 1,
+  "description": "기본 정책: 신원·연락처 형식은 MASK, 비밀·결제 정보는 BLOCK. 브라우저 확장의 내장 기본값과 같습니다.",
+  "category_actions": {
+    "government_id": "MASK",
+    "phone_number": "MASK",
+    "email": "MASK",
+    "api_key": "BLOCK",
+    "credit_card": "BLOCK",
+    "bank_account": "MASK",
+    "passport_number": "MASK",
+    "driver_license": "MASK",
+    "password": "BLOCK"
+  },
+  "unknown_category_action": "REQUIRE_APPROVAL",
+  "bulk_record_threshold": 100
+}

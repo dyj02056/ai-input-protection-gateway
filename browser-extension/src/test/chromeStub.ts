@@ -7,6 +7,9 @@ export interface ChromeStub {
   store: Record<string, unknown>;
   sendMessage: ReturnType<typeof vi.fn>;
   tabsQuery: ReturnType<typeof vi.fn>;
+  // 서버 접근 권한 요청·회수(chrome.permissions). 기본은 허용합니다.
+  permissionsRequest: ReturnType<typeof vi.fn>;
+  permissionsRemove: ReturnType<typeof vi.fn>;
   emitChange: (key: string, newValue: unknown) => void;
 }
 
@@ -73,7 +76,11 @@ export function installChromeStub(
     return [{ url: options.tabUrl }];
   });
 
+  const permissionsRequest = vi.fn(async (_request: unknown) => true);
+  const permissionsRemove = vi.fn(async (_request: unknown) => true);
+
   const stub = {
+    permissions: { request: permissionsRequest, remove: permissionsRemove, contains: vi.fn(async () => true) },
     storage: {
       local,
       onChanged: {
@@ -94,6 +101,8 @@ export function installChromeStub(
     store,
     sendMessage: stub.runtime.sendMessage,
     tabsQuery,
+    permissionsRequest,
+    permissionsRemove,
     emitChange: (key, newValue) => {
       const oldValue = store[key];
       store[key] = structuredClone(newValue);

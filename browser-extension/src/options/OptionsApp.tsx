@@ -1,4 +1,4 @@
-// 설정 화면: 바뀔 때마다 바로 chrome.storage.local에 저장합니다(저장 버튼 없음). 서버 전송 없음.
+// 설정 화면: 바뀔 때마다 바로 chrome.storage.local에 저장합니다(저장 버튼 없음). 서버는 선택 사항이며 입력 내용은 보내지 않습니다.
 import { useEffect, useState } from "react";
 import { CATEGORIES } from "../shared/categories.ts";
 import {
@@ -12,6 +12,7 @@ import {
   type Settings,
 } from "../shared/settings.ts";
 import { AuditTable } from "./AuditTable.tsx";
+import { ServerCard } from "./ServerCard.tsx";
 import { Toggle } from "./Toggle.tsx";
 import { useHistory } from "./useHistory.ts";
 
@@ -77,7 +78,7 @@ export function OptionsApp() {
       </p>
       <h1>설정</h1>
       <p className="small">
-        모든 설정은 브라우저 로컬에만 저장됩니다. 서버 전송·동기화 없음. 새로 설치한 확장은 감지
+        모든 설정은 브라우저 로컬에만 저장됩니다. 기본값은 서버 연결 없음(아래 &quot;조직 정책 서버&quot;는 선택 사항). 새로 설치한 확장은 감지
         안내와 실행 취소만 켜져 있고, 전송 차단·승인 확인·정책 적용·감사 기록은 모두 꺼져 있습니다.
       </p>
 
@@ -275,10 +276,12 @@ export function OptionsApp() {
         </p>
       </div>
 
+      <ServerCard />
+
       <div className="card">
         <h2>개인정보</h2>
         <p className="small">
-          수집 항목 없음. 감사 기록은 원문 없이 범주·조치·시각만 최근 20건 로컬 표시. 아래 버튼으로
+          수집 항목 없음(조직 정책 서버에 연결한 경우에도 입력 내용·감사 기록은 보내지 않습니다). 감사 기록은 원문 없이 범주·조치·시각만 최근 20건 로컬 표시. 아래 버튼으로
           전체 삭제.
         </p>
         <button id="clear" type="button" onClick={() => void handleClear()}>

@@ -24,6 +24,14 @@ function createChromeMock() {
       onUpdated: { addListener: (h: Handler) => (handlers.updated = h) },
       create: (options: unknown) => calls.create.push(options),
     },
+    storage: {
+      local: {
+        // 서버 연동 설정이 없는 상태(기본)를 흉내 냅니다.
+        get: async () => ({}),
+        set: async () => undefined,
+      },
+    },
+    permissions: { contains: async () => false },
     action: {
       setBadgeText: (options: unknown) => calls.badgeText.push(options),
       setBadgeBackgroundColor: (options: unknown) => calls.badgeColor.push(options),
@@ -123,5 +131,46 @@ describe.each(variants)("background (%s)", (_name, run) => {
     fire("message", { type: "gateway:action", action: "BLOCK" }, undefined);
     expect(mock.calls.badgeColor).toEqual([]);
     expect(mock.calls.badgeText).toEqual([]);
+  });
+
+  describe("조직 정책 동기화 메시지", () => {
+    const ask = (message: unknown, sender: unknown) =>
+      new Promise<unknown>((resolve) => {
+        const result = (mock.handlers.message as unknown as (...a: unknown[]) => unknown)(message, sender, resolve);
+        // 응답을 비동기로 돌려주지 않는 요청이면 undefined가 돌아오므로 곧바로 끝냅니다.
+        if (result !== true) resolve("no-response");
+      });
+
+    it("탭(콘텐츠 스크립트)이 동기화를 요청하면 응답을 비동기로 돌려준다(연동이 꺼져 있으면 off)", async () => {
+      const response = (await ask({ type: "gateway:policy-sync" }, fromTab(3))) as { state: string };
+      expect(response.state).toBe("off");
+    });
+
+    it("확장 화면(설정)의 동기화 요청도 처리한다", async () => {
+      const response = (await ask({ type: "gateway:policy-sync", force: true }, {})) as { state: string };
+      expect(response.state).toBe("off");
+    });
+
+    it("연결 시험은 탭에서 온 요청이면 받지 않는다(웹 페이지가 있는 곳에서는 키·주소를 넣어 호출할 수 없다)", async () => {
+      const response = await ask(
+        { type: "gateway:policy-probe", url: "http://127.0.0.1:1", key: "x".repeat(20) },
+        fromTab(3),
+      );
+      expect(response).toBe("no-response");
+    });
+
+    it("확장 화면에서 온 연결 시험은 처리하고, 권한이 없으면 실패로 답한다", async () => {
+      const response = (await ask(
+        { type: "gateway:policy-probe", url: "http://127.0.0.1:1", key: "x".repeat(20) },
+        {},
+      )) as { state: string; message: string };
+      expect(response.state).toBe("error");
+      expect(response.message).toContain("권한");
+    });
+
+    it("값이 이상한 연결 시험은 실패로 답한다", async () => {
+      const response = (await ask({ type: "gateway:policy-probe", url: 3, key: null }, {})) as { state: string };
+      expect(response.state).toBe("error");
+    });
   });
 });

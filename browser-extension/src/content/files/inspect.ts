@@ -3,8 +3,8 @@
 // 원칙(계획서 3.5): 지원하지 않는 형식·해석 실패·암호화 파일을 "검사 없이 통과"시키지 않습니다.
 // 검사하지 못했다는 사실을 결과(status)로 돌려주고, 안내와 전송 차단이 그것을 다룹니다.
 import type { Detector, DetectorOptions } from "../../engine/detector.ts";
-import { CATEGORY_IDS, type ActionName, type CategoryId } from "../../shared/categories.ts";
-import { decideLocalAction } from "../decision.ts";
+import { CATEGORY_IDS, type CategoryId } from "../../shared/categories.ts";
+import { BULK_RECORD_THRESHOLD, decideFileAction } from "./decide.ts";
 import {
   extractDocx,
   extractHwpx,
@@ -17,8 +17,9 @@ import { decodeText, looksBinary, yieldToUi } from "./text.ts";
 import { FileInspectError, type FileFinding, type FileStatus, type FlaggedColumn } from "./types.ts";
 import { isZip, type Inflate } from "./zip.ts";
 
+export { BULK_RECORD_THRESHOLD, decideFileAction };
+
 export const MAX_FILE_BYTES = 25 * 1024 * 1024; // 이보다 큰 파일은 검사하지 않습니다
-export const BULK_RECORD_THRESHOLD = 100; // 감지된 행이 이만큼 이상이면 대량으로 봅니다(계획서의 대량 고객정보 규칙)
 
 const CHUNK_CHARS = 400_000;
 const CHUNK_OVERLAP = 256; // 값이 조각 경계에 걸려도 잡히도록 조금 겹칩니다
@@ -74,27 +75,6 @@ function sniff(bytes: Uint8Array): Sniffed {
   }
   if (startsWith(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45) return "image"; // RIFF....WEBP
   return "other";
-}
-
-const priority: Readonly<Record<ActionName, number>> = { ALLOW: 1, MASK: 2, REQUIRE_APPROVAL: 3, BLOCK: 4 };
-
-// 파일에 대한 로컬 판정.
-// - 감지된 것이 없으면 ALLOW.
-// - 감지됐다면 정책 엔진의 판정을 따르되, 파일은 값을 가릴 수 없으므로(MASK 불가) 최소 REQUIRE_APPROVAL.
-// - 표에서 감지된 행이 BULK_RECORD_THRESHOLD 이상이면 BLOCK(대량 반출).
-// - 검사하지 못한 파일(암호화·미지원·실패·너무 큼)은 REQUIRE_APPROVAL: 조용히 통과시키지 않습니다.
-// 이 판정은 브라우저 안의 규칙이며, PDP 서버 정책과는 별개입니다.
-export function decideFileAction(
-  status: FileStatus,
-  categories: readonly CategoryId[],
-  recordCount = 0,
-): ActionName {
-  if (status === "clean") return "ALLOW";
-  if (status !== "detected") return "REQUIRE_APPROVAL";
-  let action = decideLocalAction(categories) as ActionName;
-  if (priority[action] === undefined || priority[action] < priority.REQUIRE_APPROVAL) action = "REQUIRE_APPROVAL";
-  if (recordCount >= BULK_RECORD_THRESHOLD) action = "BLOCK";
-  return action;
 }
 
 function finding(
