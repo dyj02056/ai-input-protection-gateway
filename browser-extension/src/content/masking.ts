@@ -1,7 +1,8 @@
 // 입력창에 마스킹을 적용하고 되돌립니다. 사용자가 알림 버튼을 누른 경우에만 호출됩니다.
-import type { Detector } from "../engine/detector.ts";
+import type { DetectedMatch, Detector } from "../engine/detector.ts";
 import { readContentEditable } from "./editable.ts";
 import { detectorOptions, state } from "./state.ts";
+import { vault } from "./tokens.ts";
 import type { Editor, MaskResult, PlainEditor, TextRun, UndoEntry } from "./types.ts";
 
 // input/textarea의 값은 평문이므로 프로토타입 setter로 넣어야 사이트가 변경을 감지합니다.
@@ -44,10 +45,27 @@ export function dispatchInputEvent(editor: Editor): void {
   editor.dispatchEvent(inputEvent);
 }
 
-interface Match {
-  readonly label: string;
-  readonly start: number;
-  readonly end: number;
+// 각 일치 구간 자리에 들어갈 글자를 정합니다. 자리표시자 방식은 [전화번호], 세션 토큰 방식은 [전화_1]입니다.
+// 토큰 방식에서는 같은 값이 항상 같은 토큰이 됩니다.
+function replacementsFor(text: string, matches: readonly DetectedMatch[]): string[] {
+  if (state.maskStyle === "token") {
+    return matches.map((match) => vault.tokenFor(match.categoryId, text.slice(match.start, match.end)));
+  }
+  return matches.map((match) => `[${match.label}]`);
+}
+
+function applyReplacements(
+  text: string,
+  matches: readonly DetectedMatch[],
+  replacements: readonly string[],
+): string {
+  let result = "";
+  let cursor = 0;
+  matches.forEach((match, index) => {
+    result += text.slice(cursor, match.start) + (replacements[index] ?? "");
+    cursor = match.end;
+  });
+  return result + text.slice(cursor);
 }
 
 // 일치한 구간이 걸친 텍스트 노드의 문자만 바꿉니다.
@@ -55,7 +73,8 @@ interface Match {
 // 하나라도 안전하게 바꿀 수 없으면 아무것도 바꾸지 않고 false를 돌려줍니다.
 function replaceInTextNodes(
   runs: readonly TextRun[],
-  matches: readonly Match[],
+  matches: readonly DetectedMatch[],
+  replacements: readonly string[],
   undoStack: Array<{ node: Text; data: string }>,
 ): boolean {
   // 뒤에서부터 바꾸면 앞쪽 구간의 위치가 밀리지 않습니다.
@@ -79,13 +98,14 @@ function replaceInTextNodes(
 
     const head = first.node.data.slice(0, match.start - first.start);
     const tail = last.node.data.slice(match.end - last.start);
+    const replacement = replacements[index] ?? "";
 
     if (first === last) {
-      first.node.data = `${head}[${match.label}]${tail}`;
+      first.node.data = `${head}${replacement}${tail}`;
     } else {
       // 일치 구간이 여러 텍스트 노드에 나뉘어 있어도 사이에 <br>이나 블록 경계가
       // 없으면(정규식이 줄바꿈을 넘지 못하므로 항상 그렇습니다) 안전하게 바꿀 수 있습니다.
-      first.node.data = `${head}[${match.label}]`;
+      first.node.data = `${head}${replacement}`;
       for (let inner = 1; inner < spanned.length - 1; inner += 1) {
         spanned[inner]!.node.data = "";
       }
@@ -105,20 +125,42 @@ export function restoreTextNodes(undoStack: ReadonlyArray<{ node: Text; data: st
   }
 }
 
+// 탐지는 됐지만 원문에서 위치를 특정할 수 없는 값(전각·숨은 문자·한글 숫자·URL/Base64 인코딩)이 있는지 봅니다.
+function hasUnlocatableFindings(detector: Detector, text: string): boolean {
+  try {
+    return detector.inspect(text, detectorOptions()).length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // input/textarea 전용 경로입니다. 값이 평문이라 위치를 따로 다룰 필요가 없습니다.
 // 결과와 함께 실행 취소에 필요한 이전 값만 돌려주고, 원문을 다른 곳에 저장하지 않습니다.
 export function maskPlainValue(editor: PlainEditor, detector: Detector): MaskResult {
   let currentText: string;
   let maskedText: unknown;
+  let usedTokens = false;
   try {
     currentText = editor.value;
-    maskedText = detector.mask(currentText, detectorOptions());
+    if (state.maskStyle === "token") {
+      const matches = detector.findMatches(currentText, detectorOptions());
+      if (matches.length > 0) {
+        maskedText = applyReplacements(currentText, matches, replacementsFor(currentText, matches));
+        usedTokens = true;
+      } else {
+        // 전각 변형처럼 원문에서 위치를 찾지 못한 값은 정규화 보기에서 가립니다(이 경우는 자리표시자입니다).
+        maskedText = detector.mask(currentText, detectorOptions());
+      }
+    } else {
+      maskedText = detector.mask(currentText, detectorOptions());
+    }
   } catch {
     return { outcome: "failed" };
   }
 
   if (typeof maskedText !== "string" || maskedText === currentText) {
-    return { outcome: "unchanged" };
+    // 숨은 문자·한글 숫자·인코딩처럼 원문 표기가 달라 바꿀 위치를 특정할 수 없는 값만 있는 경우를 구분합니다.
+    return { outcome: hasUnlocatableFindings(detector, currentText) ? "variant-only" : "unchanged" };
   }
 
   try {
@@ -131,6 +173,7 @@ export function maskPlainValue(editor: PlainEditor, detector: Detector): MaskRes
   return {
     outcome: "applied",
     undo: { kind: "plain", editor, previous: currentText },
+    tokens: usedTokens,
   };
 }
 
@@ -139,20 +182,27 @@ export function maskPlainValue(editor: PlainEditor, detector: Detector): MaskRes
 export function maskContentEditable(editor: Editor, detector: Detector): MaskResult {
   let read: ReturnType<typeof readContentEditable>;
   let matches: ReturnType<Detector["findMatches"]>;
+  let replacements: string[];
   let expected: string;
   try {
     read = readContentEditable(editor);
     matches = detector.findMatches(read.text, detectorOptions());
-    expected = detector.applyMatches(read.text, matches);
+    replacements = replacementsFor(read.text, matches);
+    expected =
+      state.maskStyle === "token"
+        ? applyReplacements(read.text, matches, replacements)
+        : detector.applyMatches(read.text, matches);
   } catch {
     return { outcome: "failed" };
   }
 
   if (matches.length === 0 || expected === read.text) {
-    // 전각 숫자처럼 원문 표기가 달라 위치를 특정할 수 없는 값만 있는 경우를 구분합니다.
+    // 전각 숫자·숨은 문자·한글 숫자·인코딩처럼 원문 표기가 달라 위치를 특정할 수 없는 값만 있는 경우를 구분합니다.
     let variantOnly = false;
     try {
-      variantOnly = detector.mask(read.text, detectorOptions()) !== read.text;
+      variantOnly =
+        detector.mask(read.text, detectorOptions()) !== read.text ||
+        hasUnlocatableFindings(detector, read.text);
     } catch {
       variantOnly = false;
     }
@@ -162,7 +212,7 @@ export function maskContentEditable(editor: Editor, detector: Detector): MaskRes
   const undoStack: Array<{ node: Text; data: string }> = [];
   let applied = false;
   try {
-    applied = replaceInTextNodes(read.runs, matches, undoStack);
+    applied = replaceInTextNodes(read.runs, matches, replacements, undoStack);
     if (applied) {
       // 바꾼 결과가 예상과 같은지 확인합니다. 다르면 전부 되돌리고 중단합니다.
       applied = readContentEditable(editor).text === expected;
@@ -178,5 +228,5 @@ export function maskContentEditable(editor: Editor, detector: Detector): MaskRes
 
   dispatchInputEvent(editor);
   const undo: UndoEntry = { kind: "nodes", editor, stack: undoStack };
-  return { outcome: "applied", undo };
+  return { outcome: "applied", undo, tokens: state.maskStyle === "token" };
 }

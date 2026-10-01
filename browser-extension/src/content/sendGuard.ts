@@ -6,13 +6,15 @@ import { recordAudit } from "./audit.ts";
 import { alertKey, decideLocalAction, formatCategoryLabels } from "./decision.ts";
 import { EDITABLE_SELECTOR, findEditableTarget } from "./editable.ts";
 import { canMaskEditor, currentCategories, displayNotice, hasUndoAvailable } from "./flow.ts";
+import { describeFindings, riskyAttachments } from "./files/guard.ts";
 import { feature, state } from "./state.ts";
 import { NOTICE_KIND, type Editor } from "./types.ts";
 
 const SEND_LABEL_HINTS = ["send", "submit", "보내기", "전송", "질문하기"];
 const BLOCK_CONFIRM_WINDOW_MS = 5000;
 
-type BlockReason = "" | "BLOCK" | "REQUIRE_APPROVAL";
+// FILE: 첨부파일 검사에서 문제가 있었고 "첨부파일 전송 차단"을 켠 경우
+type BlockReason = "" | "BLOCK" | "REQUIRE_APPROVAL" | "FILE";
 
 function sendBlockReason(editor: Editor | null): BlockReason {
   if (!feature("enforcePolicy")) {
@@ -35,6 +37,14 @@ function sendBlockReason(editor: Editor | null): BlockReason {
     return "REQUIRE_APPROVAL";
   }
   return "";
+}
+
+// 첨부파일 전송 차단은 별도 스위치(blockFileSend)입니다. 다른 두 스위치와 마찬가지로 "로컬 정책 적용"이 함께 켜져 있어야 합니다.
+function fileBlockReason(): BlockReason {
+  if (!feature("enforcePolicy") || !feature("blockFileSend")) {
+    return "";
+  }
+  return riskyAttachments().length > 0 ? "FILE" : "";
 }
 
 function isSendControl(target: EventTarget | null): boolean {
@@ -82,6 +92,8 @@ function shouldBlockNow(editor: Editor | null, reason: string): boolean {
     state.blockArmedKey = "";
     state.blockArmedUntil = 0;
     state.allowPendingSubmit = true;
+    // 사용자가 다시 눌러 보내기로 했으니 첨부된 파일도 함께 나갑니다. 같은 파일 때문에 다시 막지 않습니다.
+    state.attachedFiles = [];
     window.setTimeout(() => {
       state.allowPendingSubmit = false;
     }, 0);
@@ -94,6 +106,17 @@ function shouldBlockNow(editor: Editor | null, reason: string): boolean {
 }
 
 function announceBlock(editor: Editor | null, reason: BlockReason): void {
+  if (reason === "FILE") {
+    const seconds = Math.round(BLOCK_CONFIRM_WINDOW_MS / 1000);
+    displayNotice({
+      kind: NOTICE_KIND.ALERT,
+      title: "전송을 막았습니다 — 첨부파일 확인 필요",
+      description: `${describeFindings(riskyAttachments())}. 첨부파일에 문제가 있어 보내기를 중단했습니다. ${seconds}초 안에 다시 누르면 그대로 전송됩니다. 이미 첨부를 뺐다면 다시 눌러 주세요.`,
+      alertId: `file|block|${Date.now()}`,
+    });
+    return;
+  }
+
   const categories = currentCategories(editor);
   const label = formatCategoryLabels(categories);
   const seconds = Math.round(BLOCK_CONFIRM_WINDOW_MS / 1000);
@@ -125,7 +148,7 @@ export function installSendGuard(): void {
       }
 
       const editor = findEditableTarget(event.target);
-      const reason = sendBlockReason(editor);
+      const reason = sendBlockReason(editor) || (editor ? fileBlockReason() : "");
       if (!reason || !shouldBlockNow(editor, reason)) {
         return;
       }
@@ -152,7 +175,7 @@ export function installSendGuard(): void {
             ? event.target.querySelector<HTMLElement>(EDITABLE_SELECTOR)
             : null;
 
-      const reason = sendBlockReason(editor);
+      const reason = sendBlockReason(editor) || fileBlockReason();
       if (!reason || !shouldBlockNow(editor, reason)) {
         return;
       }
@@ -175,7 +198,7 @@ export function installSendGuard(): void {
         state.focusedEditor && state.focusedEditor.isConnected
           ? state.focusedEditor
           : state.activeEditor;
-      const reason = sendBlockReason(editor);
+      const reason = sendBlockReason(editor) || fileBlockReason();
       if (!reason || !shouldBlockNow(editor, reason)) {
         return;
       }

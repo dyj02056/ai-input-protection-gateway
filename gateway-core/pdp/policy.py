@@ -72,6 +72,11 @@ class Policy:
             "phone_number": Action.MASK,
             "email": Action.MASK,
             "api_key": Action.BLOCK,
+            "credit_card": Action.BLOCK,
+            "bank_account": Action.MASK,
+            "passport_number": Action.MASK,
+            "driver_license": Action.MASK,
+            "password": Action.BLOCK,
         }
     )
     unknown_category_action: Action = Action.REQUIRE_APPROVAL

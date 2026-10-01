@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import SiteNav from "../components/SiteNav.astro";
 import manifest from "../../../browser-extension/manifest.json";
+import { CATEGORIES } from "../../../browser-extension/src/shared/categories.ts";
 ---
 <Base title="개인정보 처리방침 — AI 입력정보 보호 게이트웨이 확장 프로그램">
 <SiteNav current="privacy" />
@@ -31,13 +32,17 @@ import manifest from "../../../browser-extension/manifest.json";
 <li><code>https://claude.ai/*</code></li>
 <li><code>https://gemini.google.com/*</code></li>
 </ul>
+<p>일부 값(URL 인코딩이나 Base64로 감싼 문자열, 눈에 보이지 않는 문자 등)은 검사를 위해 브라우저 메모리에서 풀어 보지만, 풀어낸 내용도 저장하거나 전송하지 않습니다.</p>
+<p>첨부파일(파일 선택·드롭·붙여넣기)은 <b>이 브라우저 안에서만</b> 읽어 검사합니다. 파일 내용은 저장하거나 전송하지 않고, 검사가 끝나면 남기지 않습니다. 화면에 표시되는 결과에는 파일 이름과 감지된 항목의 종류·개수만 있으며, 감사 기록(켠 경우)에는 파일 이름도 남기지 않습니다. 설정에서 이 검사를 끌 수 있습니다.</p>
+<p>설정에서 마스킹 방식을 <b>세션 토큰</b>으로 고르면, 가린 값과 토큰(<code>[전화_1]</code>)의 대응표를 <b>그 탭의 브라우저 메모리에만</b> 두고 AI 답변에 나온 토큰을 화면에서만 원래 값으로 바꿔 보여줍니다. 이 대응표는 저장하거나 전송하지 않으며 탭을 새로고침하거나 닫으면 사라집니다. 다만 복원된 값은 화면에 있는 동안 해당 사이트의 스크립트가 읽을 수 있는 상태가 되므로, 원치 않으면 설정에서 복원 표시를 끌 수 있습니다(토큰이 그대로 보입니다). 내가 보낸 메시지는 복원하지 않습니다.</p>
 <p>마스킹은 사용자가 안내 창의 버튼을 직접 눌렀을 때만 적용되며, 입력 내용을 자동으로 전송하거나 차단하지 않습니다.</p>
 
 <h2>3. 브라우저에 저장되는 정보</h2>
 <table>
 <tr><th>저장 항목</th><th>저장 위치</th><th>목적</th></tr>
-<tr><td>탐지 항목 on/off 설정 (4종)</td><td><code>chrome.storage.local</code></td><td>사용자가 끈 범주를 검사·마스킹에서 제외</td></tr>
-<tr><td>기능 스위치 설정 (안내 계속 표시, 실행 취소, 감사 기록, 전송 차단 등)</td><td><code>chrome.storage.local</code></td><td>사용자가 고른 화면 표시 방식과 차단 수준을 저장</td></tr>
+<tr><td>탐지 항목 on/off 설정 ({CATEGORIES.length}종)</td><td><code>chrome.storage.local</code></td><td>사용자가 끈 범주를 검사·마스킹에서 제외</td></tr>
+<tr><td>무시할 값 목록(허용 목록) — <b>사용자가 직접 적은 경우에만</b></td><td><code>chrome.storage.local</code></td><td>회사 대표번호처럼 사용자가 감지에서 빼려고 설정 화면에 직접 적은 값. 입력창에서 읽은 내용이 아니라 사용자가 적은 설정값이며, 설정 화면에 그대로 보입니다</td></tr>
+<tr><td>기능 스위치와 마스킹 방식 설정 (안내 계속 표시, 실행 취소, 감사 기록, 전송 차단, 세션 토큰·복원 표시 등)</td><td><code>chrome.storage.local</code></td><td>사용자가 고른 화면 표시 방식과 차단 수준을 저장</td></tr>
 <tr><td>감사 기록 (판정 이름·범주 ID·시각, 최근 20건) — <b>기본 꺼짐</b></td><td><code>chrome.storage.local</code></td><td>사용자가 직접 켠 경우에만, 어떤 항목이 어떤 조치로 걸렸는지 범주 수준으로만 기록</td></tr>
 </table>
 <p>이 값은 사용자의 브라우저 프로필에만 남고, 개발자 서버나 제3자에게 전송·동기화되지 않습니다. 설정 페이지의 “로컬 기록 전체 삭제” 버튼 또는 확장 프로그램 제거로 언제든 삭제할 수 있습니다.</p>

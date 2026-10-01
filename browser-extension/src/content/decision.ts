@@ -1,13 +1,18 @@
 // 탐지 범주 ID로 조치 이름을 정하고 안내 문구를 만듭니다. 입력 원문은 다루지 않습니다.
+import { CATEGORIES, categoryDef, type ActionName } from "../shared/categories.ts";
 import { getPolicyEngine } from "./types.ts";
 
 // detector.js와 PDP가 공유하는 범주 ID를 사용자가 읽을 수 있는 이름으로 바꿉니다.
-export const CATEGORY_LABELS: Readonly<Record<string, string>> = Object.freeze({
-  government_id: "주민등록번호 형식",
-  phone_number: "전화번호 형식",
-  email: "이메일 형식",
-  api_key: "API 키/토큰 형식",
-});
+export const CATEGORY_LABELS: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(CATEGORIES.map((category) => [category.id, category.noticeLabel])),
+);
+
+const ACTION_PRIORITY: Readonly<Record<ActionName, number>> = {
+  ALLOW: 1,
+  MASK: 2,
+  REQUIRE_APPROVAL: 3,
+  BLOCK: 4,
+};
 
 const hasOwn = (target: object, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(target, key);
@@ -28,13 +33,15 @@ export function decideLocalAction(categories: readonly string[]): string {
   if (!Array.isArray(categories) || categories.length === 0) {
     return "ALLOW";
   }
-  if (categories.includes("api_key")) {
-    return "BLOCK";
+  // 범주별 기본 조치(등록부) 중 가장 엄격한 것을 고릅니다. 등록되지 않은 범주는 승인 검토입니다.
+  let selected: ActionName = "ALLOW";
+  for (const category of categories) {
+    const action = categoryDef(category)?.defaultAction ?? "REQUIRE_APPROVAL";
+    if (ACTION_PRIORITY[action] > ACTION_PRIORITY[selected]) {
+      selected = action;
+    }
   }
-  if (categories.some((category) => !hasOwn(CATEGORY_LABELS, category))) {
-    return "REQUIRE_APPROVAL";
-  }
-  return "MASK";
+  return selected;
 }
 
 export function formatCategoryLabels(categories: readonly string[]): string {

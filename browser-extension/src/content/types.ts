@@ -27,7 +27,8 @@ export type UndoEntry =
 
 export type MaskResult =
   | { outcome: "failed" | "unchanged" | "variant-only" }
-  | { outcome: "applied"; undo: UndoEntry };
+  // tokens: 세션 토큰([전화_1])으로 바꿨는지. 그렇다면 답변 화면의 토큰을 되돌려 보여줄 수 있습니다.
+  | { outcome: "applied"; undo: UndoEntry; tokens: boolean };
 
 // detector.js·policy.js는 manifest의 content_scripts가 이 스크립트보다 먼저 읽어 전역에 둡니다.
 // 읽지 못한 경우(확장을 새로고침하기 전의 옛 탭 등)에도 안내를 띄울 수 있도록 값은 없을 수 있습니다.

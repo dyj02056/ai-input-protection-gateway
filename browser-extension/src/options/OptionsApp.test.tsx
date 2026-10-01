@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { CATEGORY_IDS } from "../shared/categories.ts";
 import { installChromeStub } from "../test/chromeStub.ts";
 import { OptionsApp } from "./OptionsApp.tsx";
 
@@ -34,9 +35,11 @@ describe("OptionsApp 기본값", () => {
     expect(radio("mask", "placeholder").checked).toBe(true);
   });
 
-  it("세션 토큰 마스킹은 비활성이다(다음 버전)", async () => {
+  it("세션 토큰 마스킹을 고를 수 있고, 기본은 자리표시자다", async () => {
     await renderOptions();
-    expect(radio("mask", "token").disabled).toBe(true);
+    expect(radio("mask", "token").disabled).toBe(false);
+    expect(radio("mask", "token").checked).toBe(false);
+    expect(radio("mask", "placeholder").checked).toBe(true);
   });
 
   it("화면을 열기만 해서는 저장소에 아무것도 쓰지 않는다", async () => {
@@ -75,11 +78,10 @@ describe("OptionsApp 저장", () => {
     const stub = await renderOptions();
     fireEvent.click(checkbox("c-phone_number"));
     await waitFor(() => expect(stub.store.enabled).toBeDefined());
+    // 등록부의 모든 범주가 저장되고, 끈 것만 false다.
     expect(stub.store.enabled).toEqual({
-      government_id: true,
+      ...Object.fromEntries(CATEGORY_IDS.map((id) => [id, true])),
       phone_number: false,
-      email: true,
-      api_key: true,
     });
   });
 

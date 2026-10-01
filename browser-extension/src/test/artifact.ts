@@ -15,8 +15,13 @@ export function distPath(file: string): string {
   return path;
 }
 
-export function loadArtifactGlobal<T>(file: string, globalName: string): T {
-  const context = vm.createContext({});
+// globals에는 실제 브라우저가 기본으로 제공하는 함수(atob 등)를 필요한 만큼만 넣습니다.
+export function loadArtifactGlobal<T>(
+  file: string,
+  globalName: string,
+  globals: Record<string, unknown> = {},
+): T {
+  const context = vm.createContext({ ...globals });
   vm.runInContext(readFileSync(distPath(file), "utf8"), context, { filename: file });
   const value = (context as Record<string, unknown>)[globalName];
   if (value === undefined) {

@@ -2,13 +2,11 @@
 // (이전에는 확장의 detector.js를 docs/에 복사해 두고 읽었습니다. 이제 소스를 직접 가져오므로 사본이 없습니다.)
 import { detector } from "../../../browser-extension/src/engine/detector.ts";
 import { policy } from "../../../browser-extension/src/engine/policy.ts";
+import { CATEGORIES } from "../../../browser-extension/src/shared/categories.ts";
 
-const LABELS: Readonly<Record<string, string>> = {
-  government_id: "주민등록번호 형식",
-  phone_number: "전화번호 형식",
-  email: "이메일 형식",
-  api_key: "API 키/토큰 형식",
-};
+const LABELS: Readonly<Record<string, string>> = Object.fromEntries(
+  CATEGORIES.map((category) => [category.id, category.noticeLabel]),
+);
 
 export const SAMPLE =
   "가짜 주민번호 000000-1000000\n가짜 전화번호 010-0000-0000\n가짜 이메일 test.user@example.com\n가짜 키 sk-TESTTESTTESTTESTTEST\n그대로 남아야 할 문장";

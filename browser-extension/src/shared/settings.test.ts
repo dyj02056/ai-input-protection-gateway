@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CATEGORY_IDS } from "./categories.ts";
 import {
   coerceEnabled,
   coerceFeatures,
@@ -44,11 +45,14 @@ describe("coerceFeatures", () => {
 describe("coerceEnabled / coerceSettings", () => {
   it("없는 범주는 켜짐으로 채운다", () => {
     expect(coerceEnabled({ email: false })).toEqual({
-      government_id: true,
-      phone_number: true,
+      ...Object.fromEntries(CATEGORY_IDS.map((id) => [id, true])),
       email: false,
-      api_key: true,
     });
+    // 새 범주가 생기기 전에 저장된 설정(4개 키)도 새 범주는 켜진 채로 읽힌다.
+    const legacy = coerceEnabled({ government_id: true, phone_number: true, email: true, api_key: false });
+    expect(legacy.credit_card).toBe(true);
+    expect(legacy.password).toBe(true);
+    expect(legacy.api_key).toBe(false);
   });
 
   it("빈 저장소는 기본 설정이 된다", () => {

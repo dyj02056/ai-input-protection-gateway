@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import { CATEGORIES } from "../../../browser-extension/src/shared/categories.ts";
 ---
 <Base title="로컬 탐지 데모 — 최종 제출">
 <div class="wrap">
@@ -32,7 +33,7 @@ import Base from "../layouts/Base.astro";
 <a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span><b>ChatGPT 새 주소</b><br>chatgpt.com</span></a>
 <a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span><b>Claude 열기</b><br>claude.ai</span></a>
 </div>
-<div class="card"><h2>한계</h2><p>4종 형식만 탐지, 미감지는 안전 아님. 마스킹은 복원 불가 자리표시자. BLOCK은 판정 이름.</p></div>
+<div class="card"><h2>한계</h2><p>{CATEGORIES.length}종 형식만 탐지, 미감지는 안전 아님. 이 데모의 마스킹은 자리표시자만 보여줍니다(확장에서는 설정으로 답변에서 원래 값으로 복원해 보여주는 세션 토큰 방식을 고를 수 있습니다). BLOCK은 판정 이름.</p></div>
 </div>
 
 <style is:global>

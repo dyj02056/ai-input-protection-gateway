@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { CATEGORIES } from "../shared/categories.ts";
 import { loadArtifactGlobal, REPO_ROOT, throwsTypeError } from "../test/artifact.ts";
 import { policy as modulePolicy, type Policy } from "./policy.ts";
 
@@ -51,14 +52,14 @@ describe.each(subjects)("policy (%s)", (_name, load) => {
 
   it("가장 엄격한 조치를 고른다 (BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)", () => {
     expect(decideIn(["email"]).action).toBe("MASK");
-    expect(decideIn(["email", "passport_number"]).action).toBe("REQUIRE_APPROVAL");
-    expect(decideIn(["passport_number", "api_key"]).action).toBe("BLOCK");
-    expect(decideIn(["api_key", "email", "passport_number"]).action).toBe("BLOCK");
+    expect(decideIn(["email", "unregistered_category"]).action).toBe("REQUIRE_APPROVAL");
+    expect(decideIn(["unregistered_category", "api_key"]).action).toBe("BLOCK");
+    expect(decideIn(["api_key", "email", "unregistered_category"]).action).toBe("BLOCK");
   });
 
   it("미등록 범주가 있으면 UNKNOWN_CATEGORY_PRESENT를 더한다", () => {
     expect(decideIn(["email"]).reasonCodes).toEqual(["MASK_POLICY_MATCHED"]);
-    expect(decideIn(["email", "passport_number"]).reasonCodes).toEqual([
+    expect(decideIn(["email", "unregistered_category"]).reasonCodes).toEqual([
       "APPROVAL_POLICY_MATCHED",
       "UNKNOWN_CATEGORY_PRESENT",
     ]);
@@ -94,7 +95,7 @@ describe.each(subjects)("policy (%s)", (_name, load) => {
     };
     expect(decideIn(["api_key"], custom).action).toBe("MASK");
     expect(decideIn(["email"], custom).action).toBe("REQUIRE_APPROVAL");
-    expect(decideIn(["passport_number"], custom).action).toBe("BLOCK");
+    expect(decideIn(["unregistered_category"], custom).action).toBe("BLOCK");
     expect(decideIn(["email", "api_key"], custom).action).toBe("REQUIRE_APPROVAL");
   });
 
@@ -105,13 +106,15 @@ describe.each(subjects)("policy (%s)", (_name, load) => {
   });
 
   it("기본 정책 매핑이 detector의 범주 ID와 일치한다", () => {
-    expect(Object.keys(policy.DEFAULT_CATEGORY_ACTIONS).sort()).toEqual([
-      "api_key",
-      "email",
-      "government_id",
-      "phone_number",
-    ]);
+    // 등록부(shared/categories.ts)의 모든 범주가 정책에 있고, 기본 조치도 같다.
+    expect(Object.keys(policy.DEFAULT_CATEGORY_ACTIONS).sort()).toEqual(
+      CATEGORIES.map((category) => category.id).sort(),
+    );
+    for (const category of CATEGORIES) {
+      expect(policy.DEFAULT_CATEGORY_ACTIONS[category.id], category.id).toBe(category.defaultAction);
+    }
     expect(policy.DEFAULT_CATEGORY_ACTIONS.api_key).toBe("BLOCK");
+    expect(policy.DEFAULT_CATEGORY_ACTIONS.credit_card).toBe("BLOCK");
     expect(policy.UNKNOWN_CATEGORY_ACTION).toBe("REQUIRE_APPROVAL");
   });
 

@@ -1,17 +1,228 @@
 {
   "_comment": "policy.js(브라우저)와 policy.py(PDP)가 같은 판정을 내는지 확인하는 공용 케이스 표입니다. 한쪽만 고치면 나머지 한쪽 테스트가 실패합니다.",
   "cases": [
-    { "name": "탐지 없음", "categories": [], "action": "ALLOW", "reasonCodes": ["NO_DETECTED_CATEGORY"] },
-    { "name": "주민번호 단일", "categories": ["government_id"], "action": "MASK", "reasonCodes": ["MASK_POLICY_MATCHED"] },
-    { "name": "전화·이메일", "categories": ["phone_number", "email"], "action": "MASK", "reasonCodes": ["MASK_POLICY_MATCHED"] },
-    { "name": "API 키 단일", "categories": ["api_key"], "action": "BLOCK", "reasonCodes": ["BLOCK_POLICY_MATCHED"] },
-    { "name": "API 키 + 이메일", "categories": ["api_key", "email"], "action": "BLOCK", "reasonCodes": ["BLOCK_POLICY_MATCHED"] },
-    { "name": "주민번호 + API 키", "categories": ["api_key", "government_id"], "action": "BLOCK", "reasonCodes": ["BLOCK_POLICY_MATCHED"] },
-    { "name": "미등록 범주 단일", "categories": ["passport_number"], "action": "REQUIRE_APPROVAL", "reasonCodes": ["APPROVAL_POLICY_MATCHED", "UNKNOWN_CATEGORY_PRESENT"] },
-    { "name": "이메일 + 미등록 범주", "categories": ["email", "passport_number"], "action": "REQUIRE_APPROVAL", "reasonCodes": ["APPROVAL_POLICY_MATCHED", "UNKNOWN_CATEGORY_PRESENT"] },
-    { "name": "주민번호 + 미등록 범주", "categories": ["government_id", "passport_number"], "action": "REQUIRE_APPROVAL", "reasonCodes": ["APPROVAL_POLICY_MATCHED", "UNKNOWN_CATEGORY_PRESENT"] },
-    { "name": "미등록 범주 + API 키", "categories": ["passport_number", "api_key"], "action": "BLOCK", "reasonCodes": ["BLOCK_POLICY_MATCHED", "UNKNOWN_CATEGORY_PRESENT"] },
-    { "name": "중복 범주", "categories": ["email", "email"], "action": "MASK", "reasonCodes": ["MASK_POLICY_MATCHED"] },
-    { "name": "네 범주 전체", "categories": ["government_id", "phone_number", "email", "api_key"], "action": "BLOCK", "reasonCodes": ["BLOCK_POLICY_MATCHED"] }
+    {
+      "name": "탐지 없음",
+      "categories": [],
+      "action": "ALLOW",
+      "reasonCodes": [
+        "NO_DETECTED_CATEGORY"
+      ]
+    },
+    {
+      "name": "주민번호 단일",
+      "categories": [
+        "government_id"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "전화·이메일",
+      "categories": [
+        "phone_number",
+        "email"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "API 키 단일",
+      "categories": [
+        "api_key"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "API 키 + 이메일",
+      "categories": [
+        "api_key",
+        "email"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "주민번호 + API 키",
+      "categories": [
+        "api_key",
+        "government_id"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "미등록 범주 단일",
+      "categories": [
+        "unregistered_category"
+      ],
+      "action": "REQUIRE_APPROVAL",
+      "reasonCodes": [
+        "APPROVAL_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    },
+    {
+      "name": "이메일 + 미등록 범주",
+      "categories": [
+        "email",
+        "unregistered_category"
+      ],
+      "action": "REQUIRE_APPROVAL",
+      "reasonCodes": [
+        "APPROVAL_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    },
+    {
+      "name": "주민번호 + 미등록 범주",
+      "categories": [
+        "government_id",
+        "unregistered_category"
+      ],
+      "action": "REQUIRE_APPROVAL",
+      "reasonCodes": [
+        "APPROVAL_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    },
+    {
+      "name": "미등록 범주 + API 키",
+      "categories": [
+        "unregistered_category",
+        "api_key"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED",
+        "UNKNOWN_CATEGORY_PRESENT"
+      ]
+    },
+    {
+      "name": "중복 범주",
+      "categories": [
+        "email",
+        "email"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "기존 네 범주 전체",
+      "categories": [
+        "government_id",
+        "phone_number",
+        "email",
+        "api_key"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "카드번호 단일",
+      "categories": [
+        "credit_card"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "계좌번호 단일",
+      "categories": [
+        "bank_account"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "여권번호 단일",
+      "categories": [
+        "passport_number"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "운전면허번호 단일",
+      "categories": [
+        "driver_license"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "비밀번호 단일",
+      "categories": [
+        "password"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "여권 + 계좌 + 면허",
+      "categories": [
+        "passport_number",
+        "bank_account",
+        "driver_license"
+      ],
+      "action": "MASK",
+      "reasonCodes": [
+        "MASK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "계좌번호 + 비밀번호",
+      "categories": [
+        "bank_account",
+        "password"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    },
+    {
+      "name": "아홉 범주 전체",
+      "categories": [
+        "government_id",
+        "phone_number",
+        "email",
+        "api_key",
+        "credit_card",
+        "bank_account",
+        "passport_number",
+        "driver_license",
+        "password"
+      ],
+      "action": "BLOCK",
+      "reasonCodes": [
+        "BLOCK_POLICY_MATCHED"
+      ]
+    }
   ]
 }

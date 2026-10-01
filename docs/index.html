@@ -11,7 +11,7 @@
 <body>
 
 <div class="wrap">
-<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v1.1.1 · vitest 229 · DOM 44 · PDP 9</span></div>
+<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.1 · 확장 v1.4.0 · vitest 720 · DOM 65 · PDP 9</span></div>
 <header class="hero">
 <div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
 <h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
@@ -35,8 +35,8 @@
 <h2>확인 방법 (5단계)</h2>
 <ol>
 <li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
-<li><code>npm test</code> → 229/229 (빌드 후 vitest: 탐지기·정책·백그라운드·화면·콘텐츠 스크립트·산출물 검사)</li>
-<li><code>py tools/dom_test.py</code> → 44/44 (헤드리스 Chrome, <code>npm run build</code> 선행)</li>
+<li><code>npm test</code> → 720/720 (빌드 후 vitest: 탐지기·정책·백그라운드·화면·콘텐츠 스크립트·산출물 검사)</li>
+<li><code>py tools/dom_test.py</code> → 65/65 (헤드리스 Chrome, <code>npm run build</code> 선행)</li>
 <li><code>py tools/policy_parity.py</code> → 12/12 (policy.py ↔ policy.ts 대조)</li>
 <li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>
 </ol>
@@ -44,12 +44,12 @@
 </aside>
 </div>
 <section class="card">
-<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.1.1)</h2>
+<h2>브라우저 확장 프로그램 (Chrome MV3 · v1.4.0)</h2>
 <p>ChatGPT · Claude · Gemini 입력창에 검사 안내와 마스킹 버튼을 추가합니다. 검사는 브라우저 안에서만 실행되고 네트워크 요청이 없습니다.</p>
 <div class="grid" style="grid-template-columns:1fr;gap:10px">
 <ul>
 <li><b>구성</b> <code>manifest.json</code>(MV3) · TypeScript 소스(<code>browser-extension/src/</code>)를 빌드해 <code>detector.js</code> 탐지 · <code>policy.js</code> 로컬 정책 · <code>content.js</code> 안내·마스킹·실행 취소·전송 차단 · <code>background.js</code> 탭 배지를 만들고, <code>popup</code> / <code>options</code> / <code>onboarding</code>은 React 화면</li>
-<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.1.1.zip</code> — <code>npm run build</code> 후 <code>py tools/package_store.py</code>로 생성 (21개 파일, 약 107KB)</li>
+<li><b>제출 패키지</b> <code>dist/ai-input-protection-gateway-1.4.0.zip</code> — <code>npm run build</code> 후 <code>py tools/package_store.py</code>로 생성 (21개 파일, 약 107KB)</li>
 <li><b>아이콘</b> A안 확정 — <a href="logo-preview.html">아이콘 세트 미리보기</a> · <code>py tools/make_icons.py</code>로 PNG 4종 재생성</li>
 <li><b>설치</b> <code>npm install</code> → <code>npm run build</code> → <code>chrome://extensions</code> → 개발자 모드 → 압축해제된 확장 프로그램 로드 → <b><code>dist-ext/</code></b> (소스 폴더 <code>browser-extension/</code>가 아닙니다)</li>
 <li><b>권한</b> <code>storage</code> + 대상 4개 주소 호스트 권한만 사용 (방문 기록 권한 없음, 원격 코드 없음)</li>

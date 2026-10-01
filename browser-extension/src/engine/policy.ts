@@ -4,7 +4,9 @@
 // - 네트워크 요청이 없습니다. 이 판정은 브라우저 로컬에서만 이루어집니다.
 // - 조치 이름을 돌려줄 뿐이며, 전송을 막는 일은 부르는 쪽(content.js)이 설정에 따라 결정합니다.
 
-export type ActionName = "ALLOW" | "MASK" | "REQUIRE_APPROVAL" | "BLOCK";
+import { CATEGORIES, type ActionName } from "../shared/categories.ts";
+
+export type { ActionName };
 
 export interface PolicyOptions {
   readonly categoryActions?: Readonly<Record<string, string>>;
@@ -30,12 +32,10 @@ const ACTION_REASON: Readonly<Record<ActionName, string>> = Object.freeze({
   BLOCK: "BLOCK_POLICY_MATCHED",
 });
 
-const DEFAULT_CATEGORY_ACTIONS: Readonly<Record<string, ActionName>> = Object.freeze({
-  government_id: "MASK",
-  phone_number: "MASK",
-  email: "MASK",
-  api_key: "BLOCK",
-});
+// 범주별 기본 조치는 shared/categories.ts(단일 등록부)에서 옵니다.
+const DEFAULT_CATEGORY_ACTIONS: Readonly<Record<string, ActionName>> = Object.freeze(
+  Object.fromEntries(CATEGORIES.map((category) => [category.id, category.defaultAction])),
+);
 
 const UNKNOWN_CATEGORY_ACTION: ActionName = "REQUIRE_APPROVAL";
 

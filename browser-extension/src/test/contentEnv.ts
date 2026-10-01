@@ -21,6 +21,8 @@ export function resetContentState(features: Partial<Features> = {}): void {
   Object.assign(state, {
     features: { ...DEFAULT_FEATURES, ...features },
     disabledCategories: [],
+    allowlist: [],
+    maskStyle: "placeholder",
     activeEditor: null,
     focusedEditor: null,
     activeAlertKey: "",
@@ -31,6 +33,7 @@ export function resetContentState(features: Partial<Features> = {}): void {
     blockArmedUntil: 0,
     allowPendingSubmit: false,
     lastAuditKey: "",
+    attachedFiles: [],
   });
 }
 

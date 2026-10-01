@@ -12,6 +12,7 @@ import {
   setPlainValue,
 } from "./masking.ts";
 import { createNoticeController } from "./notice/controller.ts";
+import { startRestoring } from "./restore.ts";
 import { detectorOptions, feature, state } from "./state.ts";
 import { getDetector, NOTICE_KIND, type Editor, type NoticeKind } from "./types.ts";
 
@@ -183,6 +184,11 @@ export function renderNotice(
     return;
   }
 
+  // 첨부파일 안내는 입력창과 별개라서, 입력창이 깨끗해져도 닫지 않습니다(사용자가 닫거나 새 안내가 뜰 때까지).
+  if (notice.kind === NOTICE_KIND.ALERT && state.activeAlertKey.startsWith("file|")) {
+    return;
+  }
+
   // 감지된 값이 모두 사라졌으면 계속 떠 있던 감지 안내를 닫고 닫힘 기록도 지웁니다.
   state.dismissedAlertKey = "";
   state.activeAlertKey = "";
@@ -199,6 +205,13 @@ export function renderNotice(
       "설정된 일부 정규식과 일치하는 항목을 찾지 못했습니다. 안전하다는 뜻은 아니며, 입력은 차단되지 않습니다.",
     showUndo: hasUndoAvailable(),
   });
+}
+
+// 세션 토큰 마스킹일 때 복원이 어떻게 동작하는지 알려 줍니다. 전송되지 않고 이 탭에서만 보인다는 점을 분명히 합니다.
+function restoreSentence(): string {
+  return feature("restoreTokens")
+    ? "AI 답변에 이 토큰이 나오면 이 탭의 화면에서만 원래 값으로 보여줍니다(전송되지 않으며, 새로고침하면 복원 정보가 사라집니다)."
+    : "복원 표시가 꺼져 있어 답변의 토큰은 그대로 보입니다.";
 }
 
 // 현재 설정에서 자동 보호가 어디까지 동작하는지 한 줄로 알려 줍니다.
@@ -247,10 +260,15 @@ function applyMaskToActiveEditor(): void {
       return;
     }
 
+    // 세션 토큰으로 가렸다면, 이제부터 화면에 나오는 토큰을 이 탭에서만 원래 값으로 보여줍니다.
+    if (result.tokens) {
+      startRestoring();
+    }
+
     displayNotice({
       kind: NOTICE_KIND.RESULT,
       title: "마스킹본을 입력란에 적용했습니다",
-      description: `일치한 구간만 유형별 자리표시자로 바꿨습니다. 문단·줄바꿈·서식은 건드리지 않았지만, 편집기별 상태가 달라질 수 있으니 결과를 확인하세요. ${enforcementSentence()} 필요하면 아래 실행 취소로 되돌릴 수 있습니다.`,
+      description: `${result.tokens ? `일치한 구간만 [전화_1] 같은 세션 토큰으로 바꿨습니다. ${restoreSentence()}` : "일치한 구간만 유형별 자리표시자로 바꿨습니다."} 문단·줄바꿈·서식은 건드리지 않았지만, 편집기별 상태가 달라질 수 있으니 결과를 확인하세요. ${enforcementSentence()} 필요하면 아래 실행 취소로 되돌릴 수 있습니다.`,
       showUndo: hasUndoAvailable(),
     });
     return;
@@ -261,7 +279,7 @@ function applyMaskToActiveEditor(): void {
       kind: NOTICE_KIND.INFO,
       title: "입력란을 바꾸지 않았습니다",
       description:
-        "전각 숫자처럼 원문 표기가 다른 값만 있어 바꿀 위치를 특정하지 못했습니다. 구조를 안전하게 유지하려면 해당 부분을 직접 수정해 주세요.",
+        "전각 숫자·보이지 않는 문자·한글로 쓴 숫자·인코딩처럼 원문 표기가 다른 값만 있어 바꿀 위치를 특정하지 못했습니다. 구조를 안전하게 유지하려면 해당 부분을 직접 수정해 주세요.",
       showUndo: hasUndoAvailable(),
     });
     return;

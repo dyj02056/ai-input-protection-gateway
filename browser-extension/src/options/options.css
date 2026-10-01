@@ -9,3 +9,4 @@ th{color:#5a6b8c;font-weight:700}
 .empty{color:#5a6b8c;font-size:13px;margin:10px 0 0}
 .small{color:#5a6b8c;font-size:13px}
 button{background:#155eef;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:800;cursor:pointer}
+textarea{width:100%;border:1px solid #dbe4f3;border-radius:8px;padding:10px;font:inherit;box-sizing:border-box}

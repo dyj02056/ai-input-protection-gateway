@@ -1,6 +1,6 @@
 {
   "name": "ai-input-protection-gateway-extension",
-  "version": "1.1.1",
+  "version": "1.4.0",
   "private": true,
   "description": "AI 입력정보 보호 게이트웨이 브라우저 확장 — 빌드·테스트 도구 (제출 ZIP에는 dist-ext/만 들어갑니다)",
   "scripts": {

@@ -13,7 +13,7 @@ describe("decideLocalAction (정책 엔진이 있을 때)", () => {
     [["email", "phone_number"], "MASK"],
     [["api_key"], "BLOCK"],
     [["email", "api_key"], "BLOCK"],
-    [["passport_number"], "REQUIRE_APPROVAL"],
+    [["unregistered_category"], "REQUIRE_APPROVAL"],
   ])("%j → %s", (categories, expected) => {
     expect(decideLocalAction(categories)).toBe(expected);
   });
@@ -27,8 +27,11 @@ describe("decideLocalAction (policy.js를 읽지 못해 폴백으로 계산할 �
     [["government_id", "phone_number", "email"], "MASK"],
     [["api_key"], "BLOCK"],
     [["email", "api_key"], "BLOCK"],
-    [["passport_number"], "REQUIRE_APPROVAL"],
-    [["email", "passport_number"], "REQUIRE_APPROVAL"],
+    [["unregistered_category"], "REQUIRE_APPROVAL"],
+    [["email", "unregistered_category"], "REQUIRE_APPROVAL"],
+    [["credit_card"], "BLOCK"],
+    [["password", "email"], "BLOCK"],
+    [["bank_account", "passport_number", "driver_license"], "MASK"],
   ])("%j → %s", (categories, expected) => {
     removeEngines();
     const withoutEngine = decideLocalAction(categories);

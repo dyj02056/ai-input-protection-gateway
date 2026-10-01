@@ -16,8 +16,8 @@ gateway-core/pdp/
 ## 현재 데모 정책
 
 - 탐지 범주 없음 → `ALLOW`
-- `government_id`, `phone_number`, `email` → `MASK`
-- `api_key` → `BLOCK`
+- `government_id`, `phone_number`, `email`, `bank_account`, `passport_number`, `driver_license` → `MASK`
+- `api_key`, `credit_card`, `password` → `BLOCK`
 - 정책에 등록되지 않은 범주 → `REQUIRE_APPROVAL`
 - 여러 범주가 있으면 더 엄격한 조치를 선택: `BLOCK` > `REQUIRE_APPROVAL` > `MASK` > `ALLOW`
 
@@ -25,7 +25,7 @@ gateway-core/pdp/
 
 ## 브라우저 탐지기와 범주 ID 맞추기
 
-`browser-extension/detector.js`의 `inspect()`는 아래 ID만 결과로 반환하도록 맞췄습니다. 같은 ID가 `policy.py`의 기본 정책에서 사용됩니다.
+브라우저 탐지기(`browser-extension/src/engine/detector.ts`)의 `inspect()`는 아래 ID만 결과로 반환합니다. 이 표의 원본은 `browser-extension/src/shared/categories.ts`(범주 등록부)이고, 같은 ID와 기본 조치가 `policy.py`에 있어야 합니다. 어긋나면 `py tools/policy_parity.py`가 실패합니다.
 
 | 범주 ID | 브라우저에서 표시하는 이름 | PDP 데모 조치 |
 |---|---|---|
@@ -33,6 +33,11 @@ gateway-core/pdp/
 | `phone_number` | 전화번호 형식 | `MASK` |
 | `email` | 이메일 형식 | `MASK` |
 | `api_key` | API 키/토큰 형식 | `BLOCK` |
+| `credit_card` | 카드번호 형식 | `BLOCK` |
+| `bank_account` | 계좌번호 형식 | `MASK` |
+| `passport_number` | 여권번호 형식 | `MASK` |
+| `driver_license` | 운전면허번호 형식 | `MASK` |
+| `password` | 비밀번호 표기 | `BLOCK` |
 
 향후 HTTP 연결을 만들 때 사용할 수 있는 원문 없는 요청 모양은 다음과 같습니다.
 

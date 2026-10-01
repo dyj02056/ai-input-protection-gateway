@@ -1,6 +1,15 @@
 // 콘텐츠 스크립트가 공유하는 상태와 설정입니다. 원문은 어디에도 저장하지 않습니다.
 import { CATEGORY_IDS } from "../shared/constants.ts";
-import { coerceFeatures, DEFAULT_FEATURES, type BoolFeature, type Features } from "../shared/settings.ts";
+import {
+  coerceAllowlist,
+  coerceFeatures,
+  coerceMaskStyle,
+  DEFAULT_FEATURES,
+  type BoolFeature,
+  type Features,
+  type MaskStyle,
+} from "../shared/settings.ts";
+import type { AttachedFile } from "./files/types.ts";
 import type { Editor, UndoEntry } from "./types.ts";
 
 // 설정(options)에서 끈 범주는 안내와 마스킹에서 모두 제외합니다.
@@ -11,12 +20,13 @@ export const ALL_CATEGORIES: readonly string[] = CATEGORY_IDS;
 // persistentAlert(감지 안내 계속 표시)와 undoButton(실행 취소 버튼)은 화면 표시 방식만
 // 바꾸므로 기본값을 켭니다. 전송 차단·승인 단계·정책 적용·감사 기록은 이 확장의
 // "자동으로 막지 않는다"는 원칙을 바꾸므로 반드시 사용자가 켜야 합니다.
-//
-// options는 maskStyle(자리표시자/세션 토큰)을 저장하지만, 1.1.0은 자리표시자만
-// 구현되어 있어 이 스크립트는 저장된 값을 쓰지 않습니다. 세션 토큰은 다음 버전 범위입니다.
 export const state = {
   features: { ...DEFAULT_FEATURES } as Features,
   disabledCategories: [] as string[],
+  // 일치해도 무시할 값(설정 화면에서 사용자가 적은 것)
+  allowlist: [] as string[],
+  // 마스킹 방식: 자리표시자([전화번호]) 또는 세션 토큰([전화_1], 답변에서 되돌려 보여줌)
+  maskStyle: "placeholder" as MaskStyle,
   // 안내창의 마스킹 버튼이 가리키는 입력창입니다.
   activeEditor: null as Editor | null,
   // 마지막으로 사용자가 입력한 입력창입니다. 전송 차단 판정에 씁니다.
@@ -36,19 +46,31 @@ export const state = {
   // 속한 제출만 한 번 통과시킵니다. (플래그는 다음 작업 묶음에서 사라집니다.)
   allowPendingSubmit: false,
   lastAuditKey: "",
+  // 첨부로 기억하는 파일의 검사 결과(내용 없음). 첨부파일 전송 차단 판정에 씁니다.
+  attachedFiles: [] as AttachedFile[],
 };
 
 export function feature(name: BoolFeature): boolean {
   return state.features[name] === true;
 }
 
-export function detectorOptions(): { disabledCategories: string[] } {
-  return { disabledCategories: state.disabledCategories };
+export function detectorOptions(): {
+  disabledCategories: string[];
+  strictValidation: boolean;
+  allowlist: string[];
+} {
+  return {
+    disabledCategories: state.disabledCategories,
+    strictValidation: state.features.strictValidation,
+    allowlist: state.allowlist,
+  };
 }
 
 interface StoredSettings {
   enabled?: unknown;
   features?: unknown;
+  allowlist?: unknown;
+  maskStyle?: unknown;
 }
 
 export function applySettings(data: StoredSettings | null | undefined): void {
@@ -64,13 +86,19 @@ export function applySettings(data: StoredSettings | null | undefined): void {
   if (data.features) {
     state.features = coerceFeatures(data.features);
   }
+  if (Array.isArray(data.allowlist)) {
+    state.allowlist = coerceAllowlist(data.allowlist);
+  }
+  if (data.maskStyle !== undefined) {
+    state.maskStyle = coerceMaskStyle(data.maskStyle);
+  }
 }
 
 // 저장된 설정을 읽고, 이후 바뀌는 설정을 다음 검사부터 바로 반영합니다.
 // chrome.storage를 쓸 수 없는 환경에서는 기본값으로만 동작합니다.
 export function watchSettings(onChanged: () => void): void {
   try {
-    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES }, (data) => {
+    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES, allowlist: [], maskStyle: "placeholder" }, (data) => {
       applySettings(data);
     });
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -79,7 +107,7 @@ export function watchSettings(onChanged: () => void): void {
       }
       // 바뀐 키만 모아서 반영합니다. 설정 변경은 다음 검사부터 바로 적용됩니다.
       const next: StoredSettings = {};
-      for (const key of ["enabled", "features"] as const) {
+      for (const key of ["enabled", "features", "allowlist", "maskStyle"] as const) {
         if (Object.prototype.hasOwnProperty.call(changes, key)) {
           next[key] = changes[key]?.newValue;
         }
