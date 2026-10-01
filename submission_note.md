@@ -146,3 +146,11 @@
 - 계획서: https://dyj02056.github.io/ai-input-protection-gateway/plan.html
 - 저장소: https://github.com/dyj02056/ai-input-protection-gateway
 - 검증: node 6/6·PDP 9/9 이 작업공간 통과.
+
+## 누적 기록 — 로고 A안 파일 생성
+
+- `browser-extension/icons/logo-a.svg` 신규: 파란 방패 + 흰색 `&gt;_` 커서, 128 viewBox, 투명 배경.
+- `docs/logo-preview.html` 신규: 128/48/32/16px 크기별 표시 + 다크 배경 확인용.
+- 검증: detector 6/6·PDP 9/9 이 작업공간 통과. 로고 시각 확인은 배포 URL에서 직접 확인 필요.
+- 로고 URL: https://dyj02056.github.io/ai-input-protection-gateway/logo-preview.html
+
