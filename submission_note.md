@@ -60,3 +60,14 @@
 - 다음 할 일: Chrome줄바꿈 재확인, PDP재실행, 원문없는 연동·BLOCK제어·승인연결, 탐지·파일·감사확장.
 - URL·저장소: https://github.com/dyj02056/ai-input-protection-gateway, 별도배포없음, 작업공간 c:\Users\User\Documents\ai-input-protection-gateway.
 - 검증: detector 5/5 이 작업공간 통과. 브라우저 재확인·PDP재실행은 다음 점검까지 직접 수행 예정.
+
+## 누적 기록 2026-10-01 — Pages 데모 추가
+
+- `docs/index.html` 신규: 1차 홈, 데모·저장소·계획서 링크, 3단계 확인법.
+- `docs/demo.html` 신규: detector.js 로컬 데모. 검사→범주ID 표시, 마스킹→미리보기, PDP데모 판정 표시. 서버 전송 없음, 가짜문구 기본값.
+- `docs/detector.js` 복사: Pages 경로용 (`./detector.js` 참조로 수정). 원본 `browser-extension/detector.js`와 동일 내용 유지.
+- `docs/plan.md` v1.1로 갱신: 배포 URL 섹션 추가, B.6에 Pages URL 기재.
+- 검증: `docs/detector.js` vm 로드 → inspect government_id·mask 전화번호 확인 OK. `node --test browser-extension/detector.test.js` pass 5 fail 0.
+- 배포 URL: https://dyj02056.github.io/ai-input-protection-gateway/ (Repo Settings → Pages → Deploy from branch → main → /docs 저장 후 유효). 데모 직접경로: .../demo.html.
+- 다음: GitHub Pages 설정 후 URL 접속 확인, plan.md 원본 19KB 백업본에서 축소된 내용 복원 여부 결정.
+

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로컬 탐지 데모 — AI 입력정보 보호 게이트웨이</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#172033;line-height:1.6}
+textarea{width:100%;min-height:140px;border:1px solid #c7d2e1;border-radius:8px;padding:12px;font:inherit;white-space:pre-wrap}
+pre{background:#0f1b33;color:#e8eefc;border-radius:8px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+button{background:#155eef;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;margin:8px 8px 0 0}
+button.ghost{background:#fff;color:#155eef;border:1px solid #155eef}
+.warn{background:#fff8e6;border:1px solid #e6c200;border-radius:8px;padding:12px;margin:12px 0}
+.badge{display:inline-block;border:1px solid #c7d2e1;border-radius:999px;padding:2px 10px;margin:2px 6px 2px 0;font-size:13px}
+a{color:#155eef}
+</style>
+</head>
+<body>
+<p><a href="index.html">← 중간점검 1차 홈</a></p>
+<h1>로컬 탐지 데모 (서버 전송 없음)</h1>
+<div class="warn"><strong>실제 개인정보·API 키를 입력하지 마세요.</strong> 이 페이지는 <code>browser-extension/detector.js</code>를 그대로 불러와 브라우저 안에서만 검사·마스킹합니다. 입력값은 저장·전송되지 않습니다.</div>
+<h2>1. 입력</h2>
+<textarea id="input" aria-label="가짜 테스트 문구 입력">가짜 주민번호 000000-1000000
+가짜 전화번호 010-0000-0000
+가짜 키 sk-TESTTESTTESTTESTTEST
+그대로 남아야 할 문장</textarea>
+<div>
+<button id="check" type="button">검사하기</button>
+<button id="mask" type="button" class="ghost">마스킹하기</button>
+<button id="reset" type="button" class="ghost">가짜 예시로 되돌리기</button>
+</div>
+<h2>2. 탐지 결과 (범주 ID만, 원문 미포함)</h2>
+<div id="cats"><span class="badge">검사 버튼을 눌러주세요</span></div>
+<pre id="catJson">[]</pre>
+<h2>3. 마스킹 결과 미리보기</h2>
+<pre id="masked">(마스킹 버튼을 눌러주세요)</pre>
+<h2>4. PDP 데모 정책 대응</h2>
+<ul>
+<li><code>없음</code> → <code>ALLOW</code></li>
+<li><code>government_id</code>, <code>phone_number</code> → <code>MASK</code></li>
+<li><code>api_key</code> → <code>BLOCK</code> (이 데모·확장은 전송을 막지 않음, 판정 이름만 표시)</li>
+<li>미등록 범주 → <code>REQUIRE_APPROVAL</code></li>
+</ul>
+<p id="pdp"></p>
+<h2>한계</h2>
+<ul>
+<li>3종 형식만 탐지하며 미감지는 안전 판정이 아닙니다.</li>
+<li>마스킹은 복원 불가 자리표시자이며 Token Vault 토큰화가 아닙니다.</li>
+<li>BLOCK은 판정 이름이며 자동 전송 차단이 없습니다.</li>
+</ul>
+<script src="./detector.js"></script>
+<script>
+(function(){
+"use strict";
+var input=document.getElementById("input");
+var cats=document.getElementById("cats");
+var catJson=document.getElementById("catJson");
+var masked=document.getElementById("masked");
+var pdp=document.getElementById("pdp");
+var LABELS={government_id:"주민등록번호 형식",phone_number:"전화번호 형식",api_key:"API 키/토큰 형식"};
+var ACTION={government_id:"MASK",phone_number:"MASK",api_key:"BLOCK"};
+var SAMPLE="가짜 주민번호 000000-1000000\n가짜 전화번호 010-0000-0000\n가짜 키 sk-TESTTESTTESTTESTTEST\n그대로 남아야 할 문장";
+function decide(list){
+if(!list.length) return "ALLOW";
+if(list.indexOf("api_key")>=0) return "BLOCK";
+var unknown=list.filter(function(x){return !LABELS[x];});
+if(unknown.length) return "REQUIRE_APPROVAL";
+return "MASK";
+}
+function render(){
+var d=window.AIInputGatewayDetector;
+if(!d){cats.textContent="detector.js 로드 실패";return [];}
+var list=[];
+try{list=Array.prototype.slice.call(d.inspect(input.value));}catch(e){list=[];}
+cats.innerHTML="";
+if(!list.length){cats.textContent="감지 없음 (안전 판정 아님)";}
+list.forEach(function(c){
+var s=document.createElement("span");s.className="badge";s.textContent=c+" · "+(LABELS[c]||"알 수 없는 범주");cats.appendChild(s);
+});
+catJson.textContent=JSON.stringify(list);
+var a=decide(list);
+pdp.innerHTML="PDP 데모 판정: <strong>"+a+"</strong>";
+return list;
+}
+document.getElementById("check").addEventListener("click",function(){masked.textContent="(마스킹 버튼을 눌러주세요)";render();});
+document.getElementById("mask").addEventListener("click",function(){
+var d=window.AIInputGatewayDetector;if(!d)return;
+render();
+try{masked.textContent=d.mask(input.value);}catch(e){masked.textContent="마스킹 실패: 입력이 보호되었다고 간주하지 마세요.";}
+});
+document.getElementById("reset").addEventListener("click",function(){input.value=SAMPLE;masked.textContent="(마스킹 버튼을 눌러주세요)";render();});
+render();
+})();
+</script>
+</body>
+</html>

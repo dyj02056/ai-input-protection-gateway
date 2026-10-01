@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 입력정보 보호 게이트웨이 — 중간점검 1차</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#172033;line-height:1.6}
+.card{border:1px solid #c7d2e1;border-radius:12px;padding:16px;margin:16px 0}
+.btn{display:inline-block;background:#155eef;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px 8px 4px 0}
+.btn2{background:#fff;color:#155eef;border:1px solid #155eef}
+.warn{background:#fff8e6;border:1px solid #e6c200;border-radius:8px;padding:12px}
+code{background:#f1f4f9;padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<p>중간점검 1차 제출용</p>
+<h1>중소기업용 생성형 AI 입력정보 보호 게이트웨이</h1>
+<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 현 구현은 로컬 탐지 3종 + 수동 마스킹 + PDP 데모 판정까지이며 자동 차단·서버 연동은 미구현입니다.</p>
+<div class="warn"><strong>주의:</strong> 실제 개인정보·키는 입력하지 마세요. 데모는 100% 브라우저 로컬 처리이며 서버 전송이 없습니다.</div>
+<div class="card">
+<h2>바로 확인</h2>
+<a class="btn" href="demo.html">로컬 탐지 데모 열기</a>
+<a class="btn btn2" href="https://github.com/dyj02056/ai-input-protection-gateway">소스 저장소</a>
+<a class="btn btn2" href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/docs/plan.md">계획서 원문</a>
+</div>
+<div class="card">
+<h2>확인 방법 (3단계)</h2>
+<ol>
+<li><code>demo.html</code>에서 가짜 4줄 입력 → 범주 표시 확인</li>
+<li>로컬에서 <code>node --test browser-extension/detector.test.js</code> → pass 5 확인</li>
+<li><code>chrome://extensions</code>에서 확장 로드 후 ChatGPT/Claude 가짜 입력 확인 (전송 금지)</li>
+</ol>
+</div>
+<div class="card">
+<h2>제출 항목 요약</h2>
+<ul>
+<li>만든 것: plan v1.0, detector inspect/mask, content.js 안내+수동마스킹, policy.py 판정, 테스트 5+7개</li>
+<li>바뀐 점: 무매칭 분리, RRN 가중치화, 로컬1차·하이브리드, 24h 누적, 승인바인딩 강화</li>
+<li>다음: Chrome 줄바꿈 재확인, PDP 재실행, 원문없는 연동·BLOCK·승인 연결</li>
+</ul>
+</div>
+</body>
+</html>
