@@ -18,8 +18,10 @@ import hashlib
 import os
 import secrets
 import socket
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -78,12 +80,13 @@ def cmd_test(_: argparse.Namespace) -> int:
 def cmd_newkey(args: argparse.Namespace) -> int:
     key = secrets.token_urlsafe(32)  # 43자
     digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
-    print("새 API 키입니다. 지금 한 번만 보여 드리며, 서버에는 해시만 두는 것을 권합니다.")
+    variable = "PDP_ADMIN_KEYS_SHA256" if args.admin else "PDP_API_KEYS_SHA256"
+    print(("새 관리자 키입니다(감사 로그를 읽고 검증할 수 있음)." if args.admin else "새 API 키입니다.") + " 이하 안내를 따라 주세요. 지금 한 번만 보여 드리며, 서버에는 해시만 두는 것을 권합니다.")
     print()
     print(f"  API 키 (확장 프로그램 설정에 입력):\n    {key}")
     print()
     print("  서버 환경 변수 (평문 키를 서버에 두지 않으려면 해시만):")
-    print(f"    PDP_API_KEYS_SHA256={args.name}={digest}")
+    print(f"    {variable}={args.name}={digest}")
     print()
     print("이 값들을 코드·설정 파일·메신저에 남기지 마세요. 키를 잃어버리면 새로 만들어 교체하세요.")
     return 0
@@ -109,7 +112,9 @@ def cmd_e2e(_: argparse.Namespace) -> int:
     python = require_venv()
     port = free_port()
     key = secrets.token_urlsafe(32)
-    env = {**os.environ, "PDP_API_KEYS": f"e2e={key}"}
+    admin_key = secrets.token_urlsafe(32)
+    audit_dir = tempfile.mkdtemp(prefix="pdp-e2e-audit-")
+    env = {**os.environ, "PDP_API_KEYS": f"e2e={key}", "PDP_ADMIN_KEYS": f"e2eadmin={admin_key}", "PDP_AUDIT_DIR": audit_dir}
     server = subprocess.Popen(
         [str(python), "-m", "uvicorn", "server.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
         cwd=GATEWAY_CORE,
@@ -126,9 +131,9 @@ def cmd_e2e(_: argparse.Namespace) -> int:
             print("서버가 시작되지 않았습니다.", file=sys.stderr)
             return 1
         npx = "npx.cmd" if os.name == "nt" else "npx"
-        test_env = {**os.environ, "PDP_E2E_URL": f"http://127.0.0.1:{port}", "PDP_E2E_KEY": key}
+        test_env = {**os.environ, "PDP_E2E_URL": f"http://127.0.0.1:{port}", "PDP_E2E_KEY": key, "PDP_E2E_ADMIN_KEY": admin_key}
         return subprocess.run(
-            [npx, "vitest", "run", "browser-extension/src/background/policySync.e2e.test.ts"],
+            [npx, "vitest", "run", "browser-extension/src/background/policySync.e2e.test.ts", "browser-extension/src/background/auditUpload.e2e.test.ts"],
             cwd=REPO_ROOT,
             env=test_env,
             check=False,
@@ -139,6 +144,7 @@ def cmd_e2e(_: argparse.Namespace) -> int:
             server.wait(timeout=5)
         except subprocess.TimeoutExpired:
             server.kill()
+        shutil.rmtree(audit_dir, ignore_errors=True)
 
 
 def main() -> int:
@@ -148,6 +154,7 @@ def main() -> int:
     sub.add_parser("test").set_defaults(func=cmd_test)
     newkey = sub.add_parser("newkey")
     newkey.add_argument("--name", default="default", help="키 이름(예: 조직 이름)")
+    newkey.add_argument("--admin", action="store_true", help="감사 로그를 읽는 관리자 키로 만듭니다")
     newkey.set_defaults(func=cmd_newkey)
     run = sub.add_parser("run")
     run.add_argument("--host", default="127.0.0.1")

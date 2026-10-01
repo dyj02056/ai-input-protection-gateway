@@ -48,3 +48,29 @@ class PolicyVersionInfo(BaseModel):
     active: bool
     etag: str
     description: str
+
+
+class AuditEvent(BaseModel):
+    """감사 이벤트 한 건. 입력 원문·파일 이름·사이트 주소·사용자 식별자가 들어갈 자리가 없습니다."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_id: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{32}$")]
+    # 브라우저가 주장하는 발생 시각(ms). 서버가 받은 시각은 따로 기록합니다.
+    at: int = Field(ge=0, le=4_102_444_800_000)
+    action: Literal["ALLOW", "MASK", "REQUIRE_APPROVAL", "BLOCK"]
+    categories: list[CategoryId] = Field(max_length=32)
+    channel: Literal["prompt", "file"] = "prompt"
+    policy_version: int | None = Field(default=None, ge=1, le=1_000_000_000)
+
+
+class AuditBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    events: list[AuditEvent] = Field(min_length=1, max_length=50)
+
+
+class AuditAck(BaseModel):
+    accepted: int
+    duplicates: int
+    head_seq: int

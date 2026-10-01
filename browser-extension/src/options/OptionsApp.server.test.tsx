@@ -211,3 +211,45 @@ describe("연결된 상태", () => {
     await waitFor(() => expect(text()).toContain("이전 정책(v3)을 계속 사용"));
   });
 });
+
+describe("감사 이벤트 전송 동의", () => {
+  const featuresOf = () => stub.store.features as Record<string, unknown>;
+
+  it("기본 꺼짐이고, 무엇을 보내고 무엇을 보내지 않는지 설명한다", async () => {
+    await renderOptions();
+    expect((document.getElementById("f-uploadAudit") as HTMLInputElement).checked).toBe(false);
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("별도 동의 스위치");
+    expect(body).toContain("입력한 글, 파일 이름·내용, 사이트 주소, 감지 건수는 보내지 않습니다");
+  });
+
+  it("켜면 features에 저장된다", async () => {
+    await renderOptions();
+    fireEvent.click(document.getElementById("f-uploadAudit")!);
+    await waitFor(() => expect(featuresOf()?.uploadAudit).toBe(true));
+  });
+
+  it("서버 연결을 끊으면 동의도 꺼지고 대기열·상태가 지워진다", async () => {
+    await renderOptions({
+      [SERVER_KEYS.config]: { enabled: true, url: ORIGIN },
+      [SERVER_KEYS.apiKey]: FAKE_KEY,
+      [SERVER_KEYS.auditQueue]: [{ event_id: "a".repeat(32) }],
+      features: { uploadAudit: true },
+    });
+    await waitFor(() => expect(button("server-disconnect")).not.toBeNull());
+    expect((document.getElementById("f-uploadAudit") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(button("server-disconnect")!);
+    await waitFor(() => expect(featuresOf().uploadAudit).toBe(false));
+    expect(stub.store[SERVER_KEYS.auditQueue]).toBeUndefined();
+  });
+
+  it("전송 결과와 대기 건수를 보여 준다", async () => {
+    await renderOptions({
+      [SERVER_KEYS.config]: { enabled: true, url: ORIGIN },
+      [SERVER_KEYS.apiKey]: FAKE_KEY,
+      [SERVER_KEYS.auditStatus]: { state: "error", message: "서버에 보내지 못했습니다. 나중에 다시 시도합니다.", at: 1, pending: 3 },
+      [SERVER_KEYS.auditQueue]: [{}, {}, {}],
+    });
+    await waitFor(() => expect(document.getElementById("server-audit-status")?.textContent).toContain("대기 3건"));
+  });
+});

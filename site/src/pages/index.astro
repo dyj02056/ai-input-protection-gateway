@@ -6,7 +6,7 @@ const { version } = manifest;
 ---
 <Base title="AI 입력정보 보호 게이트웨이 — 최종 제출">
 <div class="wrap">
-<div class="top"><span>최종 제출 · 로컬 처리 · 입력 내용 서버 전송 없음</span><span>plan v2.1 · 확장 v{version} · vitest 863 · DOM 65 · PDP 9 · 서버 36</span></div>
+<div class="top"><span>최종 제출 · 로컬 처리 · 입력 내용 서버 전송 없음</span><span>plan v2.1 · 확장 v{version} · vitest 894 · DOM 65 · PDP 9 · 서버 47</span></div>
 <header class="hero">
 <div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
 <h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
@@ -30,7 +30,7 @@ const { version } = manifest;
 <h2>확인 방법 (5단계)</h2>
 <ol>
 <li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
-<li><code>npm test</code> → 863 통과 (빌드 후 vitest: 탐지기·정책·백그라운드·화면·콘텐츠 스크립트·산출물·서버 정책 동기화 검사)</li>
+<li><code>npm test</code> → 894 통과 (빌드 후 vitest: 탐지기·정책·백그라운드·화면·콘텐츠 스크립트·산출물·서버 정책 동기화 검사)</li>
 <li><code>py tools/dom_test.py</code> → 65/65 (헤드리스 Chrome, <code>npm run build</code> 선행)</li>
 <li><code>py tools/policy_parity.py</code> → 12/12 (policy.py ↔ policy.ts 대조)</li>
 <li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>

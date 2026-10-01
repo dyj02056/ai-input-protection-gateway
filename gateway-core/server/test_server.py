@@ -25,8 +25,17 @@ OTHER_KEY = "other-key-" + "b" * 32
 POLICY_DIR = Path(__file__).resolve().parent / "policy_files"
 
 
+# 테스트가 저장소 안에 감사 로그를 남기지 않도록 임시 폴더를 씁니다.
+_AUDIT_TMP = tempfile.TemporaryDirectory()
+ADMIN_KEY = "admin-key-" + "c" * 32  # 테스트 전용 값. 실제 키가 아닙니다.
+
+
 def make_settings(**overrides) -> Settings:
-    values = dict(api_key_digests={"acme": digest(KEY)})
+    values = dict(
+        api_key_digests={"acme": digest(KEY)},
+        admin_key_digests={"boss": digest(ADMIN_KEY)},
+        audit_dir=Path(tempfile.mkdtemp(dir=_AUDIT_TMP.name)),
+    )
     values.update(overrides)
     return Settings(**values)
 
@@ -390,5 +399,136 @@ class LoggingTests(unittest.TestCase):
         self.assertNotIn(KEY, text)
 
 
+ADMIN = {"Authorization": f"Bearer {ADMIN_KEY}"}
+
+
+def event(n: int = 1, **overrides) -> dict:
+    data = {
+        "event_id": f"{n:032x}",
+        "at": 1_700_000_000_000 + n,
+        "action": "MASK",
+        "categories": ["email"],
+        "channel": "prompt",
+        "policy_version": 1,
+    }
+    data.update(overrides)
+    return data
+
+
+class AuditTests(unittest.TestCase):
+    def setUp(self):
+        self.settings = make_settings()
+        self.client = make_client(self.settings)
+
+    def post(self, *events, headers=AUTH):
+        return self.client.post("/v1/audit", json={"events": list(events)}, headers=headers)
+
+    def test_post_stores_and_chains(self):
+        response = self.post(event(1), event(2), event(3))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"accepted": 3, "duplicates": 0, "head_seq": 3})
+        records = self.client.get("/v1/audit", headers=ADMIN).json()["records"]
+        self.assertEqual([r["seq"] for r in records], [1, 2, 3])
+        self.assertEqual(records[0]["prev_hash"], "0" * 64)
+        self.assertEqual(records[1]["prev_hash"], records[0]["hash"])
+        self.assertEqual(records[0]["caller"], "acme")
+        verify = self.client.get("/v1/audit/verify", headers=ADMIN).json()
+        self.assertTrue(verify["ok"])
+        self.assertEqual(verify["count"], 3)
+        head = self.client.get("/v1/audit/head", headers=ADMIN).json()
+        self.assertEqual(head, {"seq": 3, "hash": records[2]["hash"]})
+
+    def test_retry_is_idempotent(self):
+        self.post(event(1))
+        again = self.post(event(1), event(2)).json()
+        self.assertEqual((again["accepted"], again["duplicates"], again["head_seq"]), (1, 1, 2))
+
+    def test_client_key_cannot_read_and_admin_key_cannot_write(self):
+        self.post(event(1))
+        for path in ("/v1/audit", "/v1/audit/head", "/v1/audit/verify"):
+            self.assertEqual(self.client.get(path, headers=AUTH).status_code, 401, path)
+            self.assertEqual(self.client.get(path).status_code, 401, path)
+        self.assertEqual(self.post(event(2), headers=ADMIN).status_code, 401)
+        self.assertEqual(self.client.post("/v1/audit", json={"events": [event(3)]}).status_code, 401)
+
+    def test_rejects_extra_fields_and_bad_values_without_echo(self):
+        secret = "SECRET-INPUT-TEXT"
+        for bad in (
+            event(1, text=secret),
+            event(1, filename=secret),
+            event(1, categories=[secret]),
+            event(1, action="DELETE"),
+            event(1, event_id="not-hex"),
+            event(1, at=-1),
+            event(1, channel="other"),
+        ):
+            response = self.post(bad)
+            self.assertEqual(response.status_code, 422, bad)
+            self.assertNotIn(secret, response.text)
+        self.assertEqual(self.client.post("/v1/audit", json={"events": []}, headers=AUTH).status_code, 422)
+        self.assertEqual(self.post(*[event(i) for i in range(1, 52)]).status_code, 422)
+        self.assertEqual(self.client.get("/v1/audit/head", headers=ADMIN).json()["seq"], 0)
+
+    def test_batch_of_50_fits_the_audit_body_limit_but_other_paths_stay_small(self):
+        self.assertEqual(self.post(*[event(i) for i in range(1, 51)]).status_code, 200)
+        big = self.client.post("/v1/decide", content=b"x" * 5000, headers=AUTH)
+        self.assertEqual(big.status_code, 413)
+        huge = self.client.post("/v1/audit", content=b"x" * 40000, headers=AUTH)
+        self.assertEqual(huge.status_code, 413)
+
+    def test_verify_detects_edit_delete_and_reorder(self):
+        self.post(event(1), event(2), event(3))
+        path = self.settings.audit_dir / "audit.jsonl"
+        original = path.read_text(encoding="utf-8")
+        lines = original.strip().split("\n")
+
+        def broken_at(new_lines):
+            path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+            return self.client.get("/v1/audit/verify", headers=ADMIN).json()
+
+        edited = json.loads(lines[1])
+        edited["event"]["action"] = "ALLOW"
+        result = broken_at([lines[0], json.dumps(edited), lines[2]])
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["broken_at"], 2)
+        self.assertFalse(broken_at([lines[0], lines[2]])["ok"])  # 중간 삭제
+        self.assertFalse(broken_at([lines[1], lines[0], lines[2]])["ok"])  # 순서 바꿈
+        self.assertTrue(broken_at(lines)["ok"])  # 원래대로면 통과
+
+    def test_restart_restores_chain_and_dedupe(self):
+        self.post(event(1), event(2))
+        again = make_client(self.settings)
+        ack = again.post("/v1/audit", json={"events": [event(2), event(3)]}, headers=AUTH).json()
+        self.assertEqual((ack["accepted"], ack["duplicates"], ack["head_seq"]), (1, 1, 3))
+        self.assertTrue(again.get("/v1/audit/verify", headers=ADMIN).json()["ok"])
+
+    def test_corrupt_log_blocks_startup(self):
+        self.post(event(1))
+        path = self.settings.audit_dir / "audit.jsonl"
+        path.write_text(path.read_text(encoding="utf-8").replace("MASK", "BLOCK"), encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "손상"):
+            make_client(self.settings)
+
+    def test_log_has_no_raw_input_fields(self):
+        self.post(event(1))
+        text = (self.settings.audit_dir / "audit.jsonl").read_text(encoding="utf-8")
+        for field in ("text", "content", "filename", "url"):
+            self.assertNotIn(f'"{field}"', text)
+
+    def test_read_paging_and_limits(self):
+        self.post(*[event(i) for i in range(1, 6)])
+        page = self.client.get("/v1/audit?after=2&limit=2", headers=ADMIN).json()["records"]
+        self.assertEqual([r["seq"] for r in page], [3, 4])
+        self.assertEqual(self.client.get("/v1/audit?limit=0", headers=ADMIN).status_code, 422)
+        self.assertEqual(self.client.get("/v1/audit?after=-1", headers=ADMIN).status_code, 422)
+
+    def test_admin_keys_must_differ_from_api_keys(self):
+        with self.assertRaisesRegex(ConfigError, "같은 값"):
+            Settings.from_env({"PDP_API_KEYS": f"a={KEY}", "PDP_ADMIN_KEYS": f"b={KEY}"})
+        settings = Settings.from_env({"PDP_API_KEYS": f"a={KEY}", "PDP_ADMIN_KEYS_SHA256": f"b={digest(ADMIN_KEY)}"})
+        self.assertIn("b", settings.admin_key_digests)
+
+
 if __name__ == "__main__":
     unittest.main()
+

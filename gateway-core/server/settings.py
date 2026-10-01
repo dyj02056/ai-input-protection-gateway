@@ -8,6 +8,9 @@ API 키는 코드·설정 파일·저장소에 두지 않고 환경 변수로만
   PDP_POLICY_DIR        정책 파일(*.json) 폴더. 기본: 이 폴더의 policy_files/
   PDP_ACTIVE_POLICY_VERSION  활성 정책 버전. 기본: 가장 높은 버전
   PDP_MAX_BODY_BYTES    요청 본문 크기 상한. 기본 4096 (원문이 아니라 범주 ID만 받기 때문입니다)
+  PDP_ADMIN_KEYS_SHA256 / PDP_ADMIN_KEYS  감사 로그를 읽고 검증할 수 있는 관리자 키(위 API 키와 같은 형식).
+                        일반 API 키는 로그를 쓰기만 하고 읽지 못합니다.
+  PDP_AUDIT_DIR         감사 로그(audit.jsonl) 폴더. 기본: 이 폴더의 audit_data/ (커밋되지 않음)
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 DEFAULT_POLICY_DIR = Path(__file__).resolve().parent / "policy_files"
+DEFAULT_AUDIT_DIR = Path(__file__).resolve().parent / "audit_data"
 
 
 class ConfigError(ValueError):
@@ -49,6 +53,22 @@ def _split_pairs(raw: str, variable: str) -> list[tuple[str, str]]:
     return pairs
 
 
+def _read_keys(env: Mapping[str, str], variable: str) -> dict[str, str]:
+    digests: dict[str, str] = {}
+    for name, key in _split_pairs(env.get(variable, ""), variable):
+        if len(key) < MIN_KEY_LENGTH:
+            raise ConfigError(f"{variable}: '{name}'의 키가 너무 짧습니다(최소 {MIN_KEY_LENGTH}자).")
+        digests[name] = digest(key)
+    hashed = variable + "_SHA256"
+    for name, value in _split_pairs(env.get(hashed, ""), hashed):
+        if not _SHA256.fullmatch(value):
+            raise ConfigError(f"{hashed}: '{name}'의 값이 SHA-256(16진수 64자)이 아닙니다.")
+        if name in digests:
+            raise ConfigError(f"키 이름이 겹칩니다: {name}")
+        digests[name] = value.lower()
+    return digests
+
+
 @dataclass(frozen=True)
 class Settings:
     # 이름 -> SHA-256(키). 평문 키는 메모리에 오래 두지 않습니다.
@@ -57,23 +77,18 @@ class Settings:
     policy_dir: Path = DEFAULT_POLICY_DIR
     active_policy_version: int | None = None
     max_body_bytes: int = 4096
+    # 감사 로그를 읽을 수 있는 관리자 키(이름 -> SHA-256). 일반 키와 별개입니다.
+    admin_key_digests: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
+    audit_dir: Path = DEFAULT_AUDIT_DIR
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
         env = os.environ if env is None else env
-        digests: dict[str, str] = {}
-
-        for name, key in _split_pairs(env.get("PDP_API_KEYS", ""), "PDP_API_KEYS"):
-            if len(key) < MIN_KEY_LENGTH:
-                raise ConfigError(f"PDP_API_KEYS: '{name}'의 키가 너무 짧습니다(최소 {MIN_KEY_LENGTH}자).")
-            digests[name] = digest(key)
-
-        for name, value in _split_pairs(env.get("PDP_API_KEYS_SHA256", ""), "PDP_API_KEYS_SHA256"):
-            if not _SHA256.fullmatch(value):
-                raise ConfigError(f"PDP_API_KEYS_SHA256: '{name}'의 값이 SHA-256(16진수 64자)이 아닙니다.")
-            if name in digests:
-                raise ConfigError(f"API 키 이름이 겹칩니다: {name}")
-            digests[name] = value.lower()
+        digests = _read_keys(env, "PDP_API_KEYS")
+        admin_digests = _read_keys(env, "PDP_ADMIN_KEYS")
+        overlap = set(digests.values()) & set(admin_digests.values())
+        if overlap:
+            raise ConfigError("일반 API 키와 관리자 키가 같은 값입니다. 서로 다른 키를 쓰세요.")
 
         allow_no_auth = env.get("PDP_ALLOW_NO_AUTH", "") == "1"
         if not digests and not allow_no_auth:
@@ -102,4 +117,6 @@ class Settings:
             policy_dir=policy_dir,
             active_policy_version=integer("PDP_ACTIVE_POLICY_VERSION", None, 1, 1_000_000),
             max_body_bytes=integer("PDP_MAX_BODY_BYTES", 4096, 256, 65536) or 4096,
+            admin_key_digests=MappingProxyType(admin_digests),
+            audit_dir=Path(env["PDP_AUDIT_DIR"]) if env.get("PDP_AUDIT_DIR") else DEFAULT_AUDIT_DIR,
         )

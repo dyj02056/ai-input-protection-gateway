@@ -162,6 +162,9 @@ export const SERVER_KEYS = Object.freeze({
   apiKey: "serverApiKey",
   policy: "serverPolicy",
   status: "serverStatus",
+  // 서버로 보내기 전에 기다리는 감사 이벤트(범주 ID·조치·시각만)와 마지막 전송 결과
+  auditQueue: "serverAuditQueue",
+  auditStatus: "serverAuditStatus",
 });
 
 export interface ServerConfig {
@@ -206,6 +209,7 @@ export function readSyncStatus(value: unknown): SyncStatus | null {
 // 메시지 이름(콘텐츠·설정 화면 → 백그라운드)
 export const POLICY_SYNC_MESSAGE = "gateway:policy-sync";
 export const POLICY_PROBE_MESSAGE = "gateway:policy-probe";
+export const AUDIT_UPLOAD_MESSAGE = "gateway:audit-upload";
 
 // API 키로 쓸 수 있는 값인지(HTTP 헤더에 안전하게 넣을 수 있는지)만 확인합니다. 키의 형식은 서버가 정합니다.
 export function isPlausibleApiKey(value: unknown): value is string {

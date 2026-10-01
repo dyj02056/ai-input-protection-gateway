@@ -24,9 +24,10 @@ def _bearer_token(request: Request) -> str | None:
     return token.strip()
 
 
-def authenticate(request: Request, settings: Settings) -> str:
-    """통과하면 호출자 이름을 돌려줍니다. 실패하면 401."""
-    if settings.allow_no_auth and not settings.api_key_digests:
+def authenticate(request: Request, settings: Settings, admin: bool = False) -> str:
+    """통과하면 호출자 이름을 돌려줍니다. 실패하면 401. admin이면 관리자 키만 받습니다."""
+    keys = settings.admin_key_digests if admin else settings.api_key_digests
+    if settings.allow_no_auth and not settings.api_key_digests and not settings.admin_key_digests:
         return "anonymous"
 
     token = _bearer_token(request)
@@ -36,7 +37,7 @@ def authenticate(request: Request, settings: Settings) -> str:
     provided = digest(token)
     matched: str | None = None
     # 일치하는 키를 찾아도 끝까지 모두 비교합니다(비교 시간이 키 위치에 따라 달라지지 않도록).
-    for name, expected in settings.api_key_digests.items():
+    for name, expected in keys.items():
         if hmac.compare_digest(provided, expected):
             matched = name
     if matched is None:

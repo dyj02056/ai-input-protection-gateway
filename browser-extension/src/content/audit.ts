@@ -1,4 +1,5 @@
 // 판정 이름만 서비스 워커(배지)와 로컬 감사 기록에 남깁니다. 원문·일치한 문자열은 보내지도 저장하지도 않습니다.
+import { AUDIT_UPLOAD_MESSAGE } from "../shared/serverPolicy.ts";
 import { feature, state } from "./state.ts";
 
 // 판정 이름만 서비스 워커에 알려 배지에 표시합니다. 원문과 범주 ID는 보내지 않습니다.
@@ -16,8 +17,10 @@ export function reportAction(action: string): void {
 // 같은 판정이 반복되면(예: 숫자를 한 자씩 입력) 마지막 기록과 비교해 한 번만 남깁니다.
 export const AUDIT_LIMIT = 20;
 
-export function recordAudit(action: string, categories: readonly string[]): void {
-  if (!feature("auditLog") || !Array.isArray(categories) || categories.length === 0) {
+export function recordAudit(action: string, categories: readonly string[], channel: "prompt" | "file" = "prompt"): void {
+  const keepLocal = feature("auditLog");
+  const upload = feature("uploadAudit");
+  if ((!keepLocal && !upload) || !Array.isArray(categories) || categories.length === 0) {
     return;
   }
 
@@ -26,6 +29,22 @@ export function recordAudit(action: string, categories: readonly string[]): void
     return;
   }
   state.lastAuditKey = key;
+
+  // 서버 전송은 별도 동의 스위치(uploadAudit)가 켜진 경우만, 그리고 서버가 연결된 경우에만 백그라운드가 실제로 보냅니다.
+  // 보내는 내용: 조치·범주 ID·시각·채널뿐입니다(원문·파일 이름·주소 없음).
+  if (upload) {
+    try {
+      chrome.runtime.sendMessage(
+        { type: AUDIT_UPLOAD_MESSAGE, event: { at: Date.now(), action, categories: [...categories].sort(), channel } },
+        () => void chrome.runtime.lastError,
+      );
+    } catch {
+      // 확장이 새로 고쳐진 뒤의 옛 탭 등에서는 보낼 수 없습니다. 이벤트는 건너뜁니다.
+    }
+  }
+  if (!keepLocal) {
+    return;
+  }
 
   try {
     chrome.storage.local.get({ history: [] }, (data) => {

@@ -5,6 +5,8 @@
   GET  /v1/policy/versions   정책 버전 목록
   GET  /v1/policy/{version}  특정 버전
   POST /v1/decide            범주 ID·건수로 판정 (원문을 받지 않습니다)
+  POST /v1/audit             감사 이벤트 수집 (해시 체인으로 추가 전용 저장)
+  GET  /v1/audit, /v1/audit/head, /v1/audit/verify   관리자 키 전용
 
 모든 /v1 요청은 `Authorization: Bearer <API 키>`가 필요합니다.
 """
@@ -19,10 +21,11 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from .audit import AuditLog
 from .auth import authenticate
 from .decision import FileStatus, decide_file, decide_prompt
 from .policies import PolicyDocument, PolicyStore
-from .schemas import DecideRequest, DecideResponse, PolicyVersionInfo
+from .schemas import AuditAck, AuditBatch, DecideRequest, DecideResponse, PolicyVersionInfo
 from .settings import Settings
 
 logger = logging.getLogger("pdp")
@@ -31,17 +34,19 @@ logger = logging.getLogger("pdp")
 class BodyLimitMiddleware:
     """요청 본문이 상한을 넘으면 413으로 거절합니다. 이 서버는 범주 ID만 받으므로 본문이 클 이유가 없습니다."""
 
-    def __init__(self, app, max_bytes: int) -> None:
+    def __init__(self, app, max_bytes: int, overrides: dict[str, int] | None = None) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.overrides = overrides or {}
 
     async def __call__(self, scope, receive, send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        limit = self.overrides.get(scope.get("path", ""), self.max_bytes)
         declared = dict(scope["headers"]).get(b"content-length")
-        if declared is not None and declared.isdigit() and int(declared) > self.max_bytes:
+        if declared is not None and declared.isdigit() and int(declared) > limit:
             await self._reject(send)
             return
 
@@ -53,7 +58,7 @@ class BodyLimitMiddleware:
             message = await receive()
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
-                if received > self.max_bytes:
+                if received > limit:
                     too_large = True
                     return {"type": "http.request", "body": b"", "more_body": False}
             return message
@@ -91,13 +96,17 @@ def _etag_matches(header: str | None, etag: str) -> bool:
     return "*" in candidates or etag in candidates
 
 
-def create_app(settings: Settings | None = None, store: PolicyStore | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, store: PolicyStore | None = None, audit: AuditLog | None = None
+) -> FastAPI:
     settings = settings or Settings.from_env()
     store = store or PolicyStore.from_directory(settings.policy_dir, settings.active_policy_version)
+    audit = audit or AuditLog(settings.audit_dir)
 
     # 문서 화면(/docs)은 켜지 않습니다. 공격 표면을 줄이기 위해서입니다.
     app = FastAPI(title="AI 입력정보 보호 게이트웨이 PDP", docs_url=None, redoc_url=None, openapi_url=None)
-    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_body_bytes)
+    # 감사 이벤트는 최대 50건 묶음이라 본문이 더 큽니다.
+    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_body_bytes, overrides={"/v1/audit": 32768})
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
@@ -114,6 +123,9 @@ def create_app(settings: Settings | None = None, store: PolicyStore | None = Non
 
     def caller(request: Request) -> str:
         return authenticate(request, settings)
+
+    def admin(request: Request) -> str:
+        return authenticate(request, settings, admin=True)
 
     def document_for(version: int | None) -> PolicyDocument:
         if version is None:
@@ -171,5 +183,33 @@ def create_app(settings: Settings | None = None, store: PolicyStore | None = Non
             policy_id=document.policy_id,
             policy_version=document.version,
         )
+
+    @app.post("/v1/audit", response_model=AuditAck)
+    def post_audit(body: AuditBatch, who: str = Depends(caller)) -> AuditAck:
+        result = audit.append(who, [event.model_dump() for event in body.events])
+        logger.info("audit caller=%s accepted=%d duplicates=%d", who, result["accepted"], result["duplicates"])
+        return AuditAck(accepted=result["accepted"], duplicates=result["duplicates"], head_seq=result["head_seq"])
+
+    @app.get("/v1/audit")
+    def read_audit(after: int = 0, limit: int = 100, who: str = Depends(admin)):
+        if after < 0 or not 1 <= limit <= 500:
+            raise HTTPException(status_code=422, detail="after는 0 이상, limit은 1~500이어야 합니다.")
+        return {"records": audit.read(after, limit)}
+
+    @app.get("/v1/audit/head")
+    def audit_head(who: str = Depends(admin)):
+        return audit.head()
+
+    @app.get("/v1/audit/verify")
+    def audit_verify(who: str = Depends(admin)):
+        result = audit.verify()
+        return {
+            "ok": result.ok,
+            "count": result.count,
+            "head_seq": result.head_seq,
+            "head_hash": result.head_hash,
+            "broken_at": result.broken_at,
+            "reason": result.reason,
+        }
 
     return app

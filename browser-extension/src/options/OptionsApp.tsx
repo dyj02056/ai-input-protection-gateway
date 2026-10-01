@@ -276,7 +276,20 @@ export function OptionsApp() {
         </p>
       </div>
 
-      <ServerCard />
+      <ServerCard onDisconnected={() => update({ ...settings, features: { ...settings.features, uploadAudit: false } })} />
+
+      <div className="card">
+        <h2>감사 이벤트를 조직 서버로 전송 (기본 꺼짐)</h2>
+        <p className="small">
+          위 &quot;조직 정책 서버&quot;를 연결했을 때만 동작하는 <b>별도 동의 스위치</b>입니다. 켜면 감지될 때마다 <b>시각·조치·범주
+          ID(예: phone_number)·입력/파일 구분·정책 버전</b>이 조직 서버로 전송되어 변조를 알아볼 수 있는 기록(해시 체인)으로 쌓입니다.
+          <b>입력한 글, 파일 이름·내용, 사이트 주소, 감지 건수는 보내지 않습니다.</b> 서버를 운영하는 조직은 &quot;어떤 호출자 키로 언제
+          어떤 범주가 감지되어 어떤 조치가 나왔는지&quot;를 볼 수 있습니다. 끄거나 연결을 끊으면 보내지 못해 쌓여 있던 이벤트도 보내지 않고 지웁니다.
+        </p>
+        <Toggle id="f-uploadAudit" checked={feature("uploadAudit")} onChange={setFeature("uploadAudit")}>
+          감지 이벤트(범주 ID·조치·시각)를 조직 서버로 전송
+        </Toggle>
+      </div>
 
       <div className="card">
         <h2>개인정보</h2>

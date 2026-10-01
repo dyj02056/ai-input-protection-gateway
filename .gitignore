@@ -66,3 +66,6 @@ local.settings.json
 
 # Python 가상환경(PDP 서버)
 .venv/
+
+# PDP 서버가 쌓는 감사 로그(운영 데이터)
+gateway-core/server/audit_data/

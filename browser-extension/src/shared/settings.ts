@@ -15,6 +15,7 @@ export const BOOL_FEATURES = [
   "restoreTokens",
   "inspectFiles",
   "blockFileSend",
+  "uploadAudit",
 ] as const;
 export type BoolFeature = (typeof BOOL_FEATURES)[number];
 
@@ -40,6 +41,9 @@ export interface Features {
   inspectFiles: boolean;
   // 위험한 첨부파일이 있으면 첫 보내기를 중단합니다(5초 안에 다시 누르면 전송). "로컬 정책 적용"과 함께 켜야 동작합니다.
   blockFileSend: boolean;
+  // 조직 정책 서버에 연결했을 때, 감사 이벤트(시각·조치·범주 ID·정책 버전)를 서버로 보냅니다. 입력 원문·파일 이름은 보내지 않습니다.
+  // 별도 동의 스위치이며 기본 꺼짐입니다(서버 연결만으로는 켜지지 않습니다).
+  uploadAudit: boolean;
 }
 
 export type Enabled = Record<CategoryId, boolean>;
@@ -72,6 +76,7 @@ export const DEFAULT_FEATURES: Readonly<Features> = Object.freeze({
   restoreTokens: true,
   inspectFiles: true,
   blockFileSend: false,
+  uploadAudit: false,
 });
 
 // 모든 범주가 기본으로 켜져 있습니다. 새 범주가 생긴 버전으로 올라온 기존 사용자도 켜진 채로 시작합니다.

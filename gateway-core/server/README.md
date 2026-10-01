@@ -30,6 +30,8 @@ py tools/server.py run                         # 기본 127.0.0.1:8787
 | `PDP_ALLOW_NO_AUTH` | `1`이면 키가 없을 때 인증 없이 시작. **로컬 개발 전용** |
 | `PDP_POLICY_DIR` | 정책 파일 폴더. 기본 `server/policy_files` |
 | `PDP_ACTIVE_POLICY_VERSION` | 활성 버전. 기본은 가장 높은 버전 |
+| `PDP_ADMIN_KEYS_SHA256` / `PDP_ADMIN_KEYS` | 감사 로그를 읽는 관리자 키(일반 키와 다른 값). `py tools/server.py newkey --admin` |
+| `PDP_AUDIT_DIR` | 감사 로그 폴더. 기본 `server/audit_data/`(커밋되지 않음) |
 | `PDP_MAX_BODY_BYTES` | 요청 본문 상한(256~65536). 기본 4096 |
 
 키도 `PDP_ALLOW_NO_AUTH`도 없으면 서버가 **시작을 거부**합니다(기본이 열린 서버가 되지 않게). 오류 메시지는 키 값을 되풀이하지 않습니다.
@@ -44,6 +46,8 @@ py tools/server.py run                         # 기본 127.0.0.1:8787
 | `GET /v1/policy` | 활성 정책. `ETag`를 주고 `If-None-Match`가 맞으면 `304`. **확장이 쓰는 유일한 호출입니다** |
 | `GET /v1/policy/versions` | 정책 버전 목록(활성 표시) |
 | `GET /v1/policy/{version}` | 특정 버전 |
+| `POST /v1/audit` | 감사 이벤트 수집(최대 50건 묶음, 본문 32KB). 해시 체인으로 추가 전용 저장, 같은 `event_id`는 한 번만. 일반 API 키 |
+| `GET /v1/audit?after=&limit=` · `/v1/audit/head` · `/v1/audit/verify` | 기록 읽기·마지막 번호와 해시·체인 검증. **관리자 키 전용** |
 | `POST /v1/decide` | 범주 ID·건수·파일 상태로 판정. 원문을 받지 않습니다. 아직 확장은 쓰지 않고, 이후 다른 집행 지점(API 프록시 등)을 위한 것입니다 |
 
 `/v1/decide` 요청 예:
@@ -71,6 +75,12 @@ py tools/server.py run                         # 기본 127.0.0.1:8787
 
 기본 정책 파일은 확장의 내장 기본값과 같아야 하며, `py tools/policy_parity.py`가 범주 등록부와 대조합니다.
 
+## 감사 로그와 해시 체인
+
+각 기록은 `hash = SHA-256(이전 hash + 줄바꿈 + 본문의 정규화 JSON)`이고 처음 기록의 이전 값은 `0`×64입니다. 중간 기록을 고치거나 지우거나 순서를 바꾸면 이후 해시가 모두 어긋나 `/v1/audit/verify`가 **처음 깨진 번호**를 알려 줍니다. 시작할 때도 검증하며, 깨져 있으면 서버가 시작하지 않습니다. 기록에는 호출자 이름, 서버가 받은 시각, 이벤트(시각·조치·범주 ID·채널·정책 버전)만 있고 원문·파일 이름·주소는 없습니다.
+
+**한계**: 파일을 쓸 수 있는 사람이 체인 전체를 다시 계산해 덮어쓰면 서버만으로는 알 수 없습니다. `GET /v1/audit/head`의 `seq`·`hash`를 서버 밖(다른 시스템·문서)에 주기적으로 남겨 두어야 변조를 확실히 잡습니다. 파일 하나·단일 프로세스(쓰기 잠금)라 규모가 커지면 DB와 외부 앵커링이 필요합니다. 보관 기간·삭제 정책은 없습니다.
+
 ## 보안 설계
 
 - 키 비교는 `hmac.compare_digest`(상수 시간)로 모든 키를 같은 방식으로 돌립니다. 서버는 키의 SHA-256만 메모리에 둡니다.
@@ -90,7 +100,7 @@ py tools/server.py run                         # 기본 127.0.0.1:8787
 ## 시험
 
 ```bash
-py tools/server.py test      # 서버 단위 시험 36개
-py tools/server.py e2e       # 서버를 임시 키로 띄워 확장의 동기화 코드와 실제 HTTP로 연결(6개). /v1/decide와 확장 판정을 직접 비교
+py tools/server.py test      # 서버 단위 시험 47개
+py tools/server.py e2e       # 서버를 임시 키로 띄워 확장의 동기화 코드와 실제 HTTP로 연결(9개: 정책 동기화 6 + 감사 전송 3). /v1/decide와 확장 판정을 직접 비교
 py tools/policy_parity.py    # 공용 케이스 표(40개)와 서버 기본 정책 대조
 ```

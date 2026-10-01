@@ -14,6 +14,6 @@ try:
     from .app import create_app
 
     app = create_app()
-except (ConfigError, PolicyError) as error:
+except (ConfigError, PolicyError, RuntimeError) as error:
     sys.stderr.write(f"[PDP 서버] 시작할 수 없습니다: {error}\n")
     raise SystemExit(2) from None

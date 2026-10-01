@@ -155,7 +155,7 @@ export async function handleFiles(files: readonly File[]): Promise<void> {
     const worst = findings.reduce((a, b) => (priority[b.action] > priority[a.action] ? b : a));
     reportAction(worst.action);
     for (const finding of findings) {
-      if (finding.status === "detected") recordAudit(finding.action, finding.categories);
+      if (finding.status === "detected") recordAudit(finding.action, finding.categories, "file");
     }
 
     showResult(findings);

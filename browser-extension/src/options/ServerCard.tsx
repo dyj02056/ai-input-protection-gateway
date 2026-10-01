@@ -28,9 +28,10 @@ interface Loaded {
   readonly hasKey: boolean;
   readonly policy: ServerPolicy | null;
   readonly status: SyncStatus | null;
+  readonly audit: { state: string; message: string; pending: number } | null;
 }
 
-const EMPTY: Loaded = { url: "", enabled: false, hasKey: false, policy: null, status: null };
+const EMPTY: Loaded = { url: "", enabled: false, hasKey: false, policy: null, status: null, audit: null };
 
 async function loadServerState(): Promise<Loaded> {
   const data = await chrome.storage.local.get([
@@ -38,7 +39,11 @@ async function loadServerState(): Promise<Loaded> {
     SERVER_KEYS.apiKey,
     SERVER_KEYS.policy,
     SERVER_KEYS.status,
+    SERVER_KEYS.auditStatus,
+    SERVER_KEYS.auditQueue,
   ]);
+  const auditRaw = data[SERVER_KEYS.auditStatus] as { state?: unknown; message?: unknown } | undefined;
+  const queued = data[SERVER_KEYS.auditQueue];
   const config = readServerConfig(data[SERVER_KEYS.config]);
   const rawConfig = data[SERVER_KEYS.config] as { url?: unknown } | undefined;
   return {
@@ -48,6 +53,12 @@ async function loadServerState(): Promise<Loaded> {
     hasKey: isPlausibleApiKey(data[SERVER_KEYS.apiKey]),
     policy: readStoredPolicy(data[SERVER_KEYS.policy]),
     status: readSyncStatus(data[SERVER_KEYS.status]),
+    audit:
+      auditRaw && typeof auditRaw.state === "string" && typeof auditRaw.message === "string"
+        ? { state: auditRaw.state, message: auditRaw.message.slice(0, 200), pending: Array.isArray(queued) ? queued.length : 0 }
+        : Array.isArray(queued) && queued.length > 0
+          ? { state: "pending", message: "전송을 기다리는 이벤트가 있습니다.", pending: queued.length }
+          : null,
   };
 }
 
@@ -70,7 +81,8 @@ function formatTime(ms: number): string {
   return new Date(ms).toLocaleString("ko-KR");
 }
 
-export function ServerCard() {
+// onDisconnected: 연결을 끊을 때 부릅니다. 감사 이벤트 전송 동의도 함께 꺼서, 나중에 다시 연결해도 저절로 켜지지 않게 합니다.
+export function ServerCard({ onDisconnected }: { onDisconnected?: () => void } = {}) {
   const [loaded, setLoaded] = useState<Loaded>(EMPTY);
   const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
@@ -95,7 +107,7 @@ export function ServerCard() {
     // 백그라운드가 동기화 결과를 저장하면 화면도 따라갑니다.
     const listener = (changes: Record<string, unknown>, area: string) => {
       if (area !== "local") return;
-      if ([SERVER_KEYS.policy, SERVER_KEYS.status, SERVER_KEYS.config].some((name) => name in changes)) {
+      if ([SERVER_KEYS.policy, SERVER_KEYS.status, SERVER_KEYS.config, SERVER_KEYS.auditStatus, SERVER_KEYS.auditQueue].some((name) => name in changes)) {
         void refresh();
       }
     };
@@ -182,7 +194,15 @@ export function ServerCard() {
     setMessage(null);
     try {
       const origin = loaded.url ? checkServerUrl(loaded.url).origin : undefined;
-      await chrome.storage.local.remove([SERVER_KEYS.config, SERVER_KEYS.apiKey, SERVER_KEYS.policy, SERVER_KEYS.status]);
+      await chrome.storage.local.remove([
+        SERVER_KEYS.config,
+        SERVER_KEYS.apiKey,
+        SERVER_KEYS.policy,
+        SERVER_KEYS.status,
+        SERVER_KEYS.auditQueue,
+        SERVER_KEYS.auditStatus,
+      ]);
+      onDisconnected?.();
       if (origin) {
         try {
           await chrome.permissions.remove({ origins: [`${origin}/*`] });
@@ -198,7 +218,7 @@ export function ServerCard() {
     }
   };
 
-  const { policy, status } = loaded;
+  const { policy, status, audit } = loaded;
 
   return (
     <div className="card" id="server-card">
@@ -291,6 +311,11 @@ export function ServerCard() {
               </>
             ) : (
               <p>아직 정책을 받지 못했습니다. 내장 정책으로 판정합니다.</p>
+            )}
+            {audit && (
+              <p id="server-audit-status">
+                감사 이벤트 전송: {audit.message} (대기 {audit.pending}건)
+              </p>
             )}
           </>
         ) : (
