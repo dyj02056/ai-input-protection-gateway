@@ -108,3 +108,41 @@
 - 배포: https://dyj02056.github.io/ai-input-protection-gateway/demo.html (홈: https://dyj02056.github.io/ai-input-protection-gateway/)
 - 저장소: https://github.com/dyj02056/ai-input-protection-gateway
 - 검증: node 6/6·PDP 9/9 이 작업공간 통과, demo vm 로드 확인.
+
+
+## 누적 기록 2026-10-01 — 최종 제출
+
+### 이번 과정에서 만든 것 (새로 구현하거나 완성한 기능과 실제 동작)
+- 유지: 로컬 탐지 4종+NFKC, PDP 데모 판정, 수동 마스킹, 테스트 detector 6개·PDP 9개.
+- 신규: Pages 홈 디자인 개편 (히어로·카드·외부 AI 연결 버튼·3단계 확인법).
+- 신규: 데모 페이지 개편 (검사·마스킹·복사 버튼, 판정 배지, 외부 AI 버튼, 가짜 5줄 기본값).
+- 신규: ChatGPT·Claude·Gemini 연결 버튼 (새 탭 열기만 수행, 자동 입력·전송 없음).
+- 신규: `docs/plan.html` 계획서 웹페이지, `docs/plan.md` v2.0 정리 (최종 부록 B + 1·2차 유지).
+- 실제 동작: node 6/6·PDP 9/9 통과, 데모에서 이메일+전각 범주·마스킹 확인.
+
+### 확인하는 방법 (3단계 이내)
+1. 배포 홈→데모 접속 → 가짜 5줄 입력 → 범주·마스킹·판정 확인, 외부 AI 버튼 새 탭 동작 확인 (실정보·전송 금지).
+2. `node --test browser-extension/detector.test.js` → pass 6 확인.
+3. `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → 9 tests OK 확인.
+
+### 바뀐 점과 그 이유
+- 1·2차 동일 부분은 그대로 유지 (탐지·판정·보안 원칙·미구현 범위).
+- 디자인 개편: 기본 형태라는 지적 반영, 최종 제출용 가독·버튼·외부 연결 강화.
+- 외부 버튼 추가: 실제 사이트 연결 요구 반영, 이동만 허용해 전송 오해 방지.
+- 계획서 웹페이지화: 심사 접근성 향상, md 원문은 저장소에 유지.
+- 로직 변경 없음: 탐지·보안·차단 범위는 2차와 동일.
+
+### AI에게 맡긴 일과 내가 판단한 일
+- AI가 만든 부분: 홈·데모 디자인안, 외부 버튼·복사 버튼·판정 배지 코드, plan.html·v2.0 정리안.
+- 내가 직접 검토·수정한 부분: 외부 버튼은 이동만 허용 결정, 자동 입력·전송 금지 명시, 가짜문구·한계 문구 유지, 최종 범위·표현 책임은 본인.
+
+### 다음에 할 일
+- 최종 제출 뒤 보완: 확장↔PDP 원문없는 연동, BLOCK 전송제어·승인 연결, 파일 파싱·감사 해시체인, RAG·도구·출력 재검사, SIEM 연동, 업종 정책팩.
+- 다음 점검은 없음 (최종 제출). 위 보완은 제품 고도화 단계에서 진행.
+
+### 결과물 URL, 소스 저장소
+- 홈: https://dyj02056.github.io/ai-input-protection-gateway/
+- 데모: https://dyj02056.github.io/ai-input-protection-gateway/demo.html
+- 계획서: https://dyj02056.github.io/ai-input-protection-gateway/plan.html
+- 저장소: https://github.com/dyj02056/ai-input-protection-gateway
+- 검증: node 6/6·PDP 9/9 이 작업공간 통과.

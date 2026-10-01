@@ -3,42 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 입력정보 보호 게이트웨이 — 중간점검 2차</title>
+<title>AI 입력정보 보호 게이트웨이 — 최종 제출</title>
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#172033;line-height:1.6}
-.card{border:1px solid #c7d2e1;border-radius:12px;padding:16px;margin:16px 0}
-.btn{display:inline-block;background:#155eef;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;margin:4px 8px 4px 0}
-.btn2{background:#fff;color:#155eef;border:1px solid #155eef}
-.warn{background:#fff8e6;border:1px solid #e6c200;border-radius:8px;padding:12px}
-code{background:#f1f4f9;padding:2px 6px;border-radius:6px}
+:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif;color:var(--ink);background:#f4f7ff}
+.wrap{max-width:1040px;margin:0 auto;padding:26px 18px 56px}
+.top{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-bottom:12px;color:var(--mut);font-size:13px}
+.hero{background:linear-gradient(135deg,#0b1226,#1a2b66 60%,#155eef);color:#fff;border-radius:20px;padding:30px 26px}
+.hero h1{margin:8px 0;font-size:32px;line-height:1.25}
+.hero p{color:#dbe6ff;line-height:1.65}
+.btn{display:inline-block;text-decoration:none;font-weight:800;border-radius:12px;padding:12px 18px;margin:6px 8px 0 0}
+.btn-p{background:#fff;color:#0b2c9b}
+.btn-g{color:#fff;border:1px solid rgba(255,255,255,.4)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
+.ext{display:flex;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;text-decoration:none;color:inherit;margin-top:10px}
+.logo{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:900}
+.g{background:#10a37f}.c{background:#d97757}.m{background:#1a73e8}
+.warn{background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;color:#5b4a00;line-height:1.6}
+code{background:#eef3ff;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
 </style>
 </head>
 <body>
-<p>중간점검 2차 제출용 (1차 내용 유지 + 변경분 추가)</p>
-<h1>중소기업용 생성형 AI 입력정보 보호 게이트웨이</h1>
-<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 현 구현은 로컬 탐지 4종(이메일 추가) + 전각 정규화 + PDP 조치 안내 + 수동 마스킹까지이며 자동 차단·서버 연동은 미구현입니다.</p>
-<div class="warn"><strong>주의:</strong> 실제 개인정보·키는 입력하지 마세요. 데모는 100% 브라우저 로컬 처리이며 서버 전송이 없습니다.</div>
-<div class="card">
-<h2>바로 확인</h2>
-<a class="btn" href="demo.html">로컬 탐지 데모 열기</a>
-<a class="btn btn2" href="https://github.com/dyj02056/ai-input-protection-gateway">소스 저장소</a>
-<a class="btn btn2" href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/docs/plan.md">계획서 원문</a>
-</div>
-<div class="card">
+<div class="wrap">
+<div class="top"><span>최종 제출 · 로컬 처리 · 서버 전송 없음</span><span>plan v2.0 · detector 6 · PDP 9</span></div>
+<header class="hero">
+<div>중소기업용 생성형 AI 입력정보 보호 게이트웨이</div>
+<h1>보내기 전에 검사하고, 안전하게 마스킹하세요.</h1>
+<p>외부 AI 입력 직전 검사 → ALLOW / MASK / REQUIRE_APPROVAL / BLOCK → 원문 없이 감사. 데모는 브라우저 로컬에서만 동작합니다.</p>
+<a class="btn btn-p" href="demo.html">로컬 탐지 데모 열기</a>
+<a class="btn btn-g" href="https://github.com/dyj02056/ai-input-protection-gateway" target="_blank" rel="noopener">소스 저장소</a>
+<a class="btn btn-g" href="plan.html">계획서 페이지</a>
+</header>
+<div class="grid">
+<section class="card">
+<h2>실제 AI 사이트에서 확장으로 확인</h2>
+<p><b>실제 개인정보·키는 입력하지 마세요. 전송 버튼도 누르지 마세요.</b> 버튼은 외부 사이트를 새 탭으로 열기만 합니다.</p>
+<a class="ext" href="https://chat.openai.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 열기</b><br>가짜 5줄로 안내 표시만 확인</span></a>
+<a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span class="logo g">G</span><span><b>ChatGPT 새 주소 열기</b><br>위와 같은 방식으로 확인</span></a>
+<a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span class="logo c">C</span><span><b>Claude 열기</b><br>가짜 문구로 안내 표시만 확인</span></a>
+<a class="ext" href="https://gemini.google.com/" target="_blank" rel="noopener"><span class="logo m">G</span><span><b>Gemini 참고용으로 열기</b><br>MVP 지원은 ChatGPT·Claude 중심</span></a>
+<div class="warn" style="margin-top:12px">데모·확장은 입력값을 대신 보내지 않으며 자동 전송·차단을 하지 않습니다.</div>
+</section>
+<aside class="card">
 <h2>확인 방법 (3단계)</h2>
 <ol>
-<li><code>demo.html</code>에서 가짜 5줄 입력 → 범주 표시 확인</li>
-<li>로컬에서 <code>node --test browser-extension/detector.test.js</code> → pass 6 확인</li>
-<li>로컬에서 <code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK 확인</li>
+<li><code>demo.html</code> 가짜 5줄 → 범주·마스킹 확인</li>
+<li><code>node --test browser-extension/detector.test.js</code> → pass 6</li>
+<li><code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> → 9 tests OK</li>
 </ol>
+<p>최종 항목 전문은 <a href="plan.html">계획서</a>와 <code>submission_note.md</code> 누적 기록을 보세요.</p>
+</aside>
 </div>
-<div class="card">
-<h2>제출 항목 요약</h2>
-<ul>
-<li>만든 것(유지): plan, detector inspect/mask, content.js 안내+수동마스킹, policy.py 판정</li>
-<li>2차 변경: 이메일 탐지 추가(탐지 3종→4종), NFKC 전각 정규화, 확장 안내문에 PDP 조치 표시, 테스트 5+7개→6+9개</li>
-<li>다음: 확장↔PDP 원문없는 연동, BLOCK 전송제어·승인 연결, 파일·감사 확장</li>
-</ul>
 </div>
 </body>
 </html>

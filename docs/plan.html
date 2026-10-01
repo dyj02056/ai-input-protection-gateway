@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제작 계획서 v2.0 — AI 입력정보 보호 게이트웨이</title>
+<style>body{max-width:900px;margin:0 auto;padding:24px;font-family:system-ui,sans-serif;line-height:1.7;color:#16213a;background:#f4f7ff}.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:20px;margin-top:14px}a{color:#155eef}code{background:#eef3ff;padding:2px 6px;border-radius:6px}pre{background:#0f1b33;color:#e8eefc;padding:12px;border-radius:10px;white-space:pre-wrap}</style>
+</head>
+<body>
+<p><a href="index.html">홈</a> · <a href="demo.html">데모</a> · <a href="https://github.com/dyj02056/ai-input-protection-gateway/blob/main/docs/plan.md">원문(md)</a></p>
+<div class="card">
+<h1>중소기업용 생성형 AI 입력정보 보호 게이트웨이 제작 계획서 v2.0</h1>
+<p>최종 제출용 웹 요약본. 전체 md 원문은 저장소의 <code>docs/plan.md</code>를 보세요. 배포: Pages 홈·데모·계획서. 서버 전송 없음.</p>
+<h2>0. 요약</h2>
+<p>외부 AI 입력 직전 검사 → ALLOW/MASK/APPROVAL/BLOCK → 원문 없이 감사. 현 구현은 로컬 4종+NFKC+조치안내+수동마스킹, PDP 데모 판정. 자동 차단·서버 연동 미구현.</p>
+<h2>1. 개요</h2>
+<p>무통제 입력, 정규식 한계, 차단 역효과, RAG·도구 신경로, 인력 0~2명. 1일 적용·정책팩·마스킹복원·원문없는 재현.</p>
+<h2>2. 위협·정책</h2>
+<p>전체평가후 최제한, exception만 완화, 무매칭 0건 ALLOW/있음 APPROVAL, 변환후 재판정. 데모: 주민/전화/이메일 MASK, 키 BLOCK.</p>
+<pre>{"policy_id":"external_ai_input","version":3,"fallback":{"no_detection":"ALLOW","with_detection":"REQUIRE_APPROVAL"}}</pre>
+<h2>3. 아키텍처</h2>
+<p>확장PEP→검사API→PDP→Transformer→Vault+승인+감사+파일Worker. detector 4종+NFKC.</p>
+<h2>4. UX</h2>
+<p>배지→미리보기→승인→대안→복원. 본인 로컬표시, 승인자 원문비노출. 관찰→안내→강제.</p>
+<h2>5. 보안</h2>
+<p>원문미저장, TTL2h, 감사1년, 해시체인·가명ID. inspect 범주ID만 반환.</p>
+<h2>6. 로드맵·KPI</h2>
+<p>P1 0~8주, P2 2~4개월, P3 4~8개월. p95 300ms. 재현율95→97, 오탐5→3%.</p>
+<h2>부록 B. 최종 제출</h2>
+<p>만든 것: 홈·데모 개편, 외부 AI 버튼, 복사·판정 배지, plan.html 신규. 확인법: demo 5줄·node 6·PDP 9. 바뀐 점: 디자인·접근성 개선, 로직 유지. 다음: 연동·BLOCK·승인·파일·감사·RAG·SIEM.</p>
+</div>
+</body>
+</html>

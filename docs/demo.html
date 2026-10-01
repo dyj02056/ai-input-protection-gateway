@@ -3,57 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>로컬 탐지 데모 — AI 입력정보 보호 게이트웨이</title>
+<title>로컬 탐지 데모 — 최종 제출</title>
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:760px;margin:0 auto;padding:24px;color:#172033;line-height:1.6}
-textarea{width:100%;min-height:140px;border:1px solid #c7d2e1;border-radius:8px;padding:12px;font:inherit;white-space:pre-wrap}
-pre{background:#0f1b33;color:#e8eefc;border-radius:8px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}
-button{background:#155eef;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;margin:8px 8px 0 0}
-button.ghost{background:#fff;color:#155eef;border:1px solid #155eef}
-.warn{background:#fff8e6;border:1px solid #e6c200;border-radius:8px;padding:12px;margin:12px 0}
-.badge{display:inline-block;border:1px solid #c7d2e1;border-radius:999px;padding:2px 10px;margin:2px 6px 2px 0;font-size:13px}
-a{color:#155eef}
+:root{--ink:#16213a;--mut:#5a6b8c;--line:#dbe4f3;--brand:#155eef}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif;color:var(--ink);background:#f4f7ff}
+.wrap{max-width:1040px;margin:0 auto;padding:24px 18px 56px}
+.nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-bottom:12px}
+a{color:var(--brand)}
+.btn{display:inline-block;text-decoration:none;font-weight:800;border-radius:10px;padding:10px 16px;margin:6px 8px 0 0;border:1px solid var(--brand)}
+.btn-p{background:var(--brand);color:#fff}
+.btn-o{background:#fff;color:var(--brand)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}
+pre{background:#0f1b33;color:#e8eefc;border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.badge{display:inline-block;border:1px solid var(--line);background:#eef3ff;border-radius:999px;padding:3px 10px;margin:2px 6px 2px 0;font-size:13px}
+.warn{background:#fff8e2;border:1px solid #ecd27a;border-radius:12px;padding:12px;color:#5b4a00;line-height:1.6}
+.decision{font-size:18px;font-weight:800;padding:10px 14px;border-radius:10px;background:#eef3ff;display:inline-block}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+.ext{display:flex;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px;text-decoration:none;color:inherit;margin-top:8px}
 </style>
 </head>
 <body>
-<p><a href="index.html">← 중간점검 홈</a></p>
-<h1>로컬 탐지 데모 (서버 전송 없음, 2차)</h1>
-<div class="warn"><strong>실제 개인정보·API 키를 입력하지 마세요.</strong> 이 페이지는 <code>docs/detector.js</code>(확장과 동일 규칙)를 브라우저 안에서만 실행합니다. 입력값은 저장·전송되지 않습니다.</div>
+<div class="wrap">
+<div class="nav"><a href="index.html">← 데모 홈</a><span>최종 제출 · 서버 전송 없음</span></div>
+<h1>로컬 탐지 데모</h1>
+<div class="warn"><b>실제 개인정보·API 키를 입력하지 마세요.</b> <code>docs/detector.js</code>를 브라우저 안에서만 실행합니다. 저장·전송 없음.</div>
+<div class="card">
 <h2>1. 입력</h2>
-<textarea id="input" aria-label="가짜 테스트 문구 입력">가짜 주민번호 000000-1000000
+<textarea id="input">가짜 주민번호 000000-1000000
 가짜 전화번호 010-0000-0000
 가짜 이메일 test.user@example.com
 가짜 키 sk-TESTTESTTESTTESTTEST
 그대로 남아야 할 문장</textarea>
 <div>
-<button id="check" type="button">검사하기</button>
-<button id="mask" type="button" class="ghost">마스킹하기</button>
-<button id="reset" type="button" class="ghost">가짜 예시로 되돌리기</button>
+<button class="btn btn-p" id="check" type="button">검사하기</button>
+<button class="btn btn-o" id="mask" type="button">마스킹하기</button>
+<button class="btn btn-o" id="copy" type="button">마스킹 결과 복사</button>
+<button class="btn btn-o" id="reset" type="button">예시로 되돌리기</button>
 </div>
-<h2>2. 탐지 결과 (범주 ID만, 원문 미포함)</h2>
-<div id="cats"><span class="badge">검사 버튼을 눌러주세요</span></div>
-<pre id="catJson">[]</pre>
-<h2>3. 마스킹 결과 미리보기</h2>
-<pre id="masked">(마스킹 버튼을 눌러주세요)</pre>
-<h2>4. PDP 데모 정책 대응</h2>
-<ul>
-<li><code>없음</code> → <code>ALLOW</code></li>
-<li><code>government_id</code>, <code>phone_number</code>, <code>email</code> → <code>MASK</code></li>
-<li><code>api_key</code> → <code>BLOCK</code> (이 데모·확장은 전송을 막지 않음, 판정 이름과 안내문만 표시)</li>
-<li>미등록 범주 → <code>REQUIRE_APPROVAL</code></li>
-</ul>
-<p id="pdp"></p>
-<h2>2차에서 바뀐 점</h2>
-<ul>
-<li>이메일 범주 추가 + 전각 숫자·하이픈 정규화(NFKC) 후 검사</li>
-<li>안내문에 PDP 데모 조치(BLOCK/MASK/APPROVAL) 표시, 차단은 하지 않음</li>
-</ul>
-<h2>한계</h2>
-<ul>
-<li>4종 형식만 탐지하며 미감지는 안전 판정이 아닙니다.</li>
-<li>마스킹은 복원 불가 자리표시자이며 Token Vault 토큰화가 아닙니다.</li>
-<li>BLOCK은 판정 이름이며 자동 전송 차단이 없습니다.</li>
-</ul>
+</div>
+<div class="grid">
+<div class="card"><h2>2. 탐지 결과</h2><div id="cats"></div><pre id="catJson">[]</pre><p><span class="decision" id="pdp">PDP: -</span></p></div>
+<div class="card"><h2>3. 마스킹 미리보기</h2><pre id="masked">(마스킹 버튼을 눌러주세요)</pre>
+<p>정책: 없음→ALLOW · 주민/전화/이메일→MASK · 키→BLOCK · 미등록→APPROVAL. BLOCK도 전송을 막지 않음.</p></div>
+</div>
+<div class="card">
+<h2>4. 실제 AI 사이트로 이어서 확인</h2>
+<p>아래 버튼은 외부 AI 사이트를 새 탭으로 열기만 합니다. 가짜 문구로 확장 안내만 확인하고 전송하지 마세요.</p>
+<a class="ext" href="https://chat.openai.com/" target="_blank" rel="noopener"><span><b>ChatGPT 열기</b><br>chat.openai.com</span></a>
+<a class="ext" href="https://chatgpt.com/" target="_blank" rel="noopener"><span><b>ChatGPT 새 주소</b><br>chatgpt.com</span></a>
+<a class="ext" href="https://claude.ai/" target="_blank" rel="noopener"><span><b>Claude 열기</b><br>claude.ai</span></a>
+</div>
+<div class="card"><h2>한계</h2><p>4종 형식만 탐지, 미감지는 안전 아님. 마스킹은 복원 불가 자리표시자. BLOCK은 판정 이름.</p></div>
+</div>
 <script src="./detector.js"></script>
 <script>
 (function(){
@@ -65,34 +69,11 @@ var masked=document.getElementById("masked");
 var pdp=document.getElementById("pdp");
 var LABELS={government_id:"주민등록번호 형식",phone_number:"전화번호 형식",email:"이메일 형식",api_key:"API 키/토큰 형식"};
 var SAMPLE="가짜 주민번호 000000-1000000\n가짜 전화번호 010-0000-0000\n가짜 이메일 test.user@example.com\n가짜 키 sk-TESTTESTTESTTESTTEST\n그대로 남아야 할 문장";
-function decide(list){
-if(!list.length) return "ALLOW";
-if(list.indexOf("api_key")>=0) return "BLOCK";
-var unknown=list.filter(function(x){return !LABELS[x];});
-if(unknown.length) return "REQUIRE_APPROVAL";
-return "MASK";
-}
-function render(){
-var d=window.AIInputGatewayDetector;
-if(!d){cats.textContent="detector.js 로드 실패";return [];}
-var list=[];
-try{list=Array.prototype.slice.call(d.inspect(input.value));}catch(e){list=[];}
-cats.innerHTML="";
-if(!list.length){cats.textContent="감지 없음 (안전 판정 아님)";}
-list.forEach(function(c){
-var s=document.createElement("span");s.className="badge";s.textContent=c+" · "+(LABELS[c]||"알 수 없는 범주");cats.appendChild(s);
-});
-catJson.textContent=JSON.stringify(list);
-var a=decide(list);
-pdp.innerHTML="PDP 데모 판정: <strong>"+a+"</strong>";
-return list;
-}
+function decide(l){if(!l.length)return "ALLOW";if(l.indexOf("api_key")>=0)return "BLOCK";if(l.filter(function(x){return !LABELS[x];}).length)return "REQUIRE_APPROVAL";return "MASK";}
+function render(){var d=window.AIInputGatewayDetector;if(!d)return[];var l=[];try{l=Array.prototype.slice.call(d.inspect(input.value));}catch(e){l=[];}cats.innerHTML="";if(!l.length)cats.textContent="감지 없음 (안전 판정 아님)";l.forEach(function(c){var s=document.createElement("span");s.className="badge";s.textContent=c+" · "+(LABELS[c]||"알 수 없는 범주");cats.appendChild(s);});catJson.textContent=JSON.stringify(l);pdp.textContent="PDP: "+decide(l);return l;}
 document.getElementById("check").addEventListener("click",function(){masked.textContent="(마스킹 버튼을 눌러주세요)";render();});
-document.getElementById("mask").addEventListener("click",function(){
-var d=window.AIInputGatewayDetector;if(!d)return;
-render();
-try{masked.textContent=d.mask(input.value);}catch(e){masked.textContent="마스킹 실패: 입력이 보호되었다고 간주하지 마세요.";}
-});
+document.getElementById("mask").addEventListener("click",function(){render();try{masked.textContent=window.AIInputGatewayDetector.mask(input.value);}catch(e){masked.textContent="마스킹 실패";}});
+document.getElementById("copy").addEventListener("click",function(){var t=masked.textContent;if(navigator.clipboard)navigator.clipboard.writeText(t);});
 document.getElementById("reset").addEventListener("click",function(){input.value=SAMPLE;masked.textContent="(마스킹 버튼을 눌러주세요)";render();});
 render();
 })();
