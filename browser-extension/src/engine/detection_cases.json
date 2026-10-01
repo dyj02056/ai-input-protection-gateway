@@ -1,5 +1,5 @@
 {
-  "_comment": "탐지기 평가용 데이터 세트입니다. 모두 가짜 값입니다(공개 테스트 카드번호 등). expect는 탐지돼야 하는 범주 전체(순서 무관)이고, 빈 배열은 아무것도 잡히면 안 되는 문장입니다. masked를 적으면 마스킹 결과도 확인합니다. 새 규칙을 쓸 때는 잡혀야 하는 값뿐 아니라 '비슷하지만 잡히면 안 되는 값'을 함께 적어 오탐을 막습니다.",
+  "_comment": "탐지기 평가용 데이터 세트입니다. 모두 가짜 값입니다(공개 테스트 카드번호 등). expect는 탐지돼야 하는 범주 전체(순서 무관)이고, 빈 배열은 아무것도 잡히면 안 되는 문장입니다. masked를 적으면 마스킹 결과도 확인합니다. 새 규칙을 쓸 때는 잡혀야 하는 값뿐 아니라 '비슷하지만 잡히면 안 되는 값'을 함께 적어 오탐을 막습니다. 외부 비밀 스캐너(GitHub 등)가 진짜 키로 오인할 형식의 값은 text 대신 textParts에 조각으로 나눠 적습니다(테스트가 합칩니다).",
   "cases": [
     {
       "id": "gov-hyphen",
@@ -182,28 +182,40 @@
     },
     {
       "id": "key-aws",
-      "text": "AKIAABCDEFGHIJKLMNOP",
+      "textParts": [
+        "AKIA",
+        "ABCDEFGHIJKLMNOP"
+      ],
       "expect": [
         "api_key"
       ]
     },
     {
       "id": "key-github",
-      "text": "ghp_abcdefghijklmnopqrstuv",
+      "textParts": [
+        "ghp_",
+        "abcdefghijklmnopqrstuv"
+      ],
       "expect": [
         "api_key"
       ]
     },
     {
       "id": "key-slack",
-      "text": "xoxb-1234567890-abcdef",
+      "textParts": [
+        "xoxb-",
+        "1234567890-abcdef"
+      ],
       "expect": [
         "api_key"
       ]
     },
     {
       "id": "key-google",
-      "text": "AIzaSyA-1234567890123456789012345678901",
+      "textParts": [
+        "AIza",
+        "SyA-1234567890123456789012345678901"
+      ],
       "expect": [
         "api_key"
       ]

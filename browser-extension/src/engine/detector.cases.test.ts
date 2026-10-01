@@ -9,7 +9,9 @@ import { detector as moduleDetector, type Detector, type DetectorOptions } from 
 
 interface Case {
   id: string;
-  text: string;
+  text?: string;
+  // 비밀 스캐너가 진짜 키로 오인할 값은 조각으로 나눠 적고 여기서 합칩니다
+  textParts?: string[];
   expect: string[];
   options?: DetectorOptions;
   masked?: string;
@@ -20,6 +22,8 @@ const CASES = (
     cases: Case[];
   }
 ).cases;
+
+const textOf = (item: Case): string => item.text ?? (item.textParts ?? []).join("");
 
 const subjects: Array<[string, () => Detector]> = [
   ["TS 모듈", () => moduleDetector],
@@ -49,12 +53,12 @@ describe("평가 데이터 세트 구성", () => {
 
 describe.each(subjects)("탐지 평가 (%s)", (_name, load) => {
   const detector = load();
-  const run = (item: Case) => [...detector.inspect(item.text, item.options)].sort();
+  const run = (item: Case) => [...detector.inspect(textOf(item), item.options)].sort();
 
   it.each(CASES.map((item) => [item.id, item] as const))("%s", (_id, item) => {
     expect(run(item)).toEqual([...item.expect].sort());
     if (item.masked !== undefined) {
-      expect(detector.mask(item.text, item.options)).toBe(item.masked);
+      expect(detector.mask(textOf(item), item.options)).toBe(item.masked);
     }
   });
 
