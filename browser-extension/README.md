@@ -11,18 +11,36 @@ Chrome Manifest V3 확장 프로그램입니다. ChatGPT · Claude · Gemini의 
 | `manifest.json` | MV3 설정. 버전 1.1.0, 아이콘 4종, `options_page`, 백그라운드 서비스 워커, `storage` 권한, 대상 호스트 4개 |
 | `src/engine/detector.ts` → `dist-ext/detector.js` | 로컬 정규식 탐지·마스킹. `inspect()`는 범주 ID 배열만, `mask()`는 자리표시자 대체 문자열만, `findMatches()`/`applyMatches()`는 일치 구간의 위치를 다룹니다 |
 | `src/engine/policy.ts` → `dist-ext/policy.js` | 브라우저 안에서 도는 로컬 정책 엔진. `policy.py`와 같은 우선순위(BLOCK > REQUIRE_APPROVAL > MASK > ALLOW)와 같은 기본 매핑을 따릅니다 |
-| `content.js` | 입력·붙여넣기 감지 → 안내 창 → 수동 마스킹. 실행 취소, 감사 기록, 선택형 전송 차단 |
+| `src/content/` → `dist-ext/content.js` | 입력·붙여넣기 감지 → 안내 창 → 수동 마스킹. 실행 취소, 감사 기록, 선택형 전송 차단. 아래 "콘텐츠 스크립트 구조" 참고 |
 | `src/background/background.ts` → `dist-ext/background.js` | 설치 시 시작 가이드 1회, 탭별 판정 배지 |
 | `popup.html` · `options.html` · `onboarding.html` | 확장 페이지의 진입점. 비어 있는 `#root`에 `src/`의 React 화면을 붙입니다 |
 | `src/popup/` | 도구 모음 팝업(React). 현재 탭의 지원 여부와 버전만 표시 |
 | `src/options/` | 설정 화면(React). 탐지 4종 on/off, 안내 표시·실행 취소, 감사 기록 보기/삭제, 전송 보호 스위치 |
 | `src/onboarding/` | 설치 직후 열리는 60초 시작 가이드(React) |
 | `src/entries/` | `detector.js`·`policy.js`의 진입점. 전역 `AIInputGatewayDetector`·`AIInputGatewayPolicy`를 노출합니다(`content.js`가 이 이름으로 접근) |
-| `src/shared/` | 화면·백그라운드가 공유하는 상수·설정 읽기/쓰기·호스트 판별. `consistency.test.ts`가 `content.js`·`background.js`·`manifest.json`의 같은 값과 대조합니다 |
+| `src/shared/` | 화면·백그라운드가 공유하는 상수·설정 읽기/쓰기·호스트 판별. `consistency.test.ts`가 `manifest.json`의 지원 호스트와 대조합니다 |
 | `src/test/` | 테스트용 `chrome.*` 스텁, 빌드 산출물을 vm에서 실행하는 도우미 |
 | `icons/logo.svg` · `icon16/32/48/128.png` | 최종 로고(A안). PNG는 `py tools/make_icons.py`로 생성 |
 
-`detector.js` · `policy.js` · `background.js`는 TypeScript 소스(`src/`)를 **하나의 일반 스크립트(IIFE)로 번들**해 같은 이름으로 `dist-ext/`에 만듭니다. `manifest.json`의 `content_scripts`와 서비스 워커는 모듈이 아닌 일반 스크립트로 읽으므로 ES 모듈로 내지 않고, 읽기 쉽도록 압축하지 않습니다. `content.js`는 아직 TS로 옮기지 않아 **내용을 바꾸지 않은 채 그대로 복사**합니다(`vite.config.mts`의 `STATIC_FILES`).
+`detector.js` · `policy.js` · `background.js` · `content.js`는 TypeScript 소스(`src/`)를 **하나의 일반 스크립트(IIFE)로 번들**해 같은 이름으로 `dist-ext/`에 만듭니다. `manifest.json`의 `content_scripts`와 서비스 워커는 모듈이 아닌 일반 스크립트로 읽으므로 ES 모듈로 내지 않고, 읽기 쉽도록 우리 코드는 압축하지 않습니다. `manifest.json`과 아이콘만 그대로 복사합니다(`vite.config.mts`의 `STATIC_FILES`).
+
+### 콘텐츠 스크립트 구조
+
+`content.js`는 `detector.js`·`policy.js`가 만든 전역(`AIInputGatewayDetector`·`AIInputGatewayPolicy`)을 읽습니다. 전역이 없으면(확장을 새로고침하기 전의 옛 탭 등) "로컬 검사기를 사용할 수 없습니다"라고 알립니다.
+
+| 모듈 | 하는 일 |
+|---|---|
+| `src/content/index.ts` | 진입점. 설정을 읽고 입력·붙여넣기 리스너와 전송 차단 리스너를 등록합니다 |
+| `state.ts` | 설정과 공유 상태(닫은 안내 지문, 실행 취소 정보, 전송 차단 대기 상태). 원문은 담지 않습니다 |
+| `editable.ts` | 입력창 찾기, `contenteditable` 텍스트 읽기(블록·`<br>`을 줄바꿈 하나로 셈) |
+| `masking.ts` | 일치한 구간만 바꾸는 마스킹, 실행 취소, 사이트가 변경을 알도록 `input` 이벤트 전달 |
+| `decision.ts` | 범주 ID → 조치 이름(정책 엔진, 없으면 같은 규칙의 폴백), 안내 문구용 라벨 |
+| `audit.ts` | 판정 이름 배지 알림, 감사 기록(판정·범주 ID·시각만 최근 20건) |
+| `flow.ts` | 입력 검사 → 안내 → 마스킹·실행 취소 흐름 |
+| `sendGuard.ts` | 선택형 전송 차단(Enter·폼 제출·보내기 클릭). 첫 시도만 막고 5초 안에 다시 누르면 통과 |
+| `notice/` | 알림창. `controller.ts`가 닫힌 shadow root·위치·자동 닫기를 맡고, `Notice.tsx`는 상태 없이 props만으로 그리는 **Preact** 컴포넌트입니다 |
+
+알림창에만 Preact(약 4KB)를 씁니다. 모든 AI 사이트에 주입되는 스크립트라 React 대신 같은 문법의 가벼운 라이브러리를 골랐고, 훅을 쓰지 않아 `render()`가 같은 틱에 DOM을 바꿉니다(입력 이벤트 직후 DOM을 읽는 코드와 테스트가 있습니다).
 
 `docs/detector.js`(공개 데모가 읽는 파일)는 직접 고치지 않습니다. 빌드가 `dist-ext/detector.js`를 복사해 덮어쓰므로 탐지기 소스는 `src/engine/detector.ts` 하나입니다.
 
@@ -97,6 +115,13 @@ py tools/package_store.py   # dist-ext/ → dist/ai-input-protection-gateway-<�
 
 `resultAutoHideMs`는 감지 안내가 아닌 결과·완료 안내에만 적용됩니다(0 이하 값은 8000ms로 되돌아갑니다).
 
+## 1.1.0 배포본 이후 수정된 결함
+
+TypeScript로 옮기는 과정에서 발견해 고친 것입니다. 1.1.0 ZIP에는 아직 들어 있지 않습니다.
+
+- **안내창 위치가 한 번 닫으면 풀리던 문제**: 위치를 "왼쪽 아래"로 설정해도, 안내창을 닫은 뒤 새로 뜨는 안내창은 위치가 적용되지 않고 오른쪽 위에 나타났습니다. 이전에 적용한 값을 변수에 기억해 두고 비교하던 탓에, 새로 만든 안내창에 값을 쓰지 않았습니다. 이제 각 안내창이 가진 값을 기준으로 맞춥니다. (`notice/controller.test.ts`가 막습니다.)
+- **바깥에서 제거된 안내창을 계속 표시 중으로 보던 문제**: 사이트 스크립트가 안내창을 지워도 "감지 안내가 떠 있다"고 기억해, 값이 깨끗해졌을 때 검사 완료 안내가 나오지 않을 수 있었습니다. 이제 실제로 문서에 붙어 있는지를 봅니다.
+
 ## 감사 기록에 남는 것과 남지 않는 것
 
 남는 것: 판정 이름(`BLOCK` 등), 범주 ID(`phone_number` 등), 시각. 최근 20건만.
@@ -168,8 +193,9 @@ npm test
 
 - `src/engine/detector.test.ts` · `policy.test.ts`: 같은 케이스를 **TS 모듈**과 **빌드된 `dist-ext/*.js`(빈 전역에서 실행)** 양쪽에 돌립니다. 탐지 범주, 원문 미반환, 전각 변형, 줄바꿈 보존, 설정에서 끈 범주 제외, `findMatches()`/`applyMatches()`와 `mask()`의 일치, 정책 우선순위·알 수 없는 범주 처리·원문 문자열 거부를 확인합니다.
 - `src/background/background.test.ts`: 설치 시 시작 가이드, 배지 색·문자, 알 수 없는 판정 이름 처리를 모듈과 산출물 양쪽에서 확인합니다.
-- `src/build-artifacts.test.ts`: `manifest.json`이 가리키는 파일이 모두 있는지, 일반 스크립트에 `import`/`export`가 없는지, `content.js`가 원본과 같은지, `docs/detector.js`가 확장에 들어가는 것과 같은지 확인합니다.
-- `src/**/*.test.tsx`: popup·options·onboarding 화면. `src/shared/consistency.test.ts`는 `content.js`·`manifest.json`과 겹치는 값(기본 설정, 지원 호스트)이 어긋나는지 대조합니다.
+- `src/build-artifacts.test.ts`: `manifest.json`이 가리키는 파일이 모두 있는지, 일반 스크립트(`content.js` 포함)에 `import`/`export`가 없는지, `docs/detector.js`가 확장에 들어가는 것과 같은지 확인합니다.
+- `src/**/*.test.tsx`: popup·options·onboarding 화면. `src/shared/consistency.test.ts`는 `manifest.json`과 겹치는 값(지원 호스트)이 어긋나는지 대조합니다.
+- `src/content/*.test.ts`: 콘텐츠 스크립트를 jsdom에서 확인합니다 — DOM 읽기·마스킹·실행 취소, 감지 안내의 지속과 닫기, 알림창 위치·자동 닫기, 전송 차단(5초 재시도, click→submit 두 경로, 두 스위치의 독립), 감사 기록, 설정 반영. 같은 흐름을 실제 브라우저에서 확인하는 것은 아래 `tools/dom_test.py`입니다.
 
 `contenteditable`의 DOM 조작은 실제 브라우저에서만 확인할 수 있습니다. 로컬 Chrome을 헤드리스로 띄워 확장 코드를 그대로 실행하는 회귀 테스트가 있습니다.
 

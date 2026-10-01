@@ -1,0 +1,93 @@
+// 콘텐츠 스크립트가 공유하는 상태와 설정입니다. 원문은 어디에도 저장하지 않습니다.
+import { CATEGORY_IDS } from "../shared/constants.ts";
+import { coerceFeatures, DEFAULT_FEATURES, type BoolFeature, type Features } from "../shared/settings.ts";
+import type { Editor, UndoEntry } from "./types.ts";
+
+// 설정(options)에서 끈 범주는 안내와 마스킹에서 모두 제외합니다.
+// 기본값은 4종 전체 사용이며, 저장소를 읽지 못하면 기본값을 유지합니다.
+export const ALL_CATEGORIES: readonly string[] = CATEGORY_IDS;
+
+// 안내창 위치와 시간, 그리고 선택 기능의 기본값(shared/settings.ts의 DEFAULT_FEATURES)입니다.
+// persistentAlert(감지 안내 계속 표시)와 undoButton(실행 취소 버튼)은 화면 표시 방식만
+// 바꾸므로 기본값을 켭니다. 전송 차단·승인 단계·정책 적용·감사 기록은 이 확장의
+// "자동으로 막지 않는다"는 원칙을 바꾸므로 반드시 사용자가 켜야 합니다.
+//
+// options는 maskStyle(자리표시자/세션 토큰)을 저장하지만, 1.1.0은 자리표시자만
+// 구현되어 있어 이 스크립트는 저장된 값을 쓰지 않습니다. 세션 토큰은 다음 버전 범위입니다.
+export const state = {
+  features: { ...DEFAULT_FEATURES } as Features,
+  disabledCategories: [] as string[],
+  // 안내창의 마스킹 버튼이 가리키는 입력창입니다.
+  activeEditor: null as Editor | null,
+  // 마지막으로 사용자가 입력한 입력창입니다. 전송 차단 판정에 씁니다.
+  focusedEditor: null as Editor | null,
+  // 표시 중인 감지 안내의 지문과, 사용자가 직접 닫은 지문입니다.
+  // 닫은 뒤 같은 감지가 계속되면 다시 띄우지 않고, 감지가 사라지면 초기화합니다.
+  activeAlertKey: "",
+  dismissedAlertKey: "",
+  // 마스킹으로 우리가 직접 만든 input 이벤트를 다시 검사하지 않도록 1회 건너뜁니다.
+  skipNextInspection: false,
+  lastUndo: null as UndoEntry | null,
+  // 전송 차단에서 "한 번 더 누르면 허용"을 처리하기 위한 상태입니다.
+  blockArmedKey: "",
+  blockArmedUntil: 0,
+  // 클릭·Enter 한 번은 click과 submit 두 경로를 탑니다. 허용한 직후에 오는 제출까지
+  // 막으면 "한 번 더 누르면 전송됩니다"가 그대로 동작하지 않으므로, 같은 입력 묶음에
+  // 속한 제출만 한 번 통과시킵니다. (플래그는 다음 작업 묶음에서 사라집니다.)
+  allowPendingSubmit: false,
+  lastAuditKey: "",
+};
+
+export function feature(name: BoolFeature): boolean {
+  return state.features[name] === true;
+}
+
+export function detectorOptions(): { disabledCategories: string[] } {
+  return { disabledCategories: state.disabledCategories };
+}
+
+interface StoredSettings {
+  enabled?: unknown;
+  features?: unknown;
+}
+
+export function applySettings(data: StoredSettings | null | undefined): void {
+  if (!data || typeof data !== "object") {
+    return;
+  }
+  const enabled = data.enabled;
+  if (enabled && typeof enabled === "object") {
+    state.disabledCategories = ALL_CATEGORIES.filter(
+      (category) => (enabled as Record<string, unknown>)[category] === false,
+    );
+  }
+  if (data.features) {
+    state.features = coerceFeatures(data.features);
+  }
+}
+
+// 저장된 설정을 읽고, 이후 바뀌는 설정을 다음 검사부터 바로 반영합니다.
+// chrome.storage를 쓸 수 없는 환경에서는 기본값으로만 동작합니다.
+export function watchSettings(onChanged: () => void): void {
+  try {
+    chrome.storage.local.get({ enabled: null, features: DEFAULT_FEATURES }, (data) => {
+      applySettings(data);
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== "local") {
+        return;
+      }
+      // 바뀐 키만 모아서 반영합니다. 설정 변경은 다음 검사부터 바로 적용됩니다.
+      const next: StoredSettings = {};
+      for (const key of ["enabled", "features"] as const) {
+        if (Object.prototype.hasOwnProperty.call(changes, key)) {
+          next[key] = changes[key]?.newValue;
+        }
+      }
+      applySettings(next);
+      onChanged();
+    });
+  } catch {
+    // chrome.storage를 쓸 수 없는 환경에서는 기본값으로만 동작합니다.
+  }
+}

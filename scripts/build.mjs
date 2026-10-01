@@ -1,6 +1,6 @@
 // 확장 빌드: dist-ext/ 에 제출·설치용 파일을 만듭니다.
 //   1) 확장 페이지(popup·options·onboarding): React, vite.config.mts
-//   2) 클래식 스크립트(detector.js·policy.js·background.js): 각각 하나의 IIFE로 번들합니다.
+//   2) 클래식 스크립트(detector.js·policy.js·background.js·content.js): 각각 하나의 IIFE로 번들합니다.
 //      manifest의 content_scripts와 서비스 워커가 모듈이 아닌 일반 스크립트로 읽으므로 ES 모듈로 내면 안 됩니다.
 //      읽기 쉽게 하려고 압축하지 않습니다.
 //   3) docs 데모가 쓰는 docs/detector.js를 같은 산출물로 맞춥니다(소스는 하나).
@@ -18,6 +18,7 @@ const CLASSIC_SCRIPTS = [
   { name: "detector.js", entry: "src/entries/detector.ts" },
   { name: "policy.js", entry: "src/entries/policy.ts" },
   { name: "background.js", entry: "src/background/background.ts" },
+  { name: "content.js", entry: "src/content/index.ts" },
 ];
 
 rmSync(OUT_DIR, { recursive: true, force: true });

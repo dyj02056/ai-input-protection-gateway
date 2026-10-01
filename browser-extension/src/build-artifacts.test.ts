@@ -56,10 +56,6 @@ describe("dist-ext 산출물", () => {
     ]);
   });
 
-  it("content.js는 원본과 바이트 단위로 같다 (4단계 전까지 수정하지 않는다)", () => {
-    expect(read("content.js")).toBe(readFileSync(resolve(REPO_ROOT, "browser-extension/content.js"), "utf8"));
-  });
-
   it("docs 데모의 detector.js가 확장에 들어가는 것과 같은 산출물이다", () => {
     expect(readFileSync(resolve(REPO_ROOT, "docs/detector.js"), "utf8")).toBe(read("detector.js"));
   });
