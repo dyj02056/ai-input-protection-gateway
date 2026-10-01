@@ -1,23 +1,36 @@
 {
   "manifest_version": 3,
   "name": "AI 입력정보 보호 게이트웨이",
-  "version": "0.5.2",
-  "description": "생성형 AI 입력 보호 기능을 단계별로 개발하기 위한 MVP 확장 프로그램입니다.",
+  "version": "1.0.0",
+  "description": "ChatGPT·Claude·Gemini에 보내기 전 개인정보를 검사하고 마스킹하는 로컬 보호 확장 (서버 전송 없음)",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
     "default_title": "AI 입력정보 보호",
     "default_popup": "popup.html"
   },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
-    "https://claude.ai/*"
+    "https://claude.ai/*",
+    "https://gemini.google.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
-        "https://claude.ai/*"
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
       ],
       "js": ["detector.js", "content.js"],
       "run_at": "document_idle"

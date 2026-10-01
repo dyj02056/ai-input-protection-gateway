@@ -71,4 +71,45 @@ section p,
   border-radius: 6px;
   background: #fff4d6;
   color: #553d08;
+  line-height: 1.55;
 }
+
+.how {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.links a {
+  flex: 1 1 90px;
+  text-align: center;
+  padding: 9px 10px;
+  border: 1px solid #cbd7ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #155eef;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.links a:hover {
+  background: #eef4ff;
+}
+
+.status-indicator.ok {
+  background: #0e9f6e;
+}
+
+.status-indicator.off {
+  background: #8a94a6;
+}
+

@@ -161,4 +161,55 @@
 - `docs/logo-preview.html` 개편: A·B·C안 비교 (128/48/16px + 다크 배경).
 - 검증: detector 6/6·PDP 9/9 이 작업공간 통과. 시각 확인은 배포 URL에서 직접 확인 필요.
 
+## 누적 기록 2026-10-01 — 확장 프로그램 v1.0 (스토어 제출)
+
+### 이번 과정에서 만든 것 (새로 구현하거나 완성한 기능과 실제 동작)
+- 유지: 로컬 탐지 4종+NFKC, 수동 마스킹, PDP 데모 판정. 탐지 규칙·판정 로직·보안 원칙은 변경 없음.
+- 확정: 로고 **A안**(파란 방패 + 흰색 `>_` 커서). `browser-extension/icons/logo.svg`로 복사.
+- 신규: 로고 A안 **PNG 아이콘 4종**(16/32/48/128). SVG 래스터라이저가 없어 `tools/make_icons.py`가 방패 폴리곤·베지어 곡선·글리프를 PIL로 직접 그리고 8배 슈퍼샘플링 후 LANCZOS로 축소한다. 16px는 내부 링과 `>_`가 뭉개져 **내부 링을 빼고 `>` 셰브론만 키운 단순화 버전**을 쓴다(육안 비교 후 확정).
+- 신규: `manifest.json` v1.0.0 — 아이콘 4종 맵, `options_page`, 백그라운드 서비스 워커, `storage` 권한, Gemini 호스트/스크립트 추가.
+- 신규: `background.js` — 설치 시 시작 가이드 1회, 탭 이동 시 배지 초기화, content.js 메시지로 **탭별 판정 배지**(초록/주황/빨강).
+- 신규: `popup.html`·`popup.css`·`popup.js` — 현재 탭 지원 여부만 표시(상태 점 포함), 30초 사용법, 바로가기 3개.
+- 신규: `options.html`·`options.js` — 탐지 4종 on/off, 마스킹 방식(자리표시자 / 토큰은 다음 버전 비활성), 로컬 기록 삭제.
+- 신규: `onboarding.html` — 설치 직후 60초 시작 가이드.
+- 신규: `tools/package_store.py` — 제출 ZIP 생성기(개발 파일 제외, manifest 아이콘 존재 검사, ZIP 경로 `/` 구분자 강제).
+- 신규: `docs/privacy.html` 개인정보 처리방침, `docs/store-listing.md` 스토어 등재 문안(요약·상세·권한 사유·데이터 사용 신고·스크린샷 계획).
+- 신규: `docs/icons/` 사본 + `docs/logo-preview.html` 개편 — 기존 페이지가 배포 환경에서 깨지는 `../browser-extension/` 경로를 가리키던 문제를 함께 고쳤다.
+- 수정: `detector.js` — `inspect(text, options)` / `mask(text, options)`에 `{ disabledCategories }` 옵션 인자 추가. **기존 1인자 호출은 그대로 동작**(하위 호환)하며 `docs/detector.js`와 동기화했다.
+- 수정: `content.js` — `chrome.storage.local`의 `enabled`를 읽어 **끈 범주를 탐지와 마스킹에서 모두 제외**하고, 설정 변경을 실시간 반영. 판정 이름만 `background.js`에 알린다(원문·범주 ID 미전송).
+- 실제 동작 검증: `node --test browser-extension/detector.test.js` → **pass 8 / fail 0**, `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → **9 tests OK**. 제출 ZIP은 15개 파일, 원본 45,558B → ZIP 28,730B, 항목 경로 `/` 구분자, 루트 `manifest.json` 확인(`zipfile.testzip()` → None).
+
+### 확인하는 방법 (3단계 이내)
+1. `py tools/package_store.py` → `dist/ai-input-protection-gateway-1.0.0.zip`을 `chrome://extensions`(개발자 모드)에서 "압축해제된 확장 프로그램을 로드"로 설치 → 시작 가이드 확인 → ChatGPT·Claude에 **가짜 5줄** 붙여넣기 → 안내·마스킹·배지 확인 (실정보·전송 금지).
+2. `node --test browser-extension/detector.test.js` → pass 8 확인.
+3. `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → 9 tests OK 확인.
+
+### 바뀐 점과 그 이유
+- 1·2차·최종 제출과 동일한 부분: 탐지 정규식 4종·NFKC, 수동 마스킹 방식, PDP 데모 판정, 원문 미저장·로컬 처리·자동 차단 없음 원칙. **로직은 건드리지 않았다.**
+- 아이콘 PNG: 스토어가 128px 아이콘 PNG를 요구하고, manifest가 PNG를 참조하므로 SVG만으로는 심사·설치가 불가능했다.
+- 16px 단순화: 16px에서는 내부 링과 `>_`가 뭉개져 형태가 사라졌다. 방패와 `>`만 남겨 툴바에서도 알아볼 수 있게 했다.
+- 설정 연동: 설정 화면만 만들고 실제 검사에 반영하지 않으면 사용자에게 거짓 상태를 보여주게 된다. `detector`에 옵션 인자를 추가하되 기존 호출을 깨지 않는 방식으로 붙였다.
+- `tabs` 권한 미요청: 팝업에서 탭 주소를 읽지 못하는 대신 "방문 기록 읽기" 경고를 만들지 않았다. 읽을 수 없는 탭은 "지원 사이트가 아님"으로 표시한다.
+- 온보딩·문안·처리방침: 심사 요건(단일 목적, 권한 사유, 개인정보 처리방침 URL, 데이터 사용 신고)을 코드와 별개로 충족해야 했다.
+- 미구현 유지: 자동 전송 차단, 서버·PDP 실호출, 파일 검사, 승인 워크플로, NER. 문안·README·팝업에 모두 명시했다.
+
+### AI에게 맡긴 일과 내가 판단한 일
+- AI가 만든 부분: `tools/make_icons.py`·`tools/package_store.py`, `background/options/onboarding/popup` 코드, `detector` 옵션 인자와 테스트 2개, `privacy.html`·`store-listing.md`·README·계획서 부록 C 초안.
+- 내가 판단한 일: 로고 **A안 최종 확정**, 16px 단순화 허용, 자동 차단 없음 원칙 유지, 로고 B·C 시안은 저장소에 기록용으로만 남김, 공개 문구의 과장 금지, 최종 제출 범위·표현의 책임은 본인.
+
+### 남은 일 (제출 직전 사용자 작업)
+- 실제 Chrome에서 확장 로드 후 가짜 문구 검증(자동 테스트는 contenteditable DOM을 재현하지 않음).
+- 스토어 스크린샷 1장 이상(1280×800 또는 640×400) 캡처 후 등재, 비공개 테스트 → 공개 전환.
+- 위 검증 전에는 "동작 확인 완료"로 단정하지 않는다.
+
+### 결과물 URL, 소스 저장소
+- 홈: https://dyj02056.github.io/ai-input-protection-gateway/
+- 데모: https://dyj02056.github.io/ai-input-protection-gateway/demo.html
+- 계획서: https://dyj02056.github.io/ai-input-protection-gateway/plan.html
+- 아이콘·브랜드: https://dyj02056.github.io/ai-input-protection-gateway/logo-preview.html
+- 개인정보 처리방침: https://dyj02056.github.io/ai-input-protection-gateway/privacy.html
+- 저장소: https://github.com/dyj02056/ai-input-protection-gateway
+- 검증: detector 8/8·PDP 9/9 이 작업공간 통과, 제출 ZIP 구조 검증 통과.
+
+
 

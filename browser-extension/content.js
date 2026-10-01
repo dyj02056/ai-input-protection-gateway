@@ -17,6 +17,48 @@
     api_key: "BLOCK",
   });
 
+  // 설정(options.html)에서 끈 범주는 안내와 마스킹에서 모두 제외합니다.
+  // 기본값은 4종 전체 사용이며, 저장소를 읽지 못하면 기본값을 유지합니다.
+  const ALL_CATEGORIES = Object.freeze(Object.keys(CATEGORY_LABELS));
+  let disabledCategories = [];
+
+  function applyEnabledSetting(enabled) {
+    if (!enabled || typeof enabled !== "object") {
+      return;
+    }
+    disabledCategories = ALL_CATEGORIES.filter((category) => enabled[category] === false);
+  }
+
+  function detectorOptions() {
+    return { disabledCategories };
+  }
+
+  // 판정 이름만 서비스 워커에 알려 배지에 표시합니다. 원문과 범주 ID는 보내지 않습니다.
+  function reportAction(action) {
+    try {
+      chrome.runtime.sendMessage({ type: "gateway:action", action }, () => {
+        void chrome.runtime.lastError;
+      });
+    } catch {
+      // 서비스 워커가 없으면 배지만 갱신되지 않습니다.
+    }
+  }
+
+  try {
+    chrome.storage.local.get({ enabled: null }, (data) => {
+      if (data) {
+        applyEnabledSetting(data.enabled);
+      }
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && Object.prototype.hasOwnProperty.call(changes, "enabled")) {
+        applyEnabledSetting(changes.enabled.newValue);
+      }
+    });
+  } catch {
+    // chrome.storage를 쓸 수 없는 환경에서는 기본값(4종 전체)으로만 동작합니다.
+  }
+
   function decideLocalAction(categories) {
     if (!Array.isArray(categories) || categories.length === 0) {
       return "ALLOW";
@@ -199,7 +241,20 @@
     }, 8000);
   }
 
+  // 설정에서 끈 범주를 걸러낸 뒤 안내를 그리고, 판정 이름만 배지용으로 알립니다.
   function showNotice(categories, detectorAvailable = true, editor = null) {
+    if (!detectorAvailable) {
+      reportAction("");
+      renderNotice(categories, false, editor);
+      return;
+    }
+
+    const visible = categories.filter((category) => !disabledCategories.includes(category));
+    reportAction(decideLocalAction(visible));
+    renderNotice(visible, true, editor);
+  }
+
+  function renderNotice(categories, detectorAvailable = true, editor = null) {
     if (!detectorAvailable) {
       displayNotice(
         "로컬 검사기를 사용할 수 없습니다",
@@ -302,7 +357,7 @@
     let maskedText;
     try {
       currentText = readEditorText(editor);
-      maskedText = detector.mask(currentText);
+      maskedText = detector.mask(currentText, detectorOptions());
     } catch {
       displayNotice(
         "마스킹을 적용하지 못했습니다",
@@ -343,7 +398,7 @@
     }
 
     try {
-      const categories = detector.inspect(readEditorText(editor));
+      const categories = detector.inspect(readEditorText(editor), detectorOptions());
       if (!Array.isArray(categories)) {
         showNotice([], false);
         return;

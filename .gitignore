@@ -1,0 +1,6 @@
+# 빌드 산출물 (Chrome 웹 스토어 제출 패키지)
+dist/
+
+# Python 캐시
+__pycache__/
+*.pyc

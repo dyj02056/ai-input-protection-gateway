@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 입력정보 보호 — 설정</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#16213a;background:#f4f7ff}
+.card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:18px;margin-top:14px}
+label{display:flex;gap:10px;align-items:flex-start;margin:10px 0;line-height:1.5}
+.small{color:#5a6b8c;font-size:13px}
+button{background:#155eef;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:800;cursor:pointer}
+</style>
+</head>
+<body>
+<p><a href="popup.html">← 팝업으로</a></p>
+<h1>설정</h1>
+<p class="small">모든 설정은 브라우저 로컬에만 저장됩니다. 서버 전송·동기화 없음.</p>
+<div class="card">
+<h2>탐지 항목 (4종)</h2>
+<label><input type="checkbox" id="c-government_id" checked> 주민등록번호 형식 — MASK</label>
+<label><input type="checkbox" id="c-phone_number" checked> 전화번호 형식 — MASK</label>
+<label><input type="checkbox" id="c-email" checked> 이메일 형식 — MASK</label>
+<label><input type="checkbox" id="c-api_key" checked> API 키/토큰 형식 — BLOCK 안내 (자동 차단 없음)</label>
+</div>
+<div class="card">
+<h2>마스킹 방식</h2>
+<label><input type="radio" name="mask" value="placeholder" checked> 자리표시자 ([전화번호] 등)</label>
+<label><input type="radio" name="mask" value="token" disabled> 세션 토큰 ([전화_1] + 응답 복원) — 다음 버전</label>
+</div>
+<div class="card">
+<h2>개인정보</h2>
+<p class="small">수집 항목 없음. 검사 기록은 원문 없이 범주·시간만 최근 20건 로컬 표시. 아래 버튼으로 전체 삭제.</p>
+<button id="clear" type="button">로컬 기록 전체 삭제</button>
+</div>
+<script src="options.js"></script>
+</body>
+</html>

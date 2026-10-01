@@ -3,55 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>로고 A·B·C안 미리보기</title>
+<title>최종 로고 A안 · 아이콘 세트 미리보기</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#16213a;background:#f4f7ff}
+body{font-family:system-ui,sans-serif;max-width:960px;margin:0 auto;padding:24px;color:#16213a;background:#f4f7ff}
 .card{background:#fff;border:1px solid #dbe4f3;border-radius:14px;padding:18px;margin-top:14px}
 .row{display:flex;gap:18px;align-items:end;flex-wrap:wrap}
 .dark{background:#0f1b33;border-radius:10px;padding:12px;display:flex;gap:18px;align-items:end;flex-wrap:wrap}
-img{image-rendering:auto}
 h2{margin:0 0 10px}
-.pick{display:inline-block;margin-top:10px;font-size:13px;color:#5a6b8c}
+.pick{display:inline-block;margin-top:10px;font-size:13px;color:#5a6b8c;line-height:1.6}
+.badge{display:inline-block;background:#e7f6ee;color:#0b6b4a;border:1px solid #b7e2cd;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:700;vertical-align:middle}
+.note{background:#fff8e2;border:1px solid #ecd27a;border-radius:10px;padding:12px;color:#5b4a00;line-height:1.6;margin-top:14px}
+code{background:#eef3ff;padding:2px 6px;border-radius:6px}
 </style>
 </head>
 <body>
-<p><a href="index.html">홈</a></p>
-<h1>로고 A·B·C안 비교</h1>
+<p><a href="index.html">홈</a> · <a href="demo.html">데모</a> · <a href="plan.html">계획서</a> · <a href="privacy.html">개인정보</a></p>
+<h1>최종 로고 <span class="badge">A안 선택</span></h1>
+<p>2026-10-01에 <b>A안(파란 방패 + 흰색 입력 커서)</b>을 최종 로고로 확정했습니다. 아래는 스토어에 들어가는 아이콘 PNG 세트와, 선택 기록용 이전 시안입니다.</p>
+
 <div class="card">
-<h2>A안: 방패 + 입력 커서</h2>
+<h2>배포 아이콘 세트 (PNG 생성본)</h2>
 <div class="row">
-<div><img src="../browser-extension/icons/logo-a.svg" width="128" height="128" alt="A안 128px"><p>128px</p></div>
-<div><img src="../browser-extension/icons/logo-a.svg" width="48" height="48" alt="A안 48px"><p>48px</p></div>
-<div><img src="../browser-extension/icons/logo-a.svg" width="16" height="16" alt="A안 16px"><p>16px</p></div>
+<div><img src="icons/icon128.png" width="128" height="128" alt="128px 아이콘"><p>128px · 스토어 등재용</p></div>
+<div><img src="icons/icon48.png" width="48" height="48" alt="48px 아이콘"><p>48px</p></div>
+<div><img src="icons/icon32.png" width="32" height="32" alt="32px 아이콘"><p>32px</p></div>
+<div><img src="icons/icon16.png" width="16" height="16" alt="16px 아이콘"><p>16px</p></div>
 </div>
-<span class="pick">입력 보호 직관형</span>
+<p class="pick">16px에서는 내부 링과 <code>&gt;_</code> 두 글자가 뭉개져, 내부 링을 빼고 <code>&gt;</code> 셰브론만 키운 단순화 버전을 사용합니다.</p>
 </div>
+
 <div class="card">
-<h2>B안: 눈 가림막 (마스킹 강조)</h2>
+<h2>원본 SVG (A안)</h2>
 <div class="row">
-<div><img src="../browser-extension/icons/logo-b.svg" width="128" height="128" alt="B안 128px"><p>128px</p></div>
-<div><img src="../browser-extension/icons/logo-b.svg" width="48" height="48" alt="B안 48px"><p>48px</p></div>
-<div><img src="../browser-extension/icons/logo-b.svg" width="16" height="16" alt="B안 16px"><p>16px</p></div>
+<div><img src="icons/logo.svg" width="128" height="128" alt="A안 128px SVG"><p>128px</p></div>
+<div><img src="icons/logo.svg" width="48" height="48" alt="A안 48px SVG"><p>48px</p></div>
+<div><img src="icons/logo.svg" width="16" height="16" alt="A안 16px SVG"><p>16px (SVG는 축소 시 뭉개짐)</p></div>
 </div>
-<span class="pick">마스킹 기능 강조형</span>
 </div>
-<div class="card">
-<h2>C안: 게이트 (제품명 일치)</h2>
-<div class="row">
-<div><img src="../browser-extension/icons/logo-c.svg" width="128" height="128" alt="C안 128px"><p>128px</p></div>
-<div><img src="../browser-extension/icons/logo-c.svg" width="48" height="48" alt="C안 48px"><p>48px</p></div>
-<div><img src="../browser-extension/icons/logo-c.svg" width="16" height="16" alt="C안 16px"><p>16px</p></div>
-</div>
-<span class="pick">게이트웨이 컨셉형 (추천)</span>
-</div>
+
 <div class="card">
 <h2>다크 배경 확인</h2>
 <div class="dark">
-<img src="../browser-extension/icons/logo-a.svg" width="64" height="64" alt="A안 다크 배경">
-<img src="../browser-extension/icons/logo-b.svg" width="64" height="64" alt="B안 다크 배경">
-<img src="../browser-extension/icons/logo-c.svg" width="64" height="64" alt="C안 다크 배경">
+<img src="icons/icon128.png" width="64" height="64" alt="A안 PNG 다크 배경 64px">
+<img src="icons/logo.svg" width="64" height="64" alt="A안 SVG 다크 배경 64px">
 </div>
+</div>
+
+<div class="card">
+<h2>이전 비교안 (기록용)</h2>
+<div class="row">
+<div><img src="icons/logo-b.svg" width="96" height="96" alt="B안 눈 가림막"><p>B안 · 눈 가림막 · 마스킹 강조</p></div>
+<div><img src="icons/logo-c.svg" width="96" height="96" alt="C안 게이트"><p>C안 · 게이트 · 게이트웨이 컨셉</p></div>
+</div>
+<span class="pick">선정 사유: 방패(보호)와 입력 커서가 가장 단순해 16px에서도 읽히고, 제품명(입력정보 보호)과 바로 연결됩니다.</span>
+</div>
+
+<div class="note">
+이 페이지의 이미지는 <code>docs/icons/</code> 사본입니다(이전에는 <code>../browser-extension/</code>을 가리켜 배포 페이지에서 깨졌습니다).
+배포 아이콘 원본은 <code>browser-extension/icons/</code>이며, <code>py tools/make_icons.py</code>로 PNG 4종을 다시 만들 수 있습니다.
 </div>
 </body>
 </html>
+
 

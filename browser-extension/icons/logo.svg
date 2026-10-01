@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>AI 입력정보 보호 게이트웨이 로고 A안</title>
+  <path d="M64 6 L110 24 V66 C110 94 88 112 64 122 C40 112 18 94 18 66 V24 Z" fill="#155eef"/>
+  <path d="M64 16 L100 30 V66 C100 88 82 102 64 110 C46 102 28 88 28 66 V30 Z" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.9"/>
+  <text x="36" y="80" font-family="monospace, Consolas, monospace" font-size="38" font-weight="900" fill="#ffffff">&gt;_</text>
+</svg>

@@ -44,20 +44,33 @@
     }
   }
 
+  // 설정(options.html)에서 끈 범주는 탐지·마스킹 대상에서 제외합니다.
+  // options를 넘기지 않으면 기존과 동일하게 4종 전체를 사용합니다.
+  function selectRules(options) {
+    const disabled =
+      options && Array.isArray(options.disabledCategories) ? options.disabledCategories : [];
+    if (disabled.length === 0) {
+      return RULES;
+    }
+    const skip = new Set(disabled);
+    return RULES.filter((rule) => !skip.has(rule.categoryId));
+  }
+
   globalThis.AIInputGatewayDetector = Object.freeze({
-    inspect(text) {
+    inspect(text, options) {
       const source = typeof text === "string" ? normalizeForDetection(text) : "";
-      return RULES.filter((rule) => rule.pattern.test(source)).map(
+      return selectRules(options).filter((rule) => rule.pattern.test(source)).map(
         (rule) => rule.categoryId,
       );
     },
 
-    mask(text) {
+    mask(text, options) {
+      const rules = selectRules(options);
       const source = typeof text === "string" ? text : "";
       const normalized = typeof text === "string" ? normalizeForDetection(text) : "";
       let masked = source;
 
-      for (const rule of RULES) {
+      for (const rule of rules) {
         // 전역 정규식은 호출 때마다 새로 만들어 lastIndex 상태를 공유하지 않습니다.
         const pattern = new RegExp(rule.pattern.source, "g");
         masked = masked.replace(
@@ -70,7 +83,7 @@
       // 정규화된 보기에서 탐지된 부분은 가려 구조 노출을 줄입니다.
       if (normalized !== source) {
         let normalizedMasked = normalized;
-        for (const rule of RULES) {
+        for (const rule of rules) {
           normalizedMasked = normalizedMasked.replace(
             new RegExp(rule.pattern.source, "g"),
             () => `[${rule.maskLabel}]`,

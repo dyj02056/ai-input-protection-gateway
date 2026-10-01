@@ -78,3 +78,32 @@ test("마스킹 문자열은 줄바꿈과 감지되지 않은 문장을 유지�
 
   assert.equal(detector.mask(input), expected);
 });
+
+test("설정에서 끈 범주는 탐지와 마스킹에서 모두 제외된다", () => {
+  const options = { disabledCategories: ["email"] };
+
+  assert.deepEqual(
+    Array.from(detector.inspect("테스트 이메일형식: test.user@example.com", options)),
+    [],
+  );
+  assert.equal(
+    detector.mask("테스트 이메일형식: test.user@example.com", options),
+    "테스트 이메일형식: test.user@example.com",
+  );
+  // 옵션을 주지 않으면 기존과 같이 이메일이 잡힌다.
+  assert.deepEqual(
+    Array.from(detector.inspect("테스트 이메일형식: test.user@example.com")),
+    ["email"],
+  );
+});
+
+test("옵션이 비어 있으면 기존 4종 동작을 그대로 유지한다", () => {
+  assert.deepEqual(
+    Array.from(detector.inspect("테스트 키형식: sk-TESTTESTTESTTESTTEST", {})),
+    ["api_key"],
+  );
+  assert.equal(
+    detector.mask("테스트 전화번호형식: 010-0000-0000", { disabledCategories: [] }),
+    "테스트 전화번호형식: [전화번호]",
+  );
+});

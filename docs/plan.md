@@ -1,6 +1,6 @@
 # 중소기업용 생성형 AI 입력정보 보호 게이트웨이 제작 계획서
 
-> 문서 버전: v2.0 (최종 제출) / 작성일: 2026-10-01
+> 문서 버전: v2.1 (최종 제출 + 확장 v1.0) / 작성일: 2026-10-01
 > 배포: https://dyj02056.github.io/ai-input-protection-gateway/
 > 구현: `browser-extension/`, `gateway-core/pdp/`, `submission_note.md`
 
@@ -77,3 +77,36 @@ B.6 URL: 홈 https://dyj02056.github.io/ai-input-protection-gateway/ · 데모 .
 1차: plan v1.0, Pages index/demo, detector·PDP 데모, 테스트 5+7개. URL 동일.
 
 MVP완료: 양경로제어·E2E·재현·무저장검증·degraded기록·리포트·단독온보딩.
+
+## 부록 C. 확장 프로그램 v1.0 (최종 제출, 2026-10-01)
+
+C.1 이번 과정에서 만든 것: Chrome MV3 확장을 스토어 제출 품질로 완성.
+`manifest.json` v1.0.0(아이콘 4종 맵·`options_page`·`background` SW·`storage` 권한·Gemini 호스트/스크립트 추가),
+`background.js`(설치 시 시작 가이드 1회, 탭별 판정 배지), `popup.html/css/js`(현재 탭 상태·30초 사용법·바로가기),
+`options.html/js`(탐지 4종 on/off, 로컬 기록 삭제), `onboarding.html`(60초 시작 가이드),
+로고 A안 아이콘 PNG 16/32/48/128 생성(`tools/make_icons.py`), 제출 ZIP 생성기(`tools/package_store.py`),
+개인정보 처리방침(`docs/privacy.html`), 스토어 등재 문안(`docs/store-listing.md`).
+
+C.2 실제 동작(이 작업공간에서 확인):
+- 설정에서 끈 범주는 탐지·마스킹에서 모두 제외된다. `detector.inspect(text, {disabledCategories})`,
+  `detector.mask(text, {disabledCategories})` 옵션 인자를 추가했고 기존 1인자 호출은 그대로 동작한다(하위 호환).
+- 팝업·설정·온보딩 페이지는 정적 파일이며 `chrome.storage.local`만 사용한다. 네트워크 요청 없음.
+- 배지 색: 감지 없음(초록 `#0e9f6e`, 문자 없음) / 마스킹·승인 필요(주황 `#b77900`, `!`) / 차단 권고(빨강 `#d92d20`, `!`).
+- 제출 ZIP `dist/ai-input-protection-gateway-1.0.0.zip`: 15개 파일, 원본 45,558B → ZIP 28,730B, 항목 경로 `/` 구분자, 루트에 `manifest.json`.
+
+C.3 확인 방법: (1) `dist/ai-input-protection-gateway-1.0.0.zip`을 `chrome://extensions`에 로드 → 가짜 5줄 붙여넣기 → 안내·마스킹 확인 (2) `node --test browser-extension/detector.test.js` → pass 8 (3) `py -m unittest discover -s gateway-core/pdp -p "test_*.py"` → 9 tests OK.
+
+C.4 바뀐 점과 이유: 2차·최종 제출의 탐지 규칙·판정 로직·보안 원칙(원문 미저장·로컬 처리·자동 차단 없음)은 변경하지 않았다.
+스토어 심사 요건(128px 아이콘, 개인정보 처리방침 URL, 권한 사유, 단일 목적)을 충족하기 위해 아이콘·설정·온보딩·문안을 추가했다.
+`tabs` 권한은 의도적으로 요청하지 않았고, 원격 코드도 사용하지 않는다.
+
+C.5 알려진 한계(문안에 명시): 자동 전송 차단 없음, 서버/PDP 실호출 없음, 파일 검사·승인 워크플로·NER 없음,
+`BLOCK`은 안내 이름일 뿐 전송을 막지 않음, 마스킹은 복원 불가 자리표시자 대체.
+
+C.6 AI/본인: AI는 아이콘 생성 스크립트·설정 연동·팝업/온보딩 HTML·문안 초안을 작성했다.
+본인은 로고 A안을 최종 확정하고, 자동 차단 없음 원칙 유지와 공개 문구 과장 금지, 최종 제출 범위·표현의 책임을 결정했다.
+
+C.7 다음에 할 일: 스토어 스크린샷 캡처 후 등재 → 확장↔PDP 원문 없는 연동 → BLOCK 전송 제어·승인 연결 → 파일·감사·RAG·SIEM·업종팩.
+
+C.8 URL: 홈 https://dyj02056.github.io/ai-input-protection-gateway/ · 데모 /demo.html · 계획서 /plan.html ·
+아이콘 /logo-preview.html · 개인정보 /privacy.html, 저장소 https://github.com/dyj02056/ai-input-protection-gateway.
