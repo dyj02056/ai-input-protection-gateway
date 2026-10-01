@@ -99,12 +99,103 @@
     return target.closest(EDITABLE_SELECTOR);
   }
 
+  // 블록으로 줄이 나뉘는 display 값입니다. 이 경계마다 줄바꿈 하나를 셉니다.
+  const BLOCK_DISPLAYS = new Set([
+    "block",
+    "flex",
+    "grid",
+    "flow-root",
+    "list-item",
+    "table",
+    "table-row",
+    "table-caption",
+  ]);
+
+  // 입력 요소가 아닌 내용은 검사 대상에서 제외합니다.
+  const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE", "TEXTAREA", "SELECT"]);
+
+  // contenteditable의 구조를 그대로 반영해 텍스트를 읽습니다.
+  //
+  // innerText를 쓰지 않는 이유: HTML 명세의 innerText는 <p> 요소 경계마다 줄바꿈을
+  // 2개로 계산합니다. 그래서 <p>a</p><p>b</p>는 "a\n\nb"가 되어, 실제로는 없는 빈 줄이
+  // 검사 대상에 섞입니다. 블록 경계와 <br>을 각각 줄바꿈 하나로 세면 사용자가 만든
+  // 줄 수와 일치합니다. (<p><br></p>처럼 빈 문단은 <br> 덕분에 빈 줄로 남습니다.)
+  //
+  // runs는 텍스트 노드마다 이 텍스트에서 차지하는 구간입니다. 마스킹할 때 이 구간만
+  // 바꾸면 문단 요소·<br>·서식이 그대로 남습니다.
+  function readContentEditable(editor) {
+    const runs = [];
+    const displayCache = new Map();
+    let text = "";
+
+    function appendBlockBreak() {
+      // 중첩된 블록 경계에서 줄바꿈이 겹치지 않게 합니다.
+      if (text.length > 0 && !text.endsWith("\n")) {
+        text += "\n";
+      }
+    }
+
+    function displayOf(element) {
+      let display = displayCache.get(element);
+      if (display === undefined) {
+        display = window.getComputedStyle(element).display;
+        displayCache.set(element, display);
+      }
+      return display;
+    }
+
+    function walk(node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const value = node.data;
+        if (value.length > 0) {
+          runs.push({ node, start: text.length, end: text.length + value.length });
+          text += value;
+        }
+        return;
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return;
+      }
+
+      if (SKIP_TAGS.has(node.tagName) || node.hasAttribute("hidden")) {
+        return;
+      }
+
+      // <br>은 사용자가 직접 만든 줄바꿈이므로 항상 한 줄로 셉니다.
+      if (node.tagName === "BR") {
+        text += "\n";
+        return;
+      }
+
+      const display = displayOf(node);
+      if (display === "none") {
+        // 화면에 없는 요소는 검사 대상이 아닙니다.
+        return;
+      }
+
+      const lineBreaking = BLOCK_DISPLAYS.has(display);
+      if (lineBreaking) {
+        appendBlockBreak();
+      }
+      for (const child of node.childNodes) {
+        walk(child);
+      }
+      if (lineBreaking) {
+        appendBlockBreak();
+      }
+    }
+
+    walk(editor);
+    return { text, runs };
+  }
+
   function readEditorText(editor) {
     if (editor instanceof HTMLInputElement || editor instanceof HTMLTextAreaElement) {
       return editor.value;
     }
 
-    return editor.innerText || editor.textContent || "";
+    return readContentEditable(editor).text;
   }
 
   function formatCategoryLabels(categories) {
@@ -266,7 +357,12 @@
     if (categories.length > 0) {
       const detector = globalThis.AIInputGatewayDetector;
       const canMask = Boolean(
-        editor && editor.isConnected && detector && typeof detector.mask === "function",
+        editor &&
+          editor.isConnected &&
+          detector &&
+          typeof detector.mask === "function" &&
+          typeof detector.findMatches === "function" &&
+          typeof detector.applyMatches === "function",
       );
       const categoryLabels = formatCategoryLabels(categories);
       const actionHint = decideLocalAction(categories);
@@ -295,42 +391,26 @@
     );
   }
 
-  function writeContentEditableText(editor, text) {
-    // contenteditable 안의 일반 텍스트 노드에서는 '\n'이 화면상 공백처럼 접힐 수 있습니다.
-    // 줄마다 텍스트 노드를 만들고 줄 사이에 <br>을 넣어 줄바꿈을 표현합니다.
-    // 입력을 HTML로 해석하지 않도록 innerHTML 대신 텍스트 노드만 사용합니다.
-    const fragment = document.createDocumentFragment();
-    const lines = text.split(/\r\n|\r|\n/);
-
-    lines.forEach((line, index) => {
-      if (index > 0) {
-        fragment.append(document.createElement("br"));
-      }
-      if (line.length > 0) {
-        fragment.append(document.createTextNode(line));
-      }
-    });
-
-    editor.replaceChildren(fragment);
-  }
-
-  function writeEditorText(editor, text) {
-    if (editor instanceof HTMLInputElement) {
-      const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
-      if (!descriptor || typeof descriptor.set !== "function") {
-        throw new Error("입력 요소를 갱신할 수 없습니다.");
-      }
-      descriptor.set.call(editor, text);
-    } else if (editor instanceof HTMLTextAreaElement) {
-      const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
-      if (!descriptor || typeof descriptor.set !== "function") {
-        throw new Error("입력 요소를 갱신할 수 없습니다.");
-      }
-      descriptor.set.call(editor, text);
-    } else {
-      writeContentEditableText(editor, text);
+  // input/textarea의 값은 평문이므로 프로토타입 setter로 넣어야 사이트가 변경을 감지합니다.
+  function setPlainValue(editor, text) {
+    const target =
+      editor instanceof HTMLInputElement
+        ? HTMLInputElement
+        : editor instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement
+          : null;
+    if (!target) {
+      throw new Error("평문 입력 요소가 아닙니다.");
     }
 
+    const descriptor = Object.getOwnPropertyDescriptor(target.prototype, "value");
+    if (!descriptor || typeof descriptor.set !== "function") {
+      throw new Error("입력 요소를 갱신할 수 없습니다.");
+    }
+    descriptor.set.call(editor, text);
+  }
+
+  function dispatchInputEvent(editor) {
     const inputEvent = typeof InputEvent === "function"
       ? new InputEvent("input", {
           bubbles: true,
@@ -341,11 +421,140 @@
     editor.dispatchEvent(inputEvent);
   }
 
+  // 일치한 구간이 걸친 텍스트 노드의 문자만 바꿉니다.
+  // 문단 요소·<br>·서식 요소를 그대로 두므로 줄 구조가 바뀌지 않습니다.
+  // 하나라도 안전하게 바꿀 수 없으면 아무것도 바꾸지 않고 false를 돌려줍니다.
+  function replaceInTextNodes(runs, matches, undoStack) {
+    // 뒤에서부터 바꾸면 앞쪽 구간의 위치가 밀리지 않습니다.
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const match = matches[index];
+      const spanned = runs.filter((run) => run.start < match.end && match.start < run.end);
+      if (spanned.length === 0) {
+        return false;
+      }
+
+      const first = spanned[0];
+      const last = spanned[spanned.length - 1];
+      if (!first.node.isConnected || !last.node.isConnected) {
+        return false;
+      }
+
+      // 되돌릴 수 있도록 바꾸기 전 값을 남깁니다.
+      for (const run of spanned) {
+        undoStack.push({ node: run.node, data: run.node.data });
+      }
+
+      const head = first.node.data.slice(0, match.start - first.start);
+      const tail = last.node.data.slice(match.end - last.start);
+
+      if (first === last) {
+        first.node.data = `${head}[${match.label}]${tail}`;
+      } else {
+        // 일치 구간이 여러 텍스트 노드에 나뉘어 있어도 사이에 <br>이나 블록 경계가
+        // 없으면(정규식이 줄바꿈을 넘지 못하므로 항상 그렇습니다) 안전하게 바꿀 수 있습니다.
+        first.node.data = `${head}[${match.label}]`;
+        for (let inner = 1; inner < spanned.length - 1; inner += 1) {
+          spanned[inner].node.data = "";
+        }
+        last.node.data = tail;
+      }
+    }
+
+    return true;
+  }
+
+  function restoreTextNodes(undoStack) {
+    for (let index = undoStack.length - 1; index >= 0; index -= 1) {
+      const entry = undoStack[index];
+      if (entry.node.isConnected) {
+        entry.node.data = entry.data;
+      }
+    }
+  }
+
+  // input/textarea 전용 경로입니다. 값이 평문이라 위치를 따로 다룰 필요가 없습니다.
+  function maskPlainValue(editor, detector) {
+    let currentText;
+    let maskedText;
+    try {
+      currentText = editor.value;
+      maskedText = detector.mask(currentText, detectorOptions());
+    } catch {
+      return "failed";
+    }
+
+    if (typeof maskedText !== "string" || maskedText === currentText) {
+      return "unchanged";
+    }
+
+    try {
+      setPlainValue(editor, maskedText);
+    } catch {
+      return "failed";
+    }
+
+    dispatchInputEvent(editor);
+    return "applied";
+  }
+
+  // contenteditable 전용 경로입니다.
+  // 일치한 구간만 바꾸고 문단·<br>·서식은 그대로 두어 줄 구조가 바뀌지 않게 합니다.
+  function maskContentEditable(editor, detector) {
+    let read;
+    let matches;
+    let expected;
+    try {
+      read = readContentEditable(editor);
+      matches = detector.findMatches(read.text, detectorOptions());
+      expected = detector.applyMatches(read.text, matches);
+    } catch {
+      return "failed";
+    }
+
+    if (matches.length === 0 || expected === read.text) {
+      // 전각 숫자처럼 원문 표기가 달라 위치를 특정할 수 없는 값만 있는 경우를 구분합니다.
+      let variantOnly = false;
+      try {
+        variantOnly = detector.mask(read.text, detectorOptions()) !== read.text;
+      } catch {
+        variantOnly = false;
+      }
+      return variantOnly ? "variant-only" : "unchanged";
+    }
+
+    const undoStack = [];
+    let applied = false;
+    try {
+      applied = replaceInTextNodes(read.runs, matches, undoStack);
+      if (applied) {
+        // 바꾼 결과가 예상과 같은지 확인합니다. 다르면 전부 되돌리고 중단합니다.
+        applied = readContentEditable(editor).text === expected;
+      }
+    } catch {
+      applied = false;
+    }
+
+    if (!applied) {
+      restoreTextNodes(undoStack);
+      return "failed";
+    }
+
+    dispatchInputEvent(editor);
+    return "applied";
+  }
+
   function applyMaskToActiveEditor() {
     const editor = activeEditor;
     const detector = globalThis.AIInputGatewayDetector;
 
-    if (!editor || !editor.isConnected || !detector || typeof detector.mask !== "function") {
+    if (
+      !editor ||
+      !editor.isConnected ||
+      !detector ||
+      typeof detector.findMatches !== "function" ||
+      typeof detector.applyMatches !== "function" ||
+      typeof detector.mask !== "function"
+    ) {
       displayNotice(
         "마스킹할 입력창을 찾을 수 없습니다",
         "입력창을 다시 클릭해 검사해 주세요. 이 상태를 보호 기능이 작동한 것으로 간주하지 마세요.",
@@ -353,20 +562,29 @@
       return;
     }
 
-    let currentText;
-    let maskedText;
-    try {
-      currentText = readEditorText(editor);
-      maskedText = detector.mask(currentText, detectorOptions());
-    } catch {
+    const plainTarget =
+      editor instanceof HTMLInputElement || editor instanceof HTMLTextAreaElement;
+    const outcome = plainTarget
+      ? maskPlainValue(editor, detector)
+      : maskContentEditable(editor, detector);
+
+    if (outcome === "applied") {
       displayNotice(
-        "마스킹을 적용하지 못했습니다",
-        "현재 편집기와 호환되지 않았을 수 있습니다. 입력이 보호되었다고 간주하지 마세요.",
+        "마스킹본을 입력란에 적용했습니다",
+        "일치한 구간만 유형별 자리표시자로 바꿨습니다. 문단·줄바꿈·서식은 건드리지 않았지만, 편집기별 상태가 달라질 수 있으니 결과를 확인하세요. 자동 전송·차단 기능은 없습니다.",
       );
       return;
     }
 
-    if (typeof maskedText !== "string" || maskedText === currentText) {
+    if (outcome === "variant-only") {
+      displayNotice(
+        "입력란을 바꾸지 않았습니다",
+        "전각 숫자처럼 원문 표기가 다른 값만 있어 바꿀 위치를 특정하지 못했습니다. 구조를 안전하게 유지하려면 해당 부분을 직접 수정해 주세요.",
+      );
+      return;
+    }
+
+    if (outcome === "unchanged") {
       displayNotice(
         "현재 입력에서 마스킹할 형식이 없습니다",
         "탐지 규칙에 일치하지 않아도 민감정보가 없다는 뜻은 아닙니다. 입력을 차단하지 않습니다.",
@@ -374,19 +592,9 @@
       return;
     }
 
-    try {
-      writeEditorText(editor, maskedText);
-    } catch {
-      displayNotice(
-        "마스킹을 적용하지 못했습니다",
-        "현재 편집기와 호환되지 않았을 수 있습니다. 입력이 보호되었다고 간주하지 마세요.",
-      );
-      return;
-    }
-
     displayNotice(
-      "마스킹본을 입력란에 적용했습니다",
-      "일치한 부분만 유형별 자리표시자로 바꿨습니다. 줄바꿈은 유지하도록 처리했지만 편집기별 서식·상태가 달라질 수 있으니 결과를 확인하세요. 자동 전송·차단 기능은 없습니다.",
+      "마스킹을 적용하지 못했습니다",
+      "감지된 값이 여러 요소에 걸쳐 있거나 편집기 구조가 예상과 달라, 일부만 바꾸지 않고 중단했습니다. 입력이 보호되었다고 간주하지 마세요.",
     );
   }
 

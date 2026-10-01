@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>content.js DOM 회귀 테스트</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; }
+  /* 실제 편집기처럼 문단마다 아래 여백이 있는 상황을 흉내 냅니다. */
+  #editor { white-space: pre-wrap; padding: 8px; }
+  #editor p, #editor div.block { margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<div id="editor" contenteditable="true"></div>
+<pre id="out"></pre>
+<script>
+  // 확장 API 스텁. content.js가 저장소와 서비스 워커를 쓰기 때문입니다.
+  window.chrome = {
+    storage: {
+      local: { get(defaults, callback) { if (callback) callback({ enabled: null }); } },
+      onChanged: { addListener() {} },
+    },
+    runtime: {
+      lastError: null,
+      sendMessage(message, callback) { if (callback) callback(); },
+    },
+  };
+
+  // content.js는 알림창을 닫힌 shadow root에 그립니다.
+  // 테스트에서 버튼을 누를 수 있도록 열린 shadow root로 바꿔 끼웁니다.
+  const nativeAttachShadow = Element.prototype.attachShadow;
+  Element.prototype.attachShadow = function (init) {
+    return nativeAttachShadow.call(this, Object.assign({}, init, { mode: "open" }));
+  };
+</script>
+<script src="../browser-extension/detector.js"></script>
+<script src="../browser-extension/content.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  const editor = document.getElementById("editor");
+  const out = document.getElementById("out");
+  const results = [];
+  const failures = [];
+
+  function check(label, actual, expected) {
+    const ok = actual === expected;
+    results.push({ label, ok, actual, expected });
+    if (!ok) {
+      failures.push(label);
+    }
+  }
+
+  // 화면에 실제로 그려진 줄 수를 셉니다.
+  // innerText는 <p> 경계를 '\n\n'로 세므로 시각적 줄 수의 근거가 될 수 없습니다.
+  function visualLineCount(element) {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const tops = new Set();
+    for (const rect of range.getClientRects()) {
+      if (rect.height > 0 && rect.width >= 0) {
+        tops.add(Math.round(rect.top));
+      }
+    }
+    return tops.size;
+  }
+
+  function breakCount(element) {
+    return element.querySelectorAll("br").length;
+  }
+
+  // 실제 사용 흐름과 같게 동작시킵니다.
+  // 입력 이벤트로 검사를 유발한 뒤, 알림창의 마스킹 버튼을 누릅니다.
+  function maskOnce(initialHtml) {
+    editor.innerHTML = initialHtml;
+    editor.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
+
+    const host = document.querySelector("[data-ai-input-gateway-notice]");
+    const button = host && host.shadowRoot ? host.shadowRoot.querySelector(".mask-button") : null;
+    if (!button) {
+      return null;
+    }
+
+    button.click();
+    return { html: editor.innerHTML, lines: visualLineCount(editor), breaks: breakCount(editor) };
+  }
+
+  function caseUsingP(label, initialHtml, expectedHtml, expectedLines) {
+    const before = visualLineCount(editor);
+    void before;
+    const result = maskOnce(initialHtml);
+    if (!result) {
+      check(label + " (알림 버튼 생성)", "버튼 없음", "버튼 있음");
+      return;
+    }
+    check(label + " (DOM 구조)", result.html, expectedHtml);
+    check(label + " (시각적 줄 수)", result.lines, expectedLines);
+  }
+
+  try {
+    // 1. ChatGPT·Claude처럼 줄마다 <p>를 쓰는 편집기. 보고된 버그의 재현 형태입니다.
+    const originalLines = (() => {
+      editor.innerHTML = "<p>010-0000-0000</p><p>000000-1000000</p>";
+      return visualLineCount(editor);
+    })();
+    check("원본 <p> 두 줄의 시각적 줄 수", originalLines, 2);
+
+    caseUsingP(
+      "<p> 두 줄",
+      "<p>010-0000-0000</p><p>000000-1000000</p>",
+      "<p>[전화번호]</p><p>[주민등록번호]</p>",
+      2,
+    );
+
+    // 2. 줄마다 <div>를 쓰는 편집기
+    caseUsingP(
+      "<div> 두 줄",
+      '<div class="block">010-0000-0000</div><div class="block">000000-1000000</div>',
+      '<div class="block">[전화번호]</div><div class="block">[주민등록번호]</div>',
+      2,
+    );
+
+    // 3. <br>로 줄을 나눈 편집기
+    caseUsingP(
+      "<br> 두 줄",
+      "010-0000-0000<br>000000-1000000",
+      "[전화번호]<br>[주민등록번호]",
+      2,
+    );
+
+    // 4. 5줄 예시 문장. 감지되지 않은 줄은 그대로 남아야 합니다.
+    const sampleFive = [
+      "가짜 주민번호 000000-1000000",
+      "가짜 전화번호 010-0000-0000",
+      "가짜 이메일 test.user@example.com",
+      "가짜 키 sk-TESTTESTTESTTESTTEST",
+      "그대로 남아야 할 문장",
+    ];
+    caseUsingP(
+      "5줄 <p>",
+      sampleFive.map((line) => `<p>${line}</p>`).join(""),
+      [
+        "<p>가짜 주민번호 [주민등록번호]</p>",
+        "<p>가짜 전화번호 [전화번호]</p>",
+        "<p>가짜 이메일 [이메일]</p>",
+        "<p>가짜 키 [API 키/토큰]</p>",
+        "<p>그대로 남아야 할 문장</p>",
+      ].join(""),
+      5,
+    );
+
+    // 5. 사용자가 직접 만든 빈 줄은 유지되어야 합니다.
+    caseUsingP(
+      "빈 줄 유지",
+      "<p>010-0000-0000</p><p><br></p><p>000000-1000000</p>",
+      "<p>[전화번호]</p><p><br></p><p>[주민등록번호]</p>",
+      3,
+    );
+
+    // 6. 한 줄에 값이 여러 개 있어도 모두 바뀝니다.
+    caseUsingP(
+      "한 줄에 두 값",
+      "<p>010-0000-0000 과 010-1111-2222</p>",
+      "<p>[전화번호] 과 [전화번호]</p>",
+      1,
+    );
+
+    // 7. 값이 여러 인라인 요소에 나뉘어 있어도 바뀝니다.
+    caseUsingP(
+      "값이 나뉜 줄",
+      "<p><span>010-0000-</span><span>0000</span></p>",
+      "<p><span>[전화번호]</span><span></span></p>",
+      1,
+    );
+
+    // 8. 감지된 값이 없으면 아무것도 바뀌지 않습니다.
+    const untouched = maskOnce("<p>평범한 테스트 문장</p><p>010-0000-0000</p>");
+    check(
+      "감지 없는 줄 유지",
+      untouched ? untouched.html : "버튼 없음",
+      "<p>평범한 테스트 문장</p><p>[전화번호]</p>",
+    );
+  } catch (error) {
+    check("예외 없이 실행", String(error && error.stack ? error.stack : error), "예외 없음");
+  }
+
+  out.textContent = JSON.stringify(
+    { total: results.length, failures, results },
+    null,
+    2,
+  );
+})();
+</script>
+</body>
+</html>

@@ -109,9 +109,9 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
    그대로 남아야 할 문장
    ```
 
-4. 안내 창의 "감지 항목 마스킹" 버튼을 누르면 네 값만 `[주민등록번호]`, `[전화번호]`, `[이메일]`, `[API 키/토큰]`으로 바뀌고 마지막 문장과 5줄 구조가 유지됩니다.
+4. 안내 창의 "감지 항목 마스킹" 버튼을 누르면 네 값만 `[주민등록번호]`, `[전화번호]`, `[이메일]`, `[API 키/토큰]`으로 바뀌고 마지막 문장과 5줄 구조가 유지됩니다. 줄 사이에 빈 줄이 생기지 않아야 합니다.
 5. 설정에서 "이메일 형식"을 끄고 같은 문구를 다시 붙여넣으면 이메일은 안내에서 제외됩니다.
-6. `node --test browser-extension/detector.test.js`(8개)와 `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다.
+6. `node --test browser-extension/detector.test.js`(14개), `py tools/dom_test.py`(16개, 헤드리스 Chrome), `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다.
 
 ## 7. 제출 전 체크리스트
 
@@ -122,7 +122,7 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
 - [x] 개인정보 처리방침 페이지 공개
 - [x] 데이터 사용 신고 표 작성
 - [x] 제출 ZIP 생성 및 구조 검증(루트 `manifest.json`, `/` 구분자)
-- [x] detector 8/8 · PDP 9/9 통과
+- [x] detector 14/14 · PDP 9/9 · contenteditable DOM 16/16 통과
 - [ ] 스토어 스크린샷 1장 이상 캡처 (5장 권장)
 - [ ] 128×128 아이콘 업로드, 설명·카테고리 입력
 - [ ] 실제 계정으로 비공개 테스트 후 공개 전환

@@ -33,8 +33,9 @@
 <h2>부록 C. 확장 프로그램 v1.0 (2026-10-01 최종 제출)</h2>
 <p><b>만든 것:</b> Chrome MV3 확장을 스토어 제출 품질로 완성. <code>manifest.json</code> v1.0.0(아이콘 4종·options_page·백그라운드·storage 권한·Gemini 대상 추가), <code>background.js</code>(설치 시 시작 가이드 1회, 탭별 판정 배지), <code>popup</code> 상태 표시, <code>options</code> 4종 탐지 on/off + 로컬 기록 삭제, <code>onboarding</code> 60초 가이드, 로고 A안 아이콘 PNG 16/32/48/128 생성.</p>
 <p><b>실제 동작:</b> 설정에서 끈 범주는 탐지·마스킹에서 모두 제외(<code>detector.inspect/mask</code>에 옵션 인자 추가, 기존 1인자 호출은 그대로 유지). 배지는 초록(감지 없음)·주황(마스킹/승인)·빨강(차단 권고). 네트워크 요청 없음.</p>
-<p><b>확인 방법:</b> <code>dist/ai-input-protection-gateway-1.0.0.zip</code>을 <code>chrome://extensions</code>에 로드 → 가짜 5줄 붙여넣기 → 안내·마스킹 확인. <code>node --test browser-extension/detector.test.js</code> pass 8, <code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> 9 tests OK.</p>
+<p><b>확인 방법:</b> <code>dist/ai-input-protection-gateway-1.0.0.zip</code>을 <code>chrome://extensions</code>에 로드 → 가짜 5줄 붙여넣기 → 안내·마스킹 확인(줄 사이 빈 줄 없음). <code>node --test browser-extension/detector.test.js</code> pass 14, <code>py tools/dom_test.py</code> 16/16, <code>py -m unittest discover -s gateway-core/pdp -p "test_*.py"</code> 9 tests OK.</p>
 <p><b>바뀐 점과 이유:</b> 2차·최종 제출의 탐지·판정·보안 원칙은 그대로 유지. 아이콘·설정·온보딩을 갖춰 스토어 심사 요건(128px 아이콘, 개인정보 처리방침 URL, 권한 사유)을 충족. 자동 차단·서버 연동·파일 검사는 여전히 미구현이며 문안에 명시.</p>
+<p><b>제출 전 수정 (부록 D):</b> 여러 줄을 마스킹하면 줄 사이에 빈 줄이 생기던 결함을 고쳤다. 원인은 <code>innerText</code>가 <code>&lt;p&gt;</code> 경계를 줄바꿈 2개로 세는 명세 규칙과, 편집기 자식을 전부 다시 쓰던 마스킹 방식의 불일치였다. 읽기를 구조 순회로, 쓰기를 <code>detector.findMatches()</code> 기반 위치 치환으로 바꿔 문단·줄바꿈·서식을 보존한다. <a href="plan.html">plan.html</a> 부록 D에 상세 기록.</p>
 <p><b>AI/본인:</b> AI는 아이콘 생성 스크립트·설정 연동·문안 초안. 본인은 로고 A안 확정, 자동 차단 없음 원칙 유지, 공개 문구의 과장 금지 결정. 최종 책임 본인.</p>
 <p><b>다음에 할 일:</b> 스토어 스크린샷 캡처 후 등재, 확장↔PDP 원문 없는 연동, BLOCK 전송 제어·승인 연결.</p>
 <p>개인정보 처리방침: <a href="privacy.html">privacy.html</a> · 아이콘 미리보기: <a href="logo-preview.html">logo-preview.html</a></p>

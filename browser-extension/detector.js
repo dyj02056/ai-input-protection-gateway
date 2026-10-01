@@ -56,6 +56,65 @@
     return RULES.filter((rule) => !skip.has(rule.categoryId));
   }
 
+  // 일치한 구간의 위치를 함께 돌려줍니다.
+  // content.js가 입력란 구조를 통째로 다시 쓰지 않고 해당 구간만 바꾸기 위해 씁니다.
+  // 여기서 반환하는 값도 범주 ID와 위치뿐이며, 일치한 문자열은 담지 않습니다.
+  function findMatches(text, options) {
+    if (typeof text !== "string" || text.length === 0) {
+      return [];
+    }
+
+    const found = [];
+    for (const rule of selectRules(options)) {
+      const pattern = new RegExp(rule.pattern.source, "g");
+      let hit = pattern.exec(text);
+      while (hit !== null) {
+        found.push({
+          categoryId: rule.categoryId,
+          label: rule.maskLabel,
+          start: hit.index,
+          end: hit.index + hit[0].length,
+        });
+        if (hit[0].length === 0) {
+          pattern.lastIndex += 1;
+        }
+        hit = pattern.exec(text);
+      }
+    }
+
+    // 앞에서 시작한 구간을 먼저 적용하고, 겹치는 뒤 구간은 건너뜁니다.
+    // mask()가 규칙 순서대로 치환한 결과와 같아지도록 하는 규칙입니다.
+    found.sort((a, b) => a.start - b.start || a.end - b.end);
+    const accepted = [];
+    let lastEnd = 0;
+    for (const match of found) {
+      if (match.start < lastEnd) {
+        continue;
+      }
+      accepted.push(match);
+      lastEnd = match.end;
+    }
+    return accepted;
+  }
+
+  // matches를 text에 적용한 결과 문자열을 만듭니다.
+  function applyMatches(text, matches) {
+    if (typeof text !== "string") {
+      return "";
+    }
+    if (!Array.isArray(matches) || matches.length === 0) {
+      return text;
+    }
+
+    let result = "";
+    let cursor = 0;
+    for (const match of matches) {
+      result += text.slice(cursor, match.start) + `[${match.label}]`;
+      cursor = match.end;
+    }
+    return result + text.slice(cursor);
+  }
+
   globalThis.AIInputGatewayDetector = Object.freeze({
     inspect(text, options) {
       const source = typeof text === "string" ? normalizeForDetection(text) : "";
@@ -63,6 +122,10 @@
         (rule) => rule.categoryId,
       );
     },
+
+    findMatches,
+
+    applyMatches,
 
     mask(text, options) {
       const rules = selectRules(options);
