@@ -35,14 +35,24 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+// 확장 자신의 화면(설정·팝업)에서 온 메시지인지. 설정 화면은 브라우저 탭으로 열리므로 sender.tab만으로는 웹 페이지와 구분되지 않습니다.
+// 콘텐츠 스크립트(웹 페이지의 탭)는 sender.url이 그 웹 페이지 주소이므로, 확장 주소(chrome-extension://…)로 시작할 수 없습니다.
+function fromExtensionPage(sender: chrome.runtime.MessageSender | undefined): boolean {
+  if (!sender || !sender.tab) return true;
+  try {
+    return typeof sender.url === "string" && sender.url.startsWith(chrome.runtime.getURL(""));
+  } catch {
+    return false;
+  }
+}
+
 chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
   if (!message || typeof message !== "object") return;
   const { type, action } = message as { type?: unknown; action?: unknown };
 
   // 조직 정책 동기화: 콘텐츠 스크립트(탭)는 "확인해 달라"고만 요청할 수 있고, 즉시 강제 확인과 연결 시험은 확장 화면만 합니다.
   if (type === POLICY_SYNC_MESSAGE) {
-    const fromExtensionPage = !sender || !sender.tab;
-    const force = fromExtensionPage && (message as { force?: unknown }).force === true;
+    const force = fromExtensionPage(sender) && (message as { force?: unknown }).force === true;
     syncPolicy(chromeDeps(), force).then(
       (status) => respond(status),
       () => respond(null),
@@ -53,13 +63,13 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
   }
   // 감사 이벤트 업로드: 탭(콘텐츠 스크립트)에서 온 것만 받고, 동의 스위치·서버 연결 여부는 enqueueAudit이 확인합니다.
   if (type === AUDIT_UPLOAD_MESSAGE) {
-    if (!sender || !sender.tab) return;
+    if (fromExtensionPage(sender)) return;
     enqueueAudit(chromeAuditDeps(chromeDeps()), (message as { event?: unknown }).event).catch(() => undefined);
     return;
   }
   // 승인 요청: 탭(콘텐츠 스크립트)에서 온 것만 받습니다. 요청·상태 확인·승인 사용을 서버에 전달하고 결과만 돌려줍니다.
   if (type === APPROVAL_MESSAGE) {
-    if (!sender || !sender.tab) return;
+    if (fromExtensionPage(sender)) return;
     handleApproval(chromeDeps(), message).then(
       (reply) => respond(reply),
       () => respond({ ok: false, error: "승인 요청을 처리하지 못했습니다." }),
@@ -67,7 +77,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
     return true;
   }
   if (type === POLICY_PROBE_MESSAGE) {
-    if (sender && sender.tab) return; // 탭(웹 페이지가 있는 곳)에서 온 요청은 받지 않습니다
+    if (!fromExtensionPage(sender)) return; // 웹 페이지(콘텐츠 스크립트)에서 온 요청은 받지 않습니다
     const { url, key } = message as { url?: unknown; key?: unknown };
     probeServer(chromeDeps(), typeof url === "string" ? url : "", typeof key === "string" ? key : "").then(
       (status) => respond(status),

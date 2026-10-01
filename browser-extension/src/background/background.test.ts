@@ -146,6 +146,31 @@ describe.each(variants)("background (%s)", (_name, run) => {
       expect(response.state).toBe("off");
     });
 
+    // 실제 크롬에서 설정 화면은 브라우저 탭으로 열려 sender.tab이 있고, sender.url이 확장 주소입니다.
+    const optionsTab = { tab: { id: 9 }, url: "chrome-extension://abc/options.html" };
+    const webPage = (tabId: number) => ({ tab: { id: tabId }, url: "https://claude.ai/new" });
+
+    it("탭으로 열린 설정 화면에서 온 연결 시험·강제 동기화도 처리한다(웹 페이지와 주소로 구분)", async () => {
+      const probe = (await ask({ type: "gateway:policy-probe", url: "http://127.0.0.1:1", key: "x".repeat(20) }, optionsTab)) as { state: string; message: string };
+      expect(probe.state).toBe("error");
+      expect(probe.message).toContain("권한"); // 응답이 왔다는 뜻(이전에는 응답 자체가 없었다)
+      const sync = (await ask({ type: "gateway:policy-sync", force: true }, optionsTab)) as { state: string };
+      expect(sync.state).toBe("off");
+    });
+
+    it("웹 페이지(콘텐츠 스크립트)는 탭 정보가 있어도 연결 시험을 못 하고, 승인 요청·감사 전송은 할 수 있다", async () => {
+      expect(await ask({ type: "gateway:policy-probe", url: "http://127.0.0.1:1", key: "x".repeat(20) }, webPage(4))).toBe("no-response");
+      const approval = (await ask({ type: "gateway:approval", op: "status", id: "ab".repeat(16) }, webPage(4))) as { ok: boolean };
+      expect(approval.ok).toBe(false);
+      // 확장 화면이 보낸 승인 요청은 받지 않는다
+      expect(await ask({ type: "gateway:approval", op: "status", id: "ab".repeat(16) }, optionsTab)).toBe("no-response");
+    });
+
+    it("웹 페이지가 확장 주소로 보이게 꾸밀 수는 없다: 주소가 확장으로 시작하지 않으면 확장 화면이 아니다", async () => {
+      const spoof = { tab: { id: 4 }, url: "https://evil.example/?chrome-extension://abc/" };
+      expect(await ask({ type: "gateway:policy-probe", url: "http://127.0.0.1:1", key: "x".repeat(20) }, spoof)).toBe("no-response");
+    });
+
     it("확장 화면(설정)의 동기화 요청도 처리한다", async () => {
       const response = (await ask({ type: "gateway:policy-sync", force: true }, {})) as { state: string };
       expect(response.state).toBe("off");

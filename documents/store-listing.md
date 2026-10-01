@@ -169,7 +169,7 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
    "로컬 정책 적용"을 켜면 보내기 첫 시도가 중단되고 5초 안에 다시 누르면 전송됩니다.
 7. 설정에서 "이메일 형식"을 끄고 같은 문구를 다시 붙여넣으면 이메일은 안내에서 제외됩니다. 설정에서 안내창 위치를 "왼쪽 아래"로 바꾸면 안내를 닫았다가 다시 띄워도 그 위치가 유지됩니다.
 8. 설정에서 "전송 차단"을 켠 뒤 API 키가 들어 있는 상태에서 보내기를 누르면 첫 시도가 중단되고, 5초 안에 다시 누르면 전송됩니다. 꺼 두면 아무것도 막히지 않습니다.
-9. 소스 저장소에서 `npm test`(빌드 후 vitest 958개), `py tools/dom_test.py`(65개, 헤드리스 Chrome, `npm run build` 선행), `py tools/policy_parity.py`(40개 대조), `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다. 서버 연동은 `py tools/server.py setup` 후 `py tools/server.py test`(84개)와 `py tools/server.py e2e`(실제 서버와 확장 코드 13개)로 확인합니다. 서버를 연결하지 않으면 확장은 네트워크 요청을 하지 않습니다.
+9. 소스 저장소에서 `npm test`(빌드 후 vitest 964개), `py tools/dom_test.py`(65개, 헤드리스 Chrome, `npm run build` 선행), `py tools/policy_parity.py`(40개 대조), `py -m unittest discover -s gateway-core/pdp -p "test_*.py"`(9개)로 회귀를 확인할 수 있습니다. 서버 연동은 `py tools/server.py setup` 후 `py tools/server.py test`(84개)와 `py tools/server.py e2e`(실제 서버와 확장 코드 13개)로 확인합니다. 서버를 연결하지 않으면 확장은 네트워크 요청을 하지 않습니다.
 
 ## 7. 제출 전 체크리스트
 
@@ -180,7 +180,7 @@ ChatGPT · Claude · Gemini 입력창에 개인정보 형식이 들어오면 바
 - [x] 개인정보 처리방침 페이지 공개
 - [x] 데이터 사용 신고 표 작성
 - [x] 제출 ZIP 생성 및 구조 검증(루트 `manifest.json`, `/` 구분자)
-- [x] vitest 958 통과(+서버 연동 13) · 정책 대조 40/40 · PDP 9/9 · 서버 84/84 · contenteditable DOM 65/65 통과
+- [x] vitest 964 통과(+서버 연동 13) · 정책 대조 40/40 · PDP 9/9 · 서버 84/84 · contenteditable DOM 65/65 통과
 - [x] 막는 기능은 모두 기본 꺼짐이고, 안내 문구에 기본값 동작을 명시
 - [ ] 스토어 스크린샷 1장 이상 캡처 (7장 권장)
 - [ ] 128×128 아이콘 업로드, 설명·카테고리 입력
